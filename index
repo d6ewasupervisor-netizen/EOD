@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Kompass EOD - Advanced</title>
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1f2937;
+            min-height: 100vh;
+            padding: 20px;
+            color: #f9fafb;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #374151;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            cursor: pointer;
+        }
+
+        .header-logo {
+            max-width: 400px;
+            width: 80%;
+            margin-bottom: 15px;
+        }
+
+        .header h1 {
+            color: #88c4ed;
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #d1d5db;
+            font-size: 0.9em;
+        }
+
+        .section {
+            background: #4b5563;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #0d4f8b;
+        }
+
+        .section-title {
+            color: #88c4ed;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #0d4f8b;
+        }
+
+        .field-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .field label {
+            color: #88c4ed;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .field input[type="text"],
+        .field input[type="date"],
+        .field textarea {
+            padding: 10px;
+            border: 1px solid #4b5563;
+            border-radius: 5px;
+            background: #374151;
+            color: #f9fafb;
+            font-size: 1em;
+            font-family: inherit;
+        }
+
+        .field textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-top: 8px;
+        }
+
+        .checkbox-option {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .checkbox-option input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #0d4f8b;
+            cursor: pointer;
+        }
+
+        .checkbox-option label {
+            cursor: pointer;
+            color: #f9fafb;
+        }
+
+        .photo-section {
+            margin-top: 15px;
+        }
+
+        .photo-upload {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .photo-button {
+            padding: 12px 20px;
+            background: #0d4f8b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .photo-button:hover {
+            background: #1e66ab;
+            transform: translateY(-2px);
+        }
+
+        .photo-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .photo-item {
+            position: relative;
+            border: 2px solid #0d4f8b;
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 4/3;
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-remove {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .signature-section {
+            margin-top: 20px;
+        }
+
+        .signature-preview {
+            border: 2px solid #0d4f8b;
+            border-radius: 8px;
+            background: white;
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #111827;
+            margin-top: 10px;
+        }
+
+        .signature-preview img {
+            max-width: 100%;
+            max-height: 150px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .btn-primary {
+            background: #0d4f8b;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1e66ab;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(86, 171, 47, 0.4);
+        }
+
+        .btn-secondary {
+            background: #4b5563;
+            color: #f9fafb;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6573;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-dialog {
+            background: #374151;
+            padding: 24px;
+            border-radius: 12px;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow: auto;
+            color: #f9fafb;
+        }
+
+        .modal-dialog h2 {
+            color: #88c4ed;
+            margin-bottom: 15px;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(17, 24, 39, 0.8);
+            z-index: 10000;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #88c4ed;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .field-group {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            background: #4b5563;
+            border-radius: 8px;
+        }
+
+        .toggle-switch-label {
+            color: #f9fafb;
+            font-weight: 600;
+            margin-left: 12px;
+            cursor: pointer;
+        }
+
+        .toggle-switch-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+            cursor: pointer;
+        }
+
+        .toggle-switch-wrapper input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #374151;
+            border-radius: 28px;
+            transition: .3s;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            border-radius: 50%;
+            transition: .3s;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #0d4f8b;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(22px);
+        }
+
+        .signature-fullscreen-overlay {
+            position: fixed;
+            inset: 0;
+            background: #111827;
+            display: none;
+            z-index: 10002;
+            flex-direction: column;
+        }
+
+        .signature-fullscreen-overlay.show {
+            display: flex;
+        }
+
+        .sig-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: #0d4f8b;
+            color: #fff;
+        }
+
+        #sigFsCanvas {
+            flex: 1;
+            background: #fff;
+            touch-action: none;
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header" onclick="openQuickView()">
+            <img src="rologo__1_.png" alt="Retail Odyssey Logo" class="header-logo" onerror="this.style.display='none'">
+            <h1>Kompass EOD - Advanced</h1>
+            <p>Click logo for quick view | Fast EOD completion for experienced leads</p>
+        </div>
+
+        <!-- Basic Info -->
+        <div class="section">
+            <div class="section-title">Store Information</div>
+            <div class="field-group">
+                <div class="field">
+                    <label>Store #:</label>
+                    <input type="text" id="storeNumber" placeholder="###">
+                </div>
+                <div class="field">
+                    <label>Date:</label>
+                    <input type="date" id="workDate">
+                </div>
+                <div class="field">
+                    <label>Lead Name:</label>
+                    <input type="text" id="leadName" placeholder="Your name">
+                </div>
+            </div>
+        </div>
+
+        <!-- Photos Section -->
+        <div class="section">
+            <div class="section-title">📸 Photos</div>
+            
+            <div class="photo-section">
+                <label class="field label">Kompass Cart - Before:</label>
+                <button class="photo-button" onclick="document.getElementById('photoBefore').click()">
+                    📷 Take/Upload Before Photo
+                </button>
+                <input type="file" id="photoBefore" accept="image/*" capture="environment" onchange="handlePhoto(this, 'before')">
+                <div id="previewBefore" class="photo-preview"></div>
+            </div>
+
+            <div class="photo-section">
+                <label class="field label">Sign-Off Sheets:</label>
+                <button class="photo-button" onclick="document.getElementById('photoSignoff').click()">
+                    📷 Take/Upload Sign-Off Sheet
+                </button>
+                <input type="file" id="photoSignoff" accept="image/*" capture="environment" multiple onchange="handlePhoto(this, 'signoff')">
+                <div id="previewSignoff" class="photo-preview"></div>
+            </div>
+
+            <div class="photo-section">
+                <label class="field label">Kompass Cart - After:</label>
+                <button class="photo-button" onclick="document.getElementById('photoAfter').click()">
+                    📷 Take/Upload After Photo
+                </button>
+                <input type="file" id="photoAfter" accept="image/*" capture="environment" onchange="handlePhoto(this, 'after')">
+                <div id="previewAfter" class="photo-preview"></div>
+            </div>
+        </div>
+
+        <!-- EOD Fields -->
+        <div class="section">
+            <div class="section-title">EOD Cover Sheet</div>
+            
+            <div class="field">
+                <label>Manager checked in with:</label>
+                <input type="text" id="checkInManager" placeholder="Manager name">
+            </div>
+
+            <div class="field" style="margin-top: 15px;">
+                <label>Called KOMPASS Hotline?</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="hotlineYes" name="hotline" value="Yes" onchange="toggleHotline(this)">
+                        <label for="hotlineYes">Yes</label>
+                    </div>
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="hotlineNo" name="hotline" value="No" onchange="toggleHotline(this)">
+                        <label for="hotlineNo">No</label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="hotlineDetails" style="display: none; margin-top: 15px;">
+                <div class="field">
+                    <label>Commodities involved:</label>
+                    <input type="text" id="commodities" placeholder="Enter commodities">
+                </div>
+                <div class="field" style="margin-top: 15px;">
+                    <label>What is the issue?</label>
+                    <textarea id="issue" placeholder="Describe the issue"></textarea>
+                </div>
+                <div class="field" style="margin-top: 15px;">
+                    <label>Issue resolved?</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-option">
+                            <input type="checkbox" id="resolvedYes" name="resolved" value="Yes" onchange="toggleResolved(this)">
+                            <label for="resolvedYes">Yes</label>
+                        </div>
+                        <div class="checkbox-option">
+                            <input type="checkbox" id="resolvedNo" name="resolved" value="No" onchange="toggleResolved(this)">
+                            <label for="resolvedNo">No</label>
+                        </div>
+                        <div class="checkbox-option">
+                            <input type="checkbox" id="resolvedNA" name="resolved" value="NA" onchange="toggleResolved(this)">
+                            <label for="resolvedNA">N/A</label>
+                        </div>
+                    </div>
+                </div>
+                <div id="tempSolutionField" style="display: none; margin-top: 15px;">
+                    <div class="field">
+                        <label>Temporary solution:</label>
+                        <textarea id="tempSolution" placeholder="Describe temporary solution"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field" style="margin-top: 15px;">
+                <label>Manager checked out with:</label>
+                <input type="text" id="checkOutManager" placeholder="Manager name">
+            </div>
+
+            <div class="field" style="margin-top: 15px;">
+                <label>All sets signed out in PROD?</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="prodYes" name="prod" value="Yes" onchange="toggleRadio('prod')">
+                        <label for="prodYes">Yes</label>
+                    </div>
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="prodNo" name="prod" value="No" onchange="toggleRadio('prod')">
+                        <label for="prodNo">No</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field" style="margin-top: 15px;">
+                <label>All sets signed out in SI?</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="siYes" name="si" value="Yes" onchange="toggleRadio('si')">
+                        <label for="siYes">Yes</label>
+                    </div>
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="siNo" name="si" value="No" onchange="toggleRadio('si')">
+                        <label for="siNo">No</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field" style="margin-top: 15px;">
+                <label>Notes:</label>
+                <textarea id="notes" placeholder="Any additional notes or observations"></textarea>
+            </div>
+        </div>
+
+        <!-- Signature -->
+        <div class="section signature-section">
+            <div class="section-title">Signature</div>
+            <div id="signaturePreview" class="signature-preview">Tap "Sign" to add signature</div>
+            <button class="photo-button" onclick="openSignature()" style="margin-top: 10px;">✍️ Sign</button>
+            <canvas id="signaturePad" style="display:none;"></canvas>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="button-group">
+            <div class="toggle-switch">
+                <label class="toggle-switch-wrapper">
+                    <input type="checkbox" id="notesOnlyToggle">
+                    <span class="toggle-slider"></span>
+                </label>
+                <label class="toggle-switch-label" for="notesOnlyToggle">Notes Only</label>
+            </div>
+            <button class="btn btn-success" onclick="generateEmail()">📧 Generate Email</button>
+            <button class="btn btn-primary" onclick="generatePDF()">📄 Generate PDF</button>
+            <button class="btn btn-secondary" onclick="resetForm()">🔄 Reset</button>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <span>Processing...</span>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal-overlay">
+        <div class="modal-dialog">
+            <h2 id="modalTitle">Title</h2>
+            <p id="modalMessage">Message</p>
+            <div class="button-group">
+                <button class="btn btn-secondary" id="modalCancel">Cancel</button>
+                <button class="btn btn-primary" id="modalConfirm">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signature Fullscreen Overlay -->
+    <div id="signatureFullOverlay" class="signature-fullscreen-overlay">
+        <div class="sig-toolbar">
+            <button class="btn btn-secondary" id="sigClose">Close</button>
+            <div style="margin-left:auto; display:flex; gap:8px;">
+                <button class="btn btn-secondary" id="sigClear">Clear</button>
+                <button class="btn btn-primary" id="sigAccept">Accept</button>
+            </div>
+        </div>
+        <canvas id="sigFsCanvas"></canvas>
+    </div>
+
+    <script>
+        // Initialize
+        const photos = {
+            before: [],
+            signoff: [],
+            after: []
+        };
+
+        // Set today's date
+        document.getElementById('workDate').valueAsDate = new Date();
+
+        // Auto-save to localStorage
+        function autoSave() {
+            const data = {
+                storeNumber: document.getElementById('storeNumber').value,
+                date: document.getElementById('workDate').value,
+                leadName: document.getElementById('leadName').value,
+                checkInManager: document.getElementById('checkInManager').value,
+                checkOutManager: document.getElementById('checkOutManager').value,
+                commodities: document.getElementById('commodities').value,
+                issue: document.getElementById('issue').value,
+                tempSolution: document.getElementById('tempSolution').value,
+                notes: document.getElementById('notes').value,
+                hotlineYes: document.getElementById('hotlineYes').checked,
+                hotlineNo: document.getElementById('hotlineNo').checked,
+                resolvedYes: document.getElementById('resolvedYes').checked,
+                resolvedNo: document.getElementById('resolvedNo').checked,
+                resolvedNA: document.getElementById('resolvedNA').checked,
+                prodYes: document.getElementById('prodYes').checked,
+                prodNo: document.getElementById('prodNo').checked,
+                siYes: document.getElementById('siYes').checked,
+                siNo: document.getElementById('siNo').checked,
+                photos: photos
+            };
+            localStorage.setItem('kompassEOD', JSON.stringify(data));
+        }
+
+        // Load saved data
+        function loadSaved() {
+            const saved = localStorage.getItem('kompassEOD');
+            if (saved) {
+                const data = JSON.parse(saved);
+                document.getElementById('storeNumber').value = data.storeNumber || '';
+                document.getElementById('workDate').value = data.date || '';
+                document.getElementById('leadName').value = data.leadName || '';
+                document.getElementById('checkInManager').value = data.checkInManager || '';
+                document.getElementById('checkOutManager').value = data.checkOutManager || '';
+                document.getElementById('commodities').value = data.commodities || '';
+                document.getElementById('issue').value = data.issue || '';
+                document.getElementById('tempSolution').value = data.tempSolution || '';
+                document.getElementById('notes').value = data.notes || '';
+                
+                if (data.hotlineYes) {
+                    document.getElementById('hotlineYes').checked = true;
+                    document.getElementById('hotlineDetails').style.display = 'block';
+                }
+                if (data.hotlineNo) document.getElementById('hotlineNo').checked = true;
+                if (data.resolvedYes) document.getElementById('resolvedYes').checked = true;
+                if (data.resolvedNo) {
+                    document.getElementById('resolvedNo').checked = true;
+                    document.getElementById('tempSolutionField').style.display = 'block';
+                }
+                if (data.resolvedNA) document.getElementById('resolvedNA').checked = true;
+                if (data.prodYes) document.getElementById('prodYes').checked = true;
+                if (data.prodNo) document.getElementById('prodNo').checked = true;
+                if (data.siYes) document.getElementById('siYes').checked = true;
+                if (data.siNo) document.getElementById('siNo').checked = true;
+
+                if (data.photos) {
+                    Object.assign(photos, data.photos);
+                    renderPhotos('before');
+                    renderPhotos('signoff');
+                    renderPhotos('after');
+                }
+            }
+        }
+
+        // Add event listeners for auto-save
+        document.querySelectorAll('input, textarea').forEach(el => {
+            el.addEventListener('change', autoSave);
+            el.addEventListener('input', autoSave);
+        });
+
+        // Toggle functions
+        function toggleRadio(groupName) {
+            const checkboxes = document.querySelectorAll(`input[name="${groupName}"]`);
+            const clickedBox = document.querySelector(`input[name="${groupName}"]:checked`);
+            if (clickedBox) {
+                checkboxes.forEach(box => {
+                    if (box !== clickedBox) box.checked = false;
+                });
+            }
+            autoSave();
+        }
+
+        function toggleHotline(checkbox) {
+            const yes = document.getElementById('hotlineYes');
+            const no = document.getElementById('hotlineNo');
+            const details = document.getElementById('hotlineDetails');
+            
+            if (checkbox.id === 'hotlineYes' && checkbox.checked) {
+                no.checked = false;
+                details.style.display = 'block';
+            } else if (checkbox.id === 'hotlineNo' && checkbox.checked) {
+                yes.checked = false;
+                details.style.display = 'none';
+            }
+            autoSave();
+        }
+
+        function toggleResolved(checkbox) {
+            const yes = document.getElementById('resolvedYes');
+            const no = document.getElementById('resolvedNo');
+            const na = document.getElementById('resolvedNA');
+            const tempField = document.getElementById('tempSolutionField');
+            
+            if (checkbox.checked) {
+                [yes, no, na].forEach(cb => {
+                    if (cb !== checkbox) cb.checked = false;
+                });
+            }
+            
+            tempField.style.display = no.checked ? 'block' : 'none';
+            autoSave();
+        }
+
+        // Photo handling
+        function handlePhoto(input, type) {
+            const files = input.files;
+            if (!files || files.length === 0) return;
+
+            for (let file of files) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    photos[type].push(e.target.result);
+                    renderPhotos(type);
+                    autoSave();
+                };
+                reader.readAsDataURL(file);
+            }
+            input.value = '';
+        }
+
+        function renderPhotos(type) {
+            const container = document.getElementById(`preview${type.charAt(0).toUpperCase() + type.slice(1)}`);
+            container.innerHTML = '';
+            
+            photos[type].forEach((photo, index) => {
+                const item = document.createElement('div');
+                item.className = 'photo-item';
+                item.innerHTML = `
+                    <img src="${photo}" alt="${type} photo">
+                    <button class="photo-remove" onclick="removePhoto('${type}', ${index})">×</button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function removePhoto(type, index) {
+            photos[type].splice(index, 1);
+            renderPhotos(type);
+            autoSave();
+        }
+
+        // Signature handling
+        const canvas = document.getElementById('signaturePad');
+        const ctx = canvas.getContext('2d');
+        const fsOverlay = document.getElementById('signatureFullOverlay');
+        const fsCanvas = document.getElementById('sigFsCanvas');
+        const fsCtx = fsCanvas.getContext('2d');
+        let fsDrawing = false, fsLastX = 0, fsLastY = 0;
+
+        function openSignature() {
+            fsOverlay.classList.add('show');
+            resizeFsCanvas();
+            
+            // Load existing signature
+            const saved = localStorage.getItem('kompassEOD');
+            if (saved) {
+                const data = JSON.parse(saved);
+                if (data.signature) {
+                    const img = new Image();
+                    img.onload = () => {
+                        const scale = Math.min(fsCanvas.width / img.width, fsCanvas.height / img.height);
+                        const dw = img.width * scale;
+                        const dh = img.height * scale;
+                        const dx = (fsCanvas.width - dw) / 2;
+                        const dy = (fsCanvas.height - dh) / 2;
+                        fsCtx.drawImage(img, 0, 0, img.width, img.height, dx, dy, dw, dh);
+                    };
+                    img.src = data.signature;
+                }
+            }
+        }
+
+        function resizeFsCanvas() {
+            const toolbar = fsOverlay.querySelector('.sig-toolbar');
+            const toolbarH = toolbar ? toolbar.offsetHeight : 0;
+            fsCanvas.width = window.innerWidth;
+            fsCanvas.height = window.innerHeight - toolbarH;
+        }
+
+        function fsStart(e) {
+            fsDrawing = true;
+            const rect = fsCanvas.getBoundingClientRect();
+            const touch = e.touches ? e.touches[0] : e;
+            fsLastX = touch.clientX - rect.left;
+            fsLastY = touch.clientY - rect.top;
+        }
+
+        function fsDraw(e) {
+            if (!fsDrawing) return;
+            e.preventDefault();
+            const rect = fsCanvas.getBoundingClientRect();
+            const touch = e.touches ? e.touches[0] : e;
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            fsCtx.beginPath();
+            fsCtx.moveTo(fsLastX, fsLastY);
+            fsCtx.lineTo(x, y);
+            fsCtx.strokeStyle = '#000';
+            fsCtx.lineWidth = 3;
+            fsCtx.lineCap = 'round';
+            fsCtx.lineJoin = 'round';
+            fsCtx.stroke();
+            fsLastX = x;
+            fsLastY = y;
+        }
+
+        function fsStop() {
+            fsDrawing = false;
+        }
+
+        fsCanvas.addEventListener('mousedown', fsStart);
+        fsCanvas.addEventListener('mousemove', fsDraw);
+        fsCanvas.addEventListener('mouseup', fsStop);
+        fsCanvas.addEventListener('mouseout', fsStop);
+        fsCanvas.addEventListener('touchstart', fsStart, { passive: false });
+        fsCanvas.addEventListener('touchmove', fsDraw, { passive: false });
+        fsCanvas.addEventListener('touchend', fsStop);
+
+        document.getElementById('sigClear').addEventListener('click', () => {
+            fsCtx.clearRect(0, 0, fsCanvas.width, fsCanvas.height);
+        });
+
+        document.getElementById('sigAccept').addEventListener('click', () => {
+            // Copy to storage canvas
+            canvas.width = fsCanvas.width;
+            canvas.height = fsCanvas.height;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(fsCanvas, 0, 0);
+            
+            // Save and update preview
+            const data = JSON.parse(localStorage.getItem('kompassEOD') || '{}');
+            data.signature = canvas.toDataURL('image/png');
+            localStorage.setItem('kompassEOD', JSON.stringify(data));
+            
+            updateSignaturePreview();
+            fsOverlay.classList.remove('show');
+        });
+
+        document.getElementById('sigClose').addEventListener('click', () => {
+            fsOverlay.classList.remove('show');
+        });
+
+        function updateSignaturePreview() {
+            const preview = document.getElementById('signaturePreview');
+            const saved = localStorage.getItem('kompassEOD');
+            if (saved) {
+                const data = JSON.parse(saved);
+                if (data.signature) {
+                    preview.innerHTML = `<img src="${data.signature}" alt="Signature">`;
+                    return;
+                }
+            }
+            preview.textContent = 'Tap "Sign" to add signature';
+        }
+
+        // Format helpers
+        function getFormattedDate(isoDate) {
+            if (!isoDate) {
+                const d = new Date();
+                isoDate = d.toISOString().split('T')[0];
+            }
+            const parts = isoDate.split('-');
+            if (parts.length === 3) {
+                const [y, m, d] = parts;
+                return {
+                    mmddyyyy: `${m}/${d}/${y}`,
+                    mm_dd_yyyy: `${m}_${d}_${y}`
+                };
+            }
+            const today = new Date();
+            const m = String(today.getMonth() + 1).padStart(2, '0');
+            const d = String(today.getDate()).padStart(2, '0');
+            const y = today.getFullYear();
+            return {
+                mmddyyyy: `${m}/${d}/${y}`,
+                mm_dd_yyyy: `${m}_${d}_${y}`
+            };
+        }
+
+        function getFormattedStoreNum(storeNum) {
+            return String(storeNum || '').padStart(3, '0');
+        }
+
+        async function getSignatureDataURL() {
+            const saved = localStorage.getItem('kompassEOD');
+            if (saved) {
+                const data = JSON.parse(saved);
+                if (data.signature) {
+                    // Auto-crop signature
+                    const img = new Image();
+                    await new Promise(resolve => {
+                        img.onload = resolve;
+                        img.src = data.signature;
+                    });
+                    
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = img.width;
+                    tempCanvas.height = img.height;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.drawImage(img, 0, 0);
+                    
+                    const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataArray = imageData.data;
+                    
+                    let minX = tempCanvas.width, minY = tempCanvas.height, maxX = 0, maxY = 0;
+                    let isEmpty = true;
+                    
+                    for (let y = 0; y < tempCanvas.height; y++) {
+                        for (let x = 0; x < tempCanvas.width; x++) {
+                            const alpha = dataArray[((y * tempCanvas.width) + x) * 4 + 3];
+                            if (alpha > 0) {
+                                isEmpty = false;
+                                if (x < minX) minX = x;
+                                if (x > maxX) maxX = x;
+                                if (y < minY) minY = y;
+                                if (y > maxY) maxY = y;
+                            }
+                        }
+                    }
+                    
+                    if (isEmpty) return '';
+                    
+                    const padding = 10;
+                    minX = Math.max(0, minX - padding);
+                    minY = Math.max(0, minY - padding);
+                    maxX = Math.min(tempCanvas.width, maxX + padding);
+                    maxY = Math.min(tempCanvas.height, maxY + padding);
+                    
+                    const cropWidth = maxX - minX;
+                    const cropHeight = maxY - minY;
+                    
+                    const cropCanvas = document.createElement('canvas');
+                    cropCanvas.width = cropWidth;
+                    cropCanvas.height = cropHeight;
+                    const cropCtx = cropCanvas.getContext('2d');
+                    cropCtx.drawImage(tempCanvas, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+                    
+                    return cropCanvas.toDataURL('image/png');
+                }
+            }
+            return '';
+        }
+
+        function pickYN(v) {
+            if (typeof v === 'string') {
+                const s = v.trim().toLowerCase();
+                if (s.startsWith('y')) return 'Yes';
+                if (s.startsWith('n')) return 'No';
+            }
+            return v ? 'Yes' : 'No';
+        }
+
+        function pickYNN(v) {
+            if (typeof v === 'string') {
+                const s = v.trim().toLowerCase();
+                if (s === 'na' || s === 'n/a') return 'NA';
+                if (s.startsWith('y')) return 'Yes';
+                if (s.startsWith('n')) return 'No';
+            }
+            if (v === null || v === undefined) return 'NA';
+            return v ? 'Yes' : 'No';
+        }
+
+        // Collect all data
+        async function collectData() {
+            const rawDate = document.getElementById('workDate').value;
+            const dates = getFormattedDate(rawDate);
+            const rawStoreNum = document.getElementById('storeNumber').value;
+            const storeNumPadded = getFormattedStoreNum(rawStoreNum);
+
+            const hotlineYes = document.getElementById('hotlineYes').checked;
+            const resolvedValue = document.querySelector('input[name="resolved"]:checked')?.value || 'NA';
+
+            return {
+                LeadName: document.getElementById('leadName').value,
+                DateMMDDYYYY: dates.mmddyyyy,
+                DateForFilename: dates.mm_dd_yyyy,
+                StoreNumber: rawStoreNum,
+                StoreNumberPadded: storeNumPadded,
+                CheckInManager: document.getElementById('checkInManager').value,
+                CheckOutManager: document.getElementById('checkOutManager').value,
+                CalledHotline: hotlineYes,
+                IssueCommodities: hotlineYes ? document.getElementById('commodities').value : 'N/A',
+                WhatIsIssue: hotlineYes ? document.getElementById('issue').value : 'N/A',
+                IssueResolved: hotlineYes ? resolvedValue : 'NA',
+                TempSolution: (hotlineYes && resolvedValue === 'No') ? document.getElementById('tempSolution').value : 'N/A',
+                SignedOutPROD: document.getElementById('prodYes').checked,
+                SignedOutSI: document.getElementById('siYes').checked,
+                Notes: document.getElementById('notes').value,
+                signatureDataURL: await getSignatureDataURL(),
+                photos: photos
+            };
+        }
+
+        // Generate PDF
+        async function generatePDF() {
+            const loading = document.getElementById('loadingOverlay');
+            loading.classList.add('show');
+            
+            try {
+                const data = await collectData();
+                
+                // Load the PDF template
+                const pdfUrl = 'End_Of_Day_Cover_Sheet_Form_Editable_Template.pdf';
+                const response = await fetch(pdfUrl);
+                if (!response.ok) throw new Error('PDF template not found');
+                const pdfBytes = await response.arrayBuffer();
+                
+                const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
+                const form = pdfDoc.getForm();
+                
+                // Fill form fields
+                form.getTextField('LeadName').setText(data.LeadName || '');
+                form.getTextField('DateISO').setText(data.DateMMDDYYYY || '');
+                form.getTextField('StoreNumber').setText(data.StoreNumber || '');
+                form.getTextField('CheckInManager').setText(data.CheckInManager || '');
+                form.getTextField('IssueCommodities').setText(data.IssueCommodities || '');
+                form.getTextField('WhatIsIssue').setText(data.WhatIsIssue || '');
+                form.getTextField('TempSolution').setText(data.TempSolution || '');
+                form.getTextField('CheckOutManager').setText(data.CheckOutManager || '');
+                
+                // Radio buttons
+                form.getRadioGroup('BeforePicPosted').select(data.photos.before.length > 0 ? 'Yes' : 'No');
+                form.getRadioGroup('CalledHotline').select(pickYN(data.CalledHotline));
+                form.getRadioGroup('IssueResolved').select(pickYNN(data.IssueResolved));
+                form.getRadioGroup('SignedOutPROD').select(pickYN(data.SignedOutPROD));
+                form.getRadioGroup('SignedOutSI').select(pickYN(data.SignedOutSI));
+                form.getRadioGroup('SignoutSheetAttachedEmail').select(data.photos.signoff.length > 0 ? 'Yes' : 'No');
+                form.getRadioGroup('SignoutSheetAttachedPROD').select(data.photos.signoff.length > 0 ? 'Yes' : 'No');
+                form.getRadioGroup('AfterPicPosted').select(data.photos.after.length > 0 ? 'Yes' : 'No');
+                
+                // Embed signature
+                if (data.signatureDataURL) {
+                    const sigBytes = await fetch(data.signatureDataURL).then(r => r.arrayBuffer());
+                    const sigImage = await pdfDoc.embedPng(sigBytes);
+                    form.getButton('LeadSignatureImage').setImage(sigImage);
+                }
+                
+                // Add photos to additional pages
+                if (data.photos.before.length > 0 || data.photos.signoff.length > 0 || data.photos.after.length > 0) {
+                    const page = pdfDoc.addPage([612, 792]); // Letter size
+                    let y = 750;
+                    
+                    const addPhotoToPage = async (photoData, title) => {
+                        if (y < 100) {
+                            const newPage = pdfDoc.addPage([612, 792]);
+                            y = 750;
+                            return newPage;
+                        }
+                        
+                        page.drawText(title, { x: 50, y, size: 14 });
+                        y -= 20;
+                        
+                        const imgBytes = await fetch(photoData).then(r => r.arrayBuffer());
+                        const img = photoData.includes('png') ? await pdfDoc.embedPng(imgBytes) : await pdfDoc.embedJpg(imgBytes);
+                        const scale = Math.min(400 / img.width, 300 / img.height);
+                        const width = img.width * scale;
+                        const height = img.height * scale;
+                        
+                        page.drawImage(img, { x: 50, y: y - height, width, height });
+                        y -= height + 30;
+                        
+                        return page;
+                    };
+                    
+                    // Add all photos
+                    for (let photo of data.photos.before) {
+                        await addPhotoToPage(photo, 'Kompass Cart - Before');
+                    }
+                    for (let i = 0; i < data.photos.signoff.length; i++) {
+                        await addPhotoToPage(data.photos.signoff[i], `Sign-Off Sheet ${i + 1}`);
+                    }
+                    for (let photo of data.photos.after) {
+                        await addPhotoToPage(photo, 'Kompass Cart - After');
+                    }
+                }
+                
+                form.flatten();
+                const finalPdfBytes = await pdfDoc.save();
+                
+                // Download
+                const blob = new Blob([finalPdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `EOD Cover Sheet FM${data.StoreNumberPadded} ${data.DateForFilename}.pdf`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                showAlert('Success', 'PDF generated successfully!');
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                showAlert('Error', 'Failed to generate PDF: ' + error.message);
+            } finally {
+                loading.classList.remove('show');
+            }
+        }
+
+        // Generate Email
+        async function generateEmail() {
+            const loading = document.getElementById('loadingOverlay');
+            loading.classList.add('show');
+            
+            try {
+                const data = await collectData();
+                const notesOnly = document.getElementById('notesOnlyToggle').checked;
+                
+                let body = '';
+                
+                if (notesOnly) {
+                    body = `\n\nNotes:\n${data.Notes || ''}\n`;
+                } else {
+                    body = `
+Lead Name: ${data.LeadName || ''}
+Date: ${data.DateMMDDYYYY || ''}
+Store Number: ${data.StoreNumber || ''}
+
+Before picture of KOMPASS cart: ${data.photos.before.length > 0 ? 'Yes' : 'No'}
+Manager checked in with: ${data.CheckInManager || ''}
+
+Called KOMPASS Hotline: ${pickYN(data.CalledHotline)}
+Commodities: ${data.IssueCommodities || 'N/A'}
+Issue: ${data.WhatIsIssue || 'N/A'}
+Issue resolved: ${data.IssueResolved || 'N/A'}
+Temporary solution: ${data.TempSolution || 'N/A'}
+
+Manager checked out with: ${data.CheckOutManager || ''}
+Signed out in PROD: ${pickYN(data.SignedOutPROD)}
+Signed out in SI: ${pickYN(data.SignedOutSI)}
+
+Sign-off sheets attached: ${data.photos.signoff.length}
+After picture of KOMPASS cart: ${data.photos.after.length > 0 ? 'Yes' : 'No'}
+
+Notes:
+${data.Notes || ''}
+`;
+                }
+                
+                const cc = 'MAshabranner@retailodyssey.com,seth.newman@retailodyssey.com,KNix@retailodyssey.com';
+                const subject = `EOD FM${data.StoreNumberPadded} ${data.DateMMDDYYYY}`;
+                const mailtoUrl = `mailto:?cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                
+                loading.classList.remove('show');
+                
+                showConfirm(
+                    'Open Email Client',
+                    'Email body prepared. Click OK to open your email client.<br><br><strong>Remember to attach:</strong><br>- EOD Cover Sheet PDF<br>- Photos of Kompass cart (before/after)<br>- Sign-off sheets',
+                    () => {
+                        window.location.href = mailtoUrl;
+                    }
+                );
+            } catch (error) {
+                console.error('Error generating email:', error);
+                loading.classList.remove('show');
+                showAlert('Error', 'Failed to generate email: ' + error.message);
+            }
+        }
+
+        // Reset form
+        function resetForm() {
+            showConfirm(
+                'Reset Form',
+                'Are you sure you want to reset all fields? This will clear all data including photos.',
+                () => {
+                    localStorage.removeItem('kompassEOD');
+                    photos.before = [];
+                    photos.signoff = [];
+                    photos.after = [];
+                    document.querySelectorAll('input, textarea').forEach(el => {
+                        if (el.type === 'checkbox') el.checked = false;
+                        else if (el.type === 'date') el.valueAsDate = new Date();
+                        else el.value = '';
+                    });
+                    renderPhotos('before');
+                    renderPhotos('signoff');
+                    renderPhotos('after');
+                    updateSignaturePreview();
+                    document.getElementById('hotlineDetails').style.display = 'none';
+                    document.getElementById('tempSolutionField').style.display = 'none';
+                }
+            );
+        }
+
+        // Modal functions
+        function showAlert(title, message) {
+            const modal = document.getElementById('modal');
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').innerHTML = message;
+            document.getElementById('modalCancel').style.display = 'none';
+            modal.classList.add('show');
+        }
+
+        function showConfirm(title, message, callback) {
+            const modal = document.getElementById('modal');
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').innerHTML = message;
+            document.getElementById('modalCancel').style.display = 'inline-block';
+            modal.classList.add('show');
+            
+            document.getElementById('modalConfirm').onclick = () => {
+                modal.classList.remove('show');
+                if (callback) callback();
+            };
+        }
+
+        document.getElementById('modalCancel').addEventListener('click', () => {
+            document.getElementById('modal').classList.remove('show');
+        });
+
+        document.getElementById('modalConfirm').addEventListener('click', () => {
+            document.getElementById('modal').classList.remove('show');
+        });
+
+        // Quick view (Easter egg)
+        function openQuickView() {
+            showAlert('Quick View', 'Coming soon! This will show a condensed view of all EOD fields for quick completion.');
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            loadSaved();
+            updateSignaturePreview();
+        });
+    </script>
+</body>
+</html>
