@@ -434,7 +434,7 @@
 <body>
     <div class="container">
         <div class="header" onclick="openQuickView()">
-            <img src="rologo__1_.png" alt="Retail Odyssey Logo" class="header-logo" onerror="this.style.display='none'">
+            <img src="rologo.png" alt="Retail Odyssey Logo" class="header-logo" onerror="this.style.display='none'">
             <h1>Kompass EOD - Advanced</h1>
             <p>Click logo for quick view | Fast EOD completion for experienced leads</p>
         </div>
@@ -605,6 +605,7 @@
             </div>
             <button class="btn btn-success" onclick="generateEmail()">📧 Generate Email</button>
             <button class="btn btn-primary" onclick="generatePDF()">📄 Generate PDF</button>
+            <button class="btn btn-secondary" onclick="testSetup()">🔧 Test Setup</button>
             <button class="btn btn-secondary" onclick="resetForm()">🔄 Reset</button>
         </div>
     </div>
@@ -1061,99 +1062,192 @@
             loading.classList.add('show');
             
             try {
+                console.log('Starting PDF generation...');
+                
+                // Check if PDFLib is loaded
+                if (typeof PDFLib === 'undefined') {
+                    throw new Error('PDF library not loaded. Please refresh the page.');
+                }
+                
                 const data = await collectData();
+                console.log('Data collected:', data);
                 
-                // Load the PDF template
-                const pdfUrl = 'End_Of_Day_Cover_Sheet_Form_Editable_Template.pdf';
-                const response = await fetch(pdfUrl);
-                if (!response.ok) throw new Error('PDF template not found');
-                const pdfBytes = await response.arrayBuffer();
+                // Load the PDF template - try multiple paths
+                let pdfBytes;
+                const pdfPaths = [
+                    'End Of Day Cover Sheet Form Editable Template.pdf',
+                    './End_Of_Day_Cover_Sheet_Form_Editable_Template.pdf',
+                    'End%20Of%20Day%20Cover%20Sheet%20Form%20Editable%20Template.pdf'
+                ];
                 
+                let loadError;
+                for (let pdfUrl of pdfPaths) {
+                    try {
+                        console.log('Trying to load PDF from:', pdfUrl);
+                        const response = await fetch(pdfUrl);
+                        if (response.ok) {
+                            pdfBytes = await response.arrayBuffer();
+                            console.log('PDF loaded successfully from:', pdfUrl);
+                            break;
+                        }
+                    } catch (e) {
+                        loadError = e;
+                        console.warn('Failed to load from:', pdfUrl, e);
+                    }
+                }
+                
+                if (!pdfBytes) {
+                    throw new Error('PDF template not found. Please ensure "End Of Day Cover Sheet Form Editable Template.pdf" is in the same directory as this HTML file. Error: ' + (loadError ? loadError.message : 'Not found'));
+                }
+                
+                console.log('Loading PDF document...');
                 const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
+                console.log('Getting form...');
                 const form = pdfDoc.getForm();
                 
-                // Fill form fields
-                form.getTextField('LeadName').setText(data.LeadName || '');
-                form.getTextField('DateISO').setText(data.DateMMDDYYYY || '');
-                form.getTextField('StoreNumber').setText(data.StoreNumber || '');
-                form.getTextField('CheckInManager').setText(data.CheckInManager || '');
-                form.getTextField('IssueCommodities').setText(data.IssueCommodities || '');
-                form.getTextField('WhatIsIssue').setText(data.WhatIsIssue || '');
-                form.getTextField('TempSolution').setText(data.TempSolution || '');
-                form.getTextField('CheckOutManager').setText(data.CheckOutManager || '');
+                console.log('Filling form fields...');
+                // Fill form fields with error handling for each field
+                try {
+                    form.getTextField('LeadName').setText(data.LeadName || '');
+                    form.getTextField('DateISO').setText(data.DateMMDDYYYY || '');
+                    form.getTextField('StoreNumber').setText(data.StoreNumber || '');
+                    form.getTextField('CheckInManager').setText(data.CheckInManager || '');
+                    form.getTextField('IssueCommodities').setText(data.IssueCommodities || '');
+                    form.getTextField('WhatIsIssue').setText(data.WhatIsIssue || '');
+                    form.getTextField('TempSolution').setText(data.TempSolution || '');
+                    form.getTextField('CheckOutManager').setText(data.CheckOutManager || '');
+                    console.log('Text fields filled successfully');
+                } catch (e) {
+                    console.error('Error filling text fields:', e);
+                    throw new Error('Error filling text fields: ' + e.message);
+                }
                 
-                // Radio buttons
-                form.getRadioGroup('BeforePicPosted').select(data.photos.before.length > 0 ? 'Yes' : 'No');
-                form.getRadioGroup('CalledHotline').select(pickYN(data.CalledHotline));
-                form.getRadioGroup('IssueResolved').select(pickYNN(data.IssueResolved));
-                form.getRadioGroup('SignedOutPROD').select(pickYN(data.SignedOutPROD));
-                form.getRadioGroup('SignedOutSI').select(pickYN(data.SignedOutSI));
-                form.getRadioGroup('SignoutSheetAttachedEmail').select(data.photos.signoff.length > 0 ? 'Yes' : 'No');
-                form.getRadioGroup('SignoutSheetAttachedPROD').select(data.photos.signoff.length > 0 ? 'Yes' : 'No');
-                form.getRadioGroup('AfterPicPosted').select(data.photos.after.length > 0 ? 'Yes' : 'No');
+                console.log('Setting radio buttons...');
+                // Radio buttons with error handling
+                try {
+                    form.getRadioGroup('BeforePicPosted').select(data.photos.before.length > 0 ? 'Yes' : 'No');
+                    form.getRadioGroup('CalledHotline').select(pickYN(data.CalledHotline));
+                    form.getRadioGroup('IssueResolved').select(pickYNN(data.IssueResolved));
+                    form.getRadioGroup('SignedOutPROD').select(pickYN(data.SignedOutPROD));
+                    form.getRadioGroup('SignedOutSI').select(pickYN(data.SignedOutSI));
+                    form.getRadioGroup('SignoutSheetAttachedEmail').select(data.photos.signoff.length > 0 ? 'Yes' : 'No');
+                    form.getRadioGroup('SignoutSheetAttachedPROD').select(data.photos.signoff.length > 0 ? 'Yes' : 'No');
+                    form.getRadioGroup('AfterPicPosted').select(data.photos.after.length > 0 ? 'Yes' : 'No');
+                    console.log('Radio buttons set successfully');
+                } catch (e) {
+                    console.error('Error setting radio buttons:', e);
+                    throw new Error('Error setting radio buttons: ' + e.message);
+                }
                 
+                console.log('Embedding signature...');
                 // Embed signature
                 if (data.signatureDataURL) {
-                    const sigBytes = await fetch(data.signatureDataURL).then(r => r.arrayBuffer());
-                    const sigImage = await pdfDoc.embedPng(sigBytes);
-                    form.getButton('LeadSignatureImage').setImage(sigImage);
+                    try {
+                        const sigBytes = await fetch(data.signatureDataURL).then(r => r.arrayBuffer());
+                        const sigImage = await pdfDoc.embedPng(sigBytes);
+                        form.getButton('LeadSignatureImage').setImage(sigImage);
+                        console.log('Signature embedded successfully');
+                    } catch (e) {
+                        console.error('Error embedding signature:', e);
+                        // Don't fail the whole PDF for signature issues
+                        console.warn('Continuing without signature');
+                    }
                 }
                 
+                console.log('Adding photo pages...');
                 // Add photos to additional pages
                 if (data.photos.before.length > 0 || data.photos.signoff.length > 0 || data.photos.after.length > 0) {
-                    const page = pdfDoc.addPage([612, 792]); // Letter size
-                    let y = 750;
-                    
-                    const addPhotoToPage = async (photoData, title) => {
-                        if (y < 100) {
-                            const newPage = pdfDoc.addPage([612, 792]);
-                            y = 750;
-                            return newPage;
+                    try {
+                        let currentPage = pdfDoc.addPage([612, 792]); // Letter size
+                        let y = 750;
+                        
+                        const addPhotoToPage = async (photoData, title) => {
+                            if (y < 100) {
+                                currentPage = pdfDoc.addPage([612, 792]);
+                                y = 750;
+                            }
+                            
+                            currentPage.drawText(title, { x: 50, y, size: 14 });
+                            y -= 20;
+                            
+                            try {
+                                const imgBytes = await fetch(photoData).then(r => r.arrayBuffer());
+                                let img;
+                                
+                                // Determine image type
+                                if (photoData.includes('data:image/png')) {
+                                    img = await pdfDoc.embedPng(imgBytes);
+                                } else if (photoData.includes('data:image/jpeg') || photoData.includes('data:image/jpg')) {
+                                    img = await pdfDoc.embedJpg(imgBytes);
+                                } else {
+                                    // Try PNG first, then JPG
+                                    try {
+                                        img = await pdfDoc.embedPng(imgBytes);
+                                    } catch {
+                                        img = await pdfDoc.embedJpg(imgBytes);
+                                    }
+                                }
+                                
+                                const scale = Math.min(400 / img.width, 300 / img.height);
+                                const width = img.width * scale;
+                                const height = img.height * scale;
+                                
+                                currentPage.drawImage(img, { x: 50, y: y - height, width, height });
+                                y -= height + 30;
+                            } catch (e) {
+                                console.error('Error adding photo:', title, e);
+                                currentPage.drawText(`[Error loading ${title}]`, { x: 50, y, size: 10 });
+                                y -= 30;
+                            }
+                        };
+                        
+                        // Add all photos
+                        console.log('Adding before photos:', data.photos.before.length);
+                        for (let photo of data.photos.before) {
+                            await addPhotoToPage(photo, 'Kompass Cart - Before');
                         }
                         
-                        page.drawText(title, { x: 50, y, size: 14 });
-                        y -= 20;
+                        console.log('Adding signoff photos:', data.photos.signoff.length);
+                        for (let i = 0; i < data.photos.signoff.length; i++) {
+                            await addPhotoToPage(data.photos.signoff[i], `Sign-Off Sheet ${i + 1}`);
+                        }
                         
-                        const imgBytes = await fetch(photoData).then(r => r.arrayBuffer());
-                        const img = photoData.includes('png') ? await pdfDoc.embedPng(imgBytes) : await pdfDoc.embedJpg(imgBytes);
-                        const scale = Math.min(400 / img.width, 300 / img.height);
-                        const width = img.width * scale;
-                        const height = img.height * scale;
+                        console.log('Adding after photos:', data.photos.after.length);
+                        for (let photo of data.photos.after) {
+                            await addPhotoToPage(photo, 'Kompass Cart - After');
+                        }
                         
-                        page.drawImage(img, { x: 50, y: y - height, width, height });
-                        y -= height + 30;
-                        
-                        return page;
-                    };
-                    
-                    // Add all photos
-                    for (let photo of data.photos.before) {
-                        await addPhotoToPage(photo, 'Kompass Cart - Before');
-                    }
-                    for (let i = 0; i < data.photos.signoff.length; i++) {
-                        await addPhotoToPage(data.photos.signoff[i], `Sign-Off Sheet ${i + 1}`);
-                    }
-                    for (let photo of data.photos.after) {
-                        await addPhotoToPage(photo, 'Kompass Cart - After');
+                        console.log('Photos added successfully');
+                    } catch (e) {
+                        console.error('Error adding photo pages:', e);
+                        // Continue even if photos fail
+                        console.warn('Continuing without photo pages');
                     }
                 }
                 
+                console.log('Flattening form...');
                 form.flatten();
+                
+                console.log('Saving PDF...');
                 const finalPdfBytes = await pdfDoc.save();
                 
+                console.log('Creating download...');
                 // Download
                 const blob = new Blob([finalPdfBytes], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = `EOD Cover Sheet FM${data.StoreNumberPadded} ${data.DateForFilename}.pdf`;
+                document.body.appendChild(a);
                 a.click();
+                document.body.removeChild(a);
                 URL.revokeObjectURL(url);
                 
+                console.log('PDF generated successfully!');
                 showAlert('Success', 'PDF generated successfully!');
             } catch (error) {
                 console.error('Error generating PDF:', error);
-                showAlert('Error', 'Failed to generate PDF: ' + error.message);
+                showAlert('Error', 'Failed to generate PDF:<br><br>' + error.message + '<br><br>Check the browser console (F12) for more details.');
             } finally {
                 loading.classList.remove('show');
             }
@@ -1223,7 +1317,7 @@ ${data.Notes || ''}
         function resetForm() {
             showConfirm(
                 'Reset Form',
-                'Are you sure you want to reset all fields? This will clear all data including photos.',
+                'Are you sure you want to reset all fields? This will clear all data, including photos?',
                 () => {
                     localStorage.removeItem('kompassEOD');
                     photos.before = [];
@@ -1279,10 +1373,78 @@ ${data.Notes || ''}
             showAlert('Quick View', 'Coming soon! This will show a condensed view of all EOD fields for quick completion.');
         }
 
+        // Test setup function
+        async function testSetup() {
+            const loading = document.getElementById('loadingOverlay');
+            loading.classList.add('show');
+            
+            let results = [];
+            
+            // Test 1: Check if PDFLib is loaded
+            results.push('1. PDF Library: ' + (typeof PDFLib !== 'undefined' ? '✅ Loaded' : '❌ Not loaded'));
+            
+            // Test 2: Try to load PDF template
+            const pdfPaths = [
+                'End Of Day Cover Sheet Form Editable Template.pdf',
+                './End_Of_Day_Cover_Sheet_Form_Editable_Template.pdf',
+                'End%20Of%20Day%20Cover%20Sheet%20Form%20Editable%20Template.pdf'
+            ];
+            
+            let pdfFound = false;
+            for (let path of pdfPaths) {
+                try {
+                    const response = await fetch(path);
+                    if (response.ok) {
+                        results.push(`2. PDF Template: ✅ Found at "${path}"`);
+                        pdfFound = true;
+                        break;
+                    }
+                } catch (e) {
+                    // Continue trying
+                }
+            }
+            
+            if (!pdfFound) {
+                results.push('2. PDF Template: ❌ Not found. Please ensure "End Of Day Cover Sheet Form Editable Template.pdf" is in the same directory as this HTML file.');
+            }
+            
+            // Test 3: Check logo
+            try {
+                const logoResponse = await fetch('rologo.png');
+                results.push('3. Logo Image: ' + (logoResponse.ok ? '✅ Found' : '❌ Not found'));
+            } catch (e) {
+                results.push('3. Logo Image: ❌ Error loading');
+            }
+            
+            // Test 4: Check localStorage
+            results.push('4. LocalStorage: ' + (typeof localStorage !== 'undefined' ? '✅ Available' : '❌ Not available'));
+            
+            // Test 5: Check saved data
+            const saved = localStorage.getItem('kompassEOD');
+            results.push('5. Saved Data: ' + (saved ? `✅ Found (${(saved.length / 1024).toFixed(1)} KB)` : '⚠️ None'));
+            
+            // Test 6: Check photos
+            const photoCount = photos.before.length + photos.signoff.length + photos.after.length;
+            results.push(`6. Photos: ${photoCount > 0 ? '✅' : '⚠️'} ${photoCount} total (Before: ${photos.before.length}, Signoff: ${photos.signoff.length}, After: ${photos.after.length})`);
+            
+            // Test 7: Check signature
+            const sigData = await getSignatureDataURL();
+            results.push('7. Signature: ' + (sigData ? '✅ Present' : '⚠️ Not signed'));
+            
+            loading.classList.remove('show');
+            
+            showAlert('Setup Test Results', results.join('<br>'));
+        }
+
         // Initialize on load
         window.addEventListener('load', () => {
             loadSaved();
             updateSignaturePreview();
+            
+            // Log startup info
+            console.log('Kompass EOD Advanced loaded');
+            console.log('PDFLib available:', typeof PDFLib !== 'undefined');
+            console.log('Current URL:', window.location.href);
         });
     </script>
 </body>
