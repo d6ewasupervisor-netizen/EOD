@@ -13,21 +13,21 @@
         }
 
         body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #374151;          /* X area = old container color */
-    min-height: 100vh;
-    padding: 20px;
-    color: #f9fafb;
-}
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #374151;          /* X area = old container color */
+            min-height: 100vh;
+            padding: 20px;
+            color: #f9fafb;
+        }
 
         .container {
-    max-width: 800px;
-    margin: 0 auto;
-    background: #111827;          /* O area = darker than before */
-    border-radius: 15px;
-    padding: 30px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
+            max-width: 800px;
+            margin: 0 auto;
+            background: #111827;          /* O area = darker than before */
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
 
         .header {
             text-align: center;
@@ -53,12 +53,12 @@
         }
 
         .section {
-    background: #020617;          /* inner panels a bit darker still */
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-    border: 2px solid #0d4f8b;
-}
+            background: #020617;          /* inner panels a bit darker still */
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #0d4f8b;
+        }
 
         .section-title {
             color: #88c4ed;
@@ -460,9 +460,15 @@
         <!-- Photos Section -->
         <div class="section">
             <div class="section-title">📸 Photos</div>
-            
+
             <div class="photo-section">
                 <label class="field label">Kompass Cart - Before:</label>
+                <div class="checkbox-group" style="margin-top: 4px;">
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="beforeComplete">
+                        <label for="beforeComplete">Section complete (no photo available)</label>
+                    </div>
+                </div>
                 <button class="photo-button" onclick="document.getElementById('photoBefore').click()">
                     📷 Take/Upload Before Photo
                 </button>
@@ -472,6 +478,12 @@
 
             <div class="photo-section">
                 <label class="field label">Sign-Off Sheets:</label>
+                <div class="checkbox-group" style="margin-top: 4px;">
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="signoffComplete">
+                        <label for="signoffComplete">Section complete (no photo available)</label>
+                    </div>
+                </div>
                 <button class="photo-button" onclick="document.getElementById('photoSignoff').click()">
                     📷 Take/Upload Sign-Off Sheet
                 </button>
@@ -481,6 +493,12 @@
 
             <div class="photo-section">
                 <label class="field label">Kompass Cart - After:</label>
+                <div class="checkbox-group" style="margin-top: 4px;">
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="afterComplete">
+                        <label for="afterComplete">Section complete (no photo available)</label>
+                    </div>
+                </div>
                 <button class="photo-button" onclick="document.getElementById('photoAfter').click()">
                     📷 Take/Upload After Photo
                 </button>
@@ -492,7 +510,7 @@
         <!-- EOD Fields -->
         <div class="section">
             <div class="section-title">EOD Cover Sheet</div>
-            
+
             <div class="field">
                 <label>Manager checked in with:</label>
                 <input type="text" id="checkInManager" placeholder="Manager name">
@@ -670,6 +688,9 @@
                 prodNo: document.getElementById('prodNo').checked,
                 siYes: document.getElementById('siYes').checked,
                 siNo: document.getElementById('siNo').checked,
+                beforeComplete: document.getElementById('beforeComplete')?.checked || false,
+                signoffComplete: document.getElementById('signoffComplete')?.checked || false,
+                afterComplete: document.getElementById('afterComplete')?.checked || false,
                 photos: photos
             };
             localStorage.setItem('kompassEOD', JSON.stringify(data));
@@ -689,7 +710,7 @@
                 document.getElementById('issue').value = data.issue || '';
                 document.getElementById('tempSolution').value = data.tempSolution || '';
                 document.getElementById('notes').value = data.notes || '';
-                
+
                 if (data.hotlineYes) {
                     document.getElementById('hotlineYes').checked = true;
                     document.getElementById('hotlineDetails').style.display = 'block';
@@ -705,6 +726,16 @@
                 if (data.prodNo) document.getElementById('prodNo').checked = true;
                 if (data.siYes) document.getElementById('siYes').checked = true;
                 if (data.siNo) document.getElementById('siNo').checked = true;
+
+                if (typeof data.beforeComplete === 'boolean') {
+                    document.getElementById('beforeComplete').checked = data.beforeComplete;
+                }
+                if (typeof data.signoffComplete === 'boolean') {
+                    document.getElementById('signoffComplete').checked = data.signoffComplete;
+                }
+                if (typeof data.afterComplete === 'boolean') {
+                    document.getElementById('afterComplete').checked = data.afterComplete;
+                }
 
                 if (data.photos) {
                     Object.assign(photos, data.photos);
@@ -737,7 +768,7 @@
             const yes = document.getElementById('hotlineYes');
             const no = document.getElementById('hotlineNo');
             const details = document.getElementById('hotlineDetails');
-            
+
             if (checkbox.id === 'hotlineYes' && checkbox.checked) {
                 no.checked = false;
                 details.style.display = 'block';
@@ -753,13 +784,13 @@
             const no = document.getElementById('resolvedNo');
             const na = document.getElementById('resolvedNA');
             const tempField = document.getElementById('tempSolutionField');
-            
+
             if (checkbox.checked) {
                 [yes, no, na].forEach(cb => {
                     if (cb !== checkbox) cb.checked = false;
                 });
             }
-            
+
             tempField.style.display = no.checked ? 'block' : 'none';
             autoSave();
         }
@@ -784,7 +815,7 @@
         function renderPhotos(type) {
             const container = document.getElementById(`preview${type.charAt(0).toUpperCase() + type.slice(1)}`);
             container.innerHTML = '';
-            
+
             photos[type].forEach((photo, index) => {
                 const item = document.createElement('div');
                 item.className = 'photo-item';
@@ -813,7 +844,7 @@
         function openSignature() {
             fsOverlay.classList.add('show');
             resizeFsCanvas();
-            
+
             // Load existing signature
             const saved = localStorage.getItem('kompassEOD');
             if (saved) {
@@ -889,12 +920,12 @@
             canvas.height = fsCanvas.height;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(fsCanvas, 0, 0);
-            
+
             // Save and update preview
             const data = JSON.parse(localStorage.getItem('kompassEOD') || '{}');
             data.signature = canvas.toDataURL('image/png');
             localStorage.setItem('kompassEOD', JSON.stringify(data));
-            
+
             updateSignaturePreview();
             fsOverlay.classList.remove('show');
         });
@@ -955,19 +986,19 @@
                         img.onload = resolve;
                         img.src = data.signature;
                     });
-                    
+
                     const tempCanvas = document.createElement('canvas');
                     tempCanvas.width = img.width;
                     tempCanvas.height = img.height;
                     const tempCtx = tempCanvas.getContext('2d');
                     tempCtx.drawImage(img, 0, 0);
-                    
+
                     const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
                     const dataArray = imageData.data;
-                    
+
                     let minX = tempCanvas.width, minY = tempCanvas.height, maxX = 0, maxY = 0;
                     let isEmpty = true;
-                    
+
                     for (let y = 0; y < tempCanvas.height; y++) {
                         for (let x = 0; x < tempCanvas.width; x++) {
                             const alpha = dataArray[((y * tempCanvas.width) + x) * 4 + 3];
@@ -980,24 +1011,24 @@
                             }
                         }
                     }
-                    
+
                     if (isEmpty) return '';
-                    
+
                     const padding = 10;
                     minX = Math.max(0, minX - padding);
                     minY = Math.max(0, minY - padding);
                     maxX = Math.min(tempCanvas.width, maxX + padding);
                     maxY = Math.min(tempCanvas.height, maxY + padding);
-                    
+
                     const cropWidth = maxX - minX;
                     const cropHeight = maxY - minY;
-                    
+
                     const cropCanvas = document.createElement('canvas');
                     cropCanvas.width = cropWidth;
                     cropCanvas.height = cropHeight;
                     const cropCtx = cropCanvas.getContext('2d');
                     cropCtx.drawImage(tempCanvas, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
-                    
+
                     return cropCanvas.toDataURL('image/png');
                 }
             }
@@ -1050,6 +1081,9 @@
                 SignedOutPROD: document.getElementById('prodYes').checked,
                 SignedOutSI: document.getElementById('siYes').checked,
                 Notes: document.getElementById('notes').value,
+                BeforeComplete: document.getElementById('beforeComplete')?.checked || false,
+                SignoffComplete: document.getElementById('signoffComplete')?.checked || false,
+                AfterComplete: document.getElementById('afterComplete')?.checked || false,
                 signatureDataURL: await getSignatureDataURL(),
                 photos: photos
             };
@@ -1059,18 +1093,18 @@
         async function generatePDF() {
             const loading = document.getElementById('loadingOverlay');
             loading.classList.add('show');
-            
+
             try {
                 console.log('Starting PDF generation...');
-                
+
                 // Check if PDFLib is loaded
                 if (typeof PDFLib === 'undefined') {
                     throw new Error('PDF library not loaded. Please refresh the page.');
                 }
-                
+
                 const data = await collectData();
                 console.log('Data collected:', data);
-                
+
                 // Load the PDF template - try multiple paths
                 let pdfBytes;
                 const pdfPaths = [
@@ -1078,7 +1112,7 @@
                     './End_Of_Day_Cover_Sheet_Form_Editable_Template.pdf',
                     'End%20Of%20Day%20Cover%20Sheet%20Form%20Editable%20Template.pdf'
                 ];
-                
+
                 let loadError;
                 for (let pdfUrl of pdfPaths) {
                     try {
@@ -1094,16 +1128,16 @@
                         console.warn('Failed to load from:', pdfUrl, e);
                     }
                 }
-                
+
                 if (!pdfBytes) {
                     throw new Error('PDF template not found. Please ensure "End Of Day Cover Sheet Form Editable Template.pdf" is in the same directory as this HTML file. Error: ' + (loadError ? loadError.message : 'Not found'));
                 }
-                
+
                 console.log('Loading PDF document...');
                 const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
                 console.log('Getting form...');
                 const form = pdfDoc.getForm();
-                
+
                 console.log('Filling form fields...');
                 // Fill form fields with error handling for each field
                 try {
@@ -1120,24 +1154,28 @@
                     console.error('Error filling text fields:', e);
                     throw new Error('Error filling text fields: ' + e.message);
                 }
-                
+
                 console.log('Setting radio buttons...');
                 // Radio buttons with error handling
                 try {
-                    form.getRadioGroup('BeforePicPosted').select(data.photos.before.length > 0 ? 'Yes' : 'No');
+                    const beforeDone = data.photos.before.length > 0 || data.BeforeComplete;
+                    const signoffDone = data.photos.signoff.length > 0 || data.SignoffComplete;
+                    const afterDone = data.photos.after.length > 0 || data.AfterComplete;
+
+                    form.getRadioGroup('BeforePicPosted').select(pickYN(beforeDone));
                     form.getRadioGroup('CalledHotline').select(pickYN(data.CalledHotline));
                     form.getRadioGroup('IssueResolved').select(pickYNN(data.IssueResolved));
                     form.getRadioGroup('SignedOutPROD').select(pickYN(data.SignedOutPROD));
                     form.getRadioGroup('SignedOutSI').select(pickYN(data.SignedOutSI));
-                    form.getRadioGroup('SignoutSheetAttachedEmail').select(data.photos.signoff.length > 0 ? 'Yes' : 'No');
-                    form.getRadioGroup('SignoutSheetAttachedPROD').select(data.photos.signoff.length > 0 ? 'Yes' : 'No');
-                    form.getRadioGroup('AfterPicPosted').select(data.photos.after.length > 0 ? 'Yes' : 'No');
+                    form.getRadioGroup('SignoutSheetAttachedEmail').select(pickYN(signoffDone));
+                    form.getRadioGroup('SignoutSheetAttachedPROD').select(pickYN(signoffDone));
+                    form.getRadioGroup('AfterPicPosted').select(pickYN(afterDone));
                     console.log('Radio buttons set successfully');
                 } catch (e) {
                     console.error('Error setting radio buttons:', e);
                     throw new Error('Error setting radio buttons: ' + e.message);
                 }
-                
+
                 console.log('Embedding signature...');
                 // Embed signature
                 if (data.signatureDataURL) {
@@ -1152,27 +1190,27 @@
                         console.warn('Continuing without signature');
                     }
                 }
-                
+
                 console.log('Adding photo pages...');
                 // Add photos to additional pages
                 if (data.photos.before.length > 0 || data.photos.signoff.length > 0 || data.photos.after.length > 0) {
                     try {
                         let currentPage = pdfDoc.addPage([612, 792]); // Letter size
                         let y = 750;
-                        
+
                         const addPhotoToPage = async (photoData, title) => {
                             if (y < 100) {
                                 currentPage = pdfDoc.addPage([612, 792]);
                                 y = 750;
                             }
-                            
+
                             currentPage.drawText(title, { x: 50, y, size: 14 });
                             y -= 20;
-                            
+
                             try {
                                 const imgBytes = await fetch(photoData).then(r => r.arrayBuffer());
                                 let img;
-                                
+
                                 // Determine image type
                                 if (photoData.includes('data:image/png')) {
                                     img = await pdfDoc.embedPng(imgBytes);
@@ -1186,11 +1224,11 @@
                                         img = await pdfDoc.embedJpg(imgBytes);
                                     }
                                 }
-                                
+
                                 const scale = Math.min(400 / img.width, 300 / img.height);
                                 const width = img.width * scale;
                                 const height = img.height * scale;
-                                
+
                                 currentPage.drawImage(img, { x: 50, y: y - height, width, height });
                                 y -= height + 30;
                             } catch (e) {
@@ -1199,23 +1237,23 @@
                                 y -= 30;
                             }
                         };
-                        
+
                         // Add all photos
                         console.log('Adding before photos:', data.photos.before.length);
                         for (let photo of data.photos.before) {
                             await addPhotoToPage(photo, 'Kompass Cart - Before');
                         }
-                        
+
                         console.log('Adding signoff photos:', data.photos.signoff.length);
                         for (let i = 0; i < data.photos.signoff.length; i++) {
                             await addPhotoToPage(data.photos.signoff[i], `Sign-Off Sheet ${i + 1}`);
                         }
-                        
+
                         console.log('Adding after photos:', data.photos.after.length);
                         for (let photo of data.photos.after) {
                             await addPhotoToPage(photo, 'Kompass Cart - After');
                         }
-                        
+
                         console.log('Photos added successfully');
                     } catch (e) {
                         console.error('Error adding photo pages:', e);
@@ -1223,13 +1261,13 @@
                         console.warn('Continuing without photo pages');
                     }
                 }
-                
+
                 console.log('Flattening form...');
                 form.flatten();
-                
+
                 console.log('Saving PDF...');
                 const finalPdfBytes = await pdfDoc.save();
-                
+
                 console.log('Creating download...');
                 // Download
                 const blob = new Blob([finalPdfBytes], { type: 'application/pdf' });
@@ -1241,7 +1279,7 @@
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                
+
                 console.log('PDF generated successfully!');
                 showAlert('Success', 'PDF generated successfully!');
             } catch (error) {
@@ -1256,22 +1294,30 @@
         async function generateEmail() {
             const loading = document.getElementById('loadingOverlay');
             loading.classList.add('show');
-            
+
             try {
                 const data = await collectData();
                 const notesOnly = document.getElementById('notesOnlyToggle').checked;
-                
+
                 let body = '';
-                
+
                 if (notesOnly) {
-                    body = `\n\nNotes:\n${data.Notes || ''}\n`;
+                    body = `
+
+Notes:
+${data.Notes || ''}
+`;
                 } else {
+                    const beforeDone  = data.photos.before.length  > 0 || data.BeforeComplete;
+                    const signoffDone = data.photos.signoff.length > 0 || data.SignoffComplete;
+                    const afterDone   = data.photos.after.length   > 0 || data.AfterComplete;
+
                     body = `
 Lead Name: ${data.LeadName || ''}
 Date: ${data.DateMMDDYYYY || ''}
 Store Number: ${data.StoreNumber || ''}
 
-Before picture of KOMPASS cart: ${data.photos.before.length > 0 ? 'Yes' : 'No'}
+Before picture of KOMPASS cart (photo or checked complete): ${beforeDone ? 'Yes' : 'No'}
 Manager checked in with: ${data.CheckInManager || ''}
 
 Called KOMPASS Hotline: ${pickYN(data.CalledHotline)}
@@ -1284,20 +1330,21 @@ Manager checked out with: ${data.CheckOutManager || ''}
 Signed out in PROD: ${pickYN(data.SignedOutPROD)}
 Signed out in SI: ${pickYN(data.SignedOutSI)}
 
-Sign-off sheets attached: ${data.photos.signoff.length}
-After picture of KOMPASS cart: ${data.photos.after.length > 0 ? 'Yes' : 'No'}
+Sign-off sheets completed (photos and/or checked complete): ${signoffDone ? 'Yes' : 'No'}
+Number of sign-off photos: ${data.photos.signoff.length}
+After picture of KOMPASS cart (photo or checked complete): ${afterDone ? 'Yes' : 'No'}
 
 Notes:
 ${data.Notes || ''}
 `;
                 }
-                
+
                 const cc = 'MAshabranner@retailodyssey.com,seth.newman@retailodyssey.com,KNix@retailodyssey.com';
                 const subject = `KOMPASS EOD FM${data.StoreNumberPadded} ${data.DateMMDDYYYY}`;
                 const mailtoUrl = `mailto:?cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-                
+
                 loading.classList.remove('show');
-                
+
                 showConfirm(
                     'Open Email Client',
                     'Email body prepared. Click OK to open your email client.<br><br><strong>Remember to attach:</strong><br>- EOD Cover Sheet PDF<br>- Photos of Kompass cart (before/after)<br>- Sign-off sheets',
@@ -1352,7 +1399,7 @@ ${data.Notes || ''}
             document.getElementById('modalMessage').innerHTML = message;
             document.getElementById('modalCancel').style.display = 'inline-block';
             modal.classList.add('show');
-            
+
             document.getElementById('modalConfirm').onclick = () => {
                 modal.classList.remove('show');
                 if (callback) callback();
@@ -1376,19 +1423,19 @@ ${data.Notes || ''}
         async function testSetup() {
             const loading = document.getElementById('loadingOverlay');
             loading.classList.add('show');
-            
+
             let results = [];
-            
+
             // Test 1: Check if PDFLib is loaded
             results.push('1. PDF Library: ' + (typeof PDFLib !== 'undefined' ? '✅ Loaded' : '❌ Not loaded'));
-            
+
             // Test 2: Try to load PDF template
             const pdfPaths = [
                 'End Of Day Cover Sheet Form Editable Template.pdf',
                 './End_Of_Day_Cover_Sheet_Form_Editable_Template.pdf',
                 'End%20Of%20Day%20Cover%20Sheet%20Form%20Editable%20Template.pdf'
             ];
-            
+
             let pdfFound = false;
             for (let path of pdfPaths) {
                 try {
@@ -1402,11 +1449,11 @@ ${data.Notes || ''}
                     // Continue trying
                 }
             }
-            
+
             if (!pdfFound) {
                 results.push('2. PDF Template: ❌ Not found. Please ensure "End Of Day Cover Sheet Form Editable Template.pdf" is in the same directory as this HTML file.');
             }
-            
+
             // Test 3: Check logo
             try {
                 const logoResponse = await fetch('rologo.png');
@@ -1414,24 +1461,24 @@ ${data.Notes || ''}
             } catch (e) {
                 results.push('3. Logo Image: ❌ Error loading');
             }
-            
+
             // Test 4: Check localStorage
             results.push('4. LocalStorage: ' + (typeof localStorage !== 'undefined' ? '✅ Available' : '❌ Not available'));
-            
+
             // Test 5: Check saved data
             const saved = localStorage.getItem('kompassEOD');
             results.push('5. Saved Data: ' + (saved ? `✅ Found (${(saved.length / 1024).toFixed(1)} KB)` : '⚠️ None'));
-            
+
             // Test 6: Check photos
             const photoCount = photos.before.length + photos.signoff.length + photos.after.length;
             results.push(`6. Photos: ${photoCount > 0 ? '✅' : '⚠️'} ${photoCount} total (Before: ${photos.before.length}, Signoff: ${photos.signoff.length}, After: ${photos.after.length})`);
-            
+
             // Test 7: Check signature
             const sigData = await getSignatureDataURL();
             results.push('7. Signature: ' + (sigData ? '✅ Present' : '⚠️ Not signed'));
-            
+
             loading.classList.remove('show');
-            
+
             showAlert('Setup Test Results', results.join('<br>'));
         }
 
@@ -1439,7 +1486,7 @@ ${data.Notes || ''}
         window.addEventListener('load', () => {
             loadSaved();
             updateSignaturePreview();
-            
+
             // Log startup info
             console.log('Kompass EOD Advanced loaded');
             console.log('PDFLib available:', typeof PDFLib !== 'undefined');
