@@ -466,7 +466,7 @@
                 <div class="checkbox-group" style="margin-top: 4px;">
                     <div class="checkbox-option">
                         <input type="checkbox" id="beforeComplete">
-                        <label for="beforeComplete">Section complete (no photo available)</label>
+                        <label for="beforeComplete">Kompass cart before picture taken.</label>
                     </div>
                 </div>
                 <button class="photo-button" onclick="document.getElementById('photoBefore').click()">
@@ -477,11 +477,26 @@
             </div>
 
             <div class="photo-section">
+                <label class="field label">Kompass Cart - After:</label>
+                <div class="checkbox-group" style="margin-top: 4px;">
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="afterComplete">
+                        <label for="afterComplete">Kompass cart after picture taken.</label>
+                    </div>
+                </div>
+                <button class="photo-button" onclick="document.getElementById('photoAfter').click()">
+                    📷 Take/Upload After Photo
+                </button>
+                <input type="file" id="photoAfter" accept="image/*" capture="environment" onchange="handlePhoto(this, 'after')">
+                <div id="previewAfter" class="photo-preview"></div>
+            </div>
+            
+            <div class="photo-section">
                 <label class="field label">Sign-Off Sheets:</label>
                 <div class="checkbox-group" style="margin-top: 4px;">
                     <div class="checkbox-option">
                         <input type="checkbox" id="signoffComplete">
-                        <label for="signoffComplete">Section complete (no photo available)</label>
+                        <label for="signoffComplete">All sign-off sheets have been photographed.</label>
                     </div>
                 </div>
                 <button class="photo-button" onclick="document.getElementById('photoSignoff').click()">
@@ -491,20 +506,6 @@
                 <div id="previewSignoff" class="photo-preview"></div>
             </div>
 
-            <div class="photo-section">
-                <label class="field label">Kompass Cart - After:</label>
-                <div class="checkbox-group" style="margin-top: 4px;">
-                    <div class="checkbox-option">
-                        <input type="checkbox" id="afterComplete">
-                        <label for="afterComplete">Section complete (no photo available)</label>
-                    </div>
-                </div>
-                <button class="photo-button" onclick="document.getElementById('photoAfter').click()">
-                    📷 Take/Upload After Photo
-                </button>
-                <input type="file" id="photoAfter" accept="image/*" capture="environment" onchange="handlePhoto(this, 'after')">
-                <div id="previewAfter" class="photo-preview"></div>
-            </div>
         </div>
 
         <!-- EOD Fields -->
@@ -1244,14 +1245,14 @@
                             await addPhotoToPage(photo, 'Kompass Cart - Before');
                         }
 
-                        console.log('Adding signoff photos:', data.photos.signoff.length);
-                        for (let i = 0; i < data.photos.signoff.length; i++) {
-                            await addPhotoToPage(data.photos.signoff[i], `Sign-Off Sheet ${i + 1}`);
-                        }
-
                         console.log('Adding after photos:', data.photos.after.length);
                         for (let photo of data.photos.after) {
                             await addPhotoToPage(photo, 'Kompass Cart - After');
+                        }
+                        
+                        console.log('Adding signoff photos:', data.photos.signoff.length);
+                        for (let i = 0; i < data.photos.signoff.length; i++) {
+                            await addPhotoToPage(data.photos.signoff[i], `Sign-Off Sheet ${i + 1}`);
                         }
 
                         console.log('Photos added successfully');
@@ -1317,7 +1318,7 @@ Lead Name: ${data.LeadName || ''}
 Date: ${data.DateMMDDYYYY || ''}
 Store Number: ${data.StoreNumber || ''}
 
-Before picture of KOMPASS cart (photo or checked complete): ${beforeDone ? 'Yes' : 'No'}
+Before picture of KOMPASS cart taken: ${beforeDone ? 'Yes' : 'No'}
 Manager checked in with: ${data.CheckInManager || ''}
 
 Called KOMPASS Hotline: ${pickYN(data.CalledHotline)}
@@ -1330,16 +1331,16 @@ Manager checked out with: ${data.CheckOutManager || ''}
 Signed out in PROD: ${pickYN(data.SignedOutPROD)}
 Signed out in SI: ${pickYN(data.SignedOutSI)}
 
-Sign-off sheets completed (photos and/or checked complete): ${signoffDone ? 'Yes' : 'No'}
+After picture of KOMPASS cart taken: ${afterDone ? 'Yes' : 'No'}
+Sign-off sheets photographed: ${signoffDone ? 'Yes' : 'No'}
 Number of sign-off photos: ${data.photos.signoff.length}
-After picture of KOMPASS cart (photo or checked complete): ${afterDone ? 'Yes' : 'No'}
 
 Notes:
 ${data.Notes || ''}
 `;
                 }
 
-                const cc = 'MAshabranner@retailodyssey.com,seth.newman@retailodyssey.com,KNix@retailodyssey.com';
+                const cc = 'aiyana.natarisalazar@retailodyssey.com,tyson.gauthier@retailodyssey.com';
                 const subject = `KOMPASS EOD FM${data.StoreNumberPadded} ${data.DateMMDDYYYY}`;
                 const mailtoUrl = `mailto:?cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
