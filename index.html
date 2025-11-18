@@ -435,8 +435,7 @@
     <div class="container">
         <div class="header" onclick="openQuickView()">
             <img src="rologo.png" alt="Retail Odyssey Logo" class="header-logo" onerror="this.style.display='none'">
-            <h1>Kompass EOD - Advanced</h1>
-            <p>Click logo for quick view | Fast EOD completion for experienced leads</p>
+            <h1>Kompass EOD Cover Sheet</h1>
         </div>
 
         <!-- Basic Info -->
@@ -1237,7 +1236,7 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `EOD Cover Sheet FM${data.StoreNumberPadded} ${data.DateForFilename}.pdf`;
+                a.download = `KOMPASS EOD Cover Sheet FM${data.StoreNumberPadded} ${data.DateForFilename}.pdf`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -1294,7 +1293,7 @@ ${data.Notes || ''}
                 }
                 
                 const cc = 'MAshabranner@retailodyssey.com,seth.newman@retailodyssey.com,KNix@retailodyssey.com';
-                const subject = `EOD FM${data.StoreNumberPadded} ${data.DateMMDDYYYY}`;
+                const subject = `KOMPASS EOD FM${data.StoreNumberPadded} ${data.DateMMDDYYYY}`;
                 const mailtoUrl = `mailto:?cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
                 
                 loading.classList.remove('show');
