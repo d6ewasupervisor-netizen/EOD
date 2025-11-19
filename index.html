@@ -431,6 +431,97 @@
             width: 100%;
             height: 100%;
         }
+
+        .camera-fullscreen-overlay {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            display: none;
+            z-index: 10003;
+            flex-direction: column;
+        }
+
+        .camera-fullscreen-overlay.show {
+            display: flex;
+        }
+
+        .camera-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: rgba(13, 79, 139, 0.9);
+            color: #fff;
+            gap: 8px;
+        }
+
+        .camera-toolbar-left {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .camera-toolbar-right {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        #cameraVideo {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #000;
+        }
+
+        .camera-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(13, 79, 139, 0.9);
+            gap: 15px;
+        }
+
+        .capture-button {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: #fff;
+            border: 5px solid #0d4f8b;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .capture-button:active {
+            transform: scale(0.95);
+        }
+
+        .flash-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .flash-toggle.active {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .photo-count {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        canvas {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -474,9 +565,9 @@
                     </div>
                 </div>
                 <button class="photo-button" onclick="document.getElementById('photoBefore').click()">
-                    📷 Take/Upload Before Photo
+                    📷 Take Photo / Upload Image
                 </button>
-                <input type="file" id="photoBefore" accept="image/*" capture="environment" onchange="handlePhoto(this, 'before')">
+                <input type="file" id="photoBefore" accept="image/*" onchange="handlePhoto(this, 'before')">
                 <div id="previewBefore" class="photo-preview"></div>
             </div>
 
@@ -489,9 +580,9 @@
                     </div>
                 </div>
                 <button class="photo-button" onclick="document.getElementById('photoAfter').click()">
-                    📷 Take/Upload After Photo
+                    📷 Take Photo / Upload Image
                 </button>
-                <input type="file" id="photoAfter" accept="image/*" capture="environment" onchange="handlePhoto(this, 'after')">
+                <input type="file" id="photoAfter" accept="image/*" onchange="handlePhoto(this, 'after')">
                 <div id="previewAfter" class="photo-preview"></div>
             </div>
             
@@ -503,10 +594,13 @@
                         <label for="signoffComplete">All sign-off sheets have been photographed.</label>
                     </div>
                 </div>
-                <button class="photo-button" onclick="document.getElementById('photoSignoff').click()">
-                    📷 Take/Upload Sign-Off Sheet
+                <button class="photo-button" onclick="openSignoffCamera()">
+                    📷 Take Sign-Off Photos (Camera)
                 </button>
-                <input type="file" id="photoSignoff" accept="image/*" capture="environment" multiple onchange="handlePhoto(this, 'signoff')">
+                <button class="photo-button" onclick="document.getElementById('photoSignoff').click()" style="margin-top: 10px;">
+                    📁 Upload Sign-Off Images
+                </button>
+                <input type="file" id="photoSignoff" accept="image/*" multiple onchange="handlePhoto(this, 'signoff')">
                 <div id="previewSignoff" class="photo-preview"></div>
             </div>
 
@@ -667,6 +761,27 @@
             </div>
         </div>
         <canvas id="sigFsCanvas"></canvas>
+    </div>
+
+    <!-- Camera Fullscreen Overlay for Sign-off Sheets -->
+    <div id="cameraFullOverlay" class="camera-fullscreen-overlay">
+        <div class="camera-toolbar">
+            <div class="camera-toolbar-left">
+                <button class="btn btn-secondary" id="cameraClose">Done</button>
+                <div class="photo-count" id="photoCount">0 photos</div>
+            </div>
+            <div class="camera-toolbar-right">
+                <div class="flash-toggle" id="flashToggle">
+                    <span>⚡</span>
+                    <span id="flashStatus">Flash Off</span>
+                </div>
+            </div>
+        </div>
+        <video id="cameraVideo" autoplay playsinline></video>
+        <div class="camera-controls">
+            <button class="capture-button" id="captureButton"></button>
+        </div>
+        <canvas id="captureCanvas"></canvas>
     </div>
 
     <script>
@@ -960,6 +1075,122 @@
                 }
             }
             preview.textContent = 'Tap "Sign" to add signature';
+        }
+
+        // Camera handling for sign-off sheets
+        const cameraOverlay = document.getElementById('cameraFullOverlay');
+        const cameraVideo = document.getElementById('cameraVideo');
+        const captureCanvas = document.getElementById('captureCanvas');
+        const captureButton = document.getElementById('captureButton');
+        const flashToggle = document.getElementById('flashToggle');
+        const flashStatus = document.getElementById('flashStatus');
+        const photoCount = document.getElementById('photoCount');
+        const cameraClose = document.getElementById('cameraClose');
+        
+        let cameraStream = null;
+        let flashEnabled = false;
+        let tempSignoffPhotos = 0;
+
+        async function openSignoffCamera() {
+            try {
+                cameraOverlay.classList.add('show');
+                tempSignoffPhotos = 0;
+                updatePhotoCount();
+                
+                // Request camera with flash support
+                const constraints = {
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }
+                };
+
+                cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+                cameraVideo.srcObject = cameraStream;
+
+                // Check if flash is supported
+                const track = cameraStream.getVideoTracks()[0];
+                const capabilities = track.getCapabilities();
+                
+                if (!capabilities.torch) {
+                    flashToggle.style.display = 'none';
+                } else {
+                    flashToggle.style.display = 'flex';
+                }
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                alert('Could not access camera. Please make sure you have granted camera permissions.');
+                cameraOverlay.classList.remove('show');
+            }
+        }
+
+        function updatePhotoCount() {
+            const count = photos.signoff.length + tempSignoffPhotos;
+            photoCount.textContent = `${count} photo${count !== 1 ? 's' : ''}`;
+        }
+
+        flashToggle.addEventListener('click', async () => {
+            if (!cameraStream) return;
+            
+            flashEnabled = !flashEnabled;
+            const track = cameraStream.getVideoTracks()[0];
+            
+            try {
+                await track.applyConstraints({
+                    advanced: [{ torch: flashEnabled }]
+                });
+                
+                flashStatus.textContent = flashEnabled ? 'Flash On' : 'Flash Off';
+                flashToggle.classList.toggle('active', flashEnabled);
+            } catch (error) {
+                console.error('Error toggling flash:', error);
+                alert('Flash control not supported on this device.');
+            }
+        });
+
+        captureButton.addEventListener('click', () => {
+            if (!cameraStream) return;
+
+            // Set canvas size to match video
+            captureCanvas.width = cameraVideo.videoWidth;
+            captureCanvas.height = cameraVideo.videoHeight;
+
+            // Draw the video frame to canvas
+            const ctx = captureCanvas.getContext('2d');
+            ctx.drawImage(cameraVideo, 0, 0);
+
+            // Convert to data URL and add to photos
+            const photoData = captureCanvas.toDataURL('image/jpeg', 0.9);
+            photos.signoff.push(photoData);
+            tempSignoffPhotos++;
+            
+            renderPhotos('signoff');
+            updatePhotoCount();
+            autoSave();
+
+            // Visual feedback
+            captureCanvas.style.display = 'block';
+            setTimeout(() => {
+                captureCanvas.style.display = 'none';
+            }, 100);
+        });
+
+        cameraClose.addEventListener('click', () => {
+            closeCameraOverlay();
+        });
+
+        function closeCameraOverlay() {
+            if (cameraStream) {
+                const tracks = cameraStream.getTracks();
+                tracks.forEach(track => track.stop());
+                cameraStream = null;
+            }
+            
+            flashEnabled = false;
+            flashStatus.textContent = 'Flash Off';
+            flashToggle.classList.remove('active');
+            cameraOverlay.classList.remove('show');
         }
 
         // Format helpers
