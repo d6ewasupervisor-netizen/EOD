@@ -36,7 +36,7 @@
         }
 
         .header-logo {
-            max-width: 400px;
+            max-width: 500px;
             width: 80%;
             margin-bottom: 15px;
         }
@@ -50,6 +50,7 @@
         .header p {
             color: #d1d5db;
             font-size: 0.9em;
+            margin: 2px 0;
         }
 
         .section {
@@ -90,6 +91,7 @@
 
         .field input[type="text"],
         .field input[type="date"],
+        .field input[type="email"],
         .field textarea {
             padding: 10px;
             border: 1px solid #4b5563;
@@ -435,7 +437,9 @@
     <div class="container">
         <div class="header" onclick="openQuickView()">
             <img src="rologo.png" alt="Retail Odyssey Logo" class="header-logo" onerror="this.style.display='none'">
-            <h1>KOMPASS END OF DAY Cover Sheet</h1>
+            <h1>KOMPASS</h1>
+            <p>END OF DAY COVER SHEET</p>
+            <p>GENERATOR</p>
         </div>
 
         <!-- Basic Info -->
@@ -612,6 +616,15 @@
             <canvas id="signaturePad" style="display:none;"></canvas>
         </div>
 
+        <!-- Email To Field -->
+        <div class="section">
+            <div class="section-title">📧 Email Settings</div>
+            <div class="field">
+                <label>Send To:</label>
+                <input type="email" id="emailTo" placeholder="recipient@example.com">
+            </div>
+        </div>
+
         <!-- Action Buttons -->
         <div class="button-group">
             <div class="toggle-switch">
@@ -622,7 +635,6 @@
                 <label class="toggle-switch-label" for="notesOnlyToggle">Notes Only</label>
             </div>
             <button class="btn btn-success" onclick="generateEmail()">📧 Generate Email</button>
-            <button class="btn btn-primary" onclick="generatePDF()">📄 Generate PDF</button>
             <button class="btn btn-secondary" onclick="testSetup()">🔧 Test Setup</button>
             <button class="btn btn-secondary" onclick="resetForm()">🔄 Reset</button>
         </div>
@@ -680,6 +692,7 @@
                 issue: document.getElementById('issue').value,
                 tempSolution: document.getElementById('tempSolution').value,
                 notes: document.getElementById('notes').value,
+                emailTo: document.getElementById('emailTo').value,
                 hotlineYes: document.getElementById('hotlineYes').checked,
                 hotlineNo: document.getElementById('hotlineNo').checked,
                 resolvedYes: document.getElementById('resolvedYes').checked,
@@ -711,6 +724,7 @@
                 document.getElementById('issue').value = data.issue || '';
                 document.getElementById('tempSolution').value = data.tempSolution || '';
                 document.getElementById('notes').value = data.notes || '';
+                document.getElementById('emailTo').value = data.emailTo || '';
 
                 if (data.hotlineYes) {
                     document.getElementById('hotlineYes').checked = true;
@@ -1082,6 +1096,7 @@
                 SignedOutPROD: document.getElementById('prodYes').checked,
                 SignedOutSI: document.getElementById('siYes').checked,
                 Notes: document.getElementById('notes').value,
+                EmailTo: document.getElementById('emailTo').value,
                 BeforeComplete: document.getElementById('beforeComplete')?.checked || false,
                 SignoffComplete: document.getElementById('signoffComplete')?.checked || false,
                 AfterComplete: document.getElementById('afterComplete')?.checked || false,
@@ -1298,6 +1313,19 @@
 
             try {
                 const data = await collectData();
+                
+                // First, generate the PDF
+                const pdfFilename = `KOMPASS EOD Cover Sheet FM${data.StoreNumberPadded} ${data.DateForFilename}.pdf`;
+                
+                try {
+                    await generatePDFInternal(data, pdfFilename);
+                } catch (pdfError) {
+                    console.error('Error generating PDF:', pdfError);
+                    loading.classList.remove('show');
+                    showAlert('PDF Generation Error', 'Failed to generate PDF. You can still send the email, but you\'ll need to attach documents manually.<br><br>Error: ' + pdfError.message);
+                    // Continue with email generation even if PDF fails
+                }
+
                 const notesOnly = document.getElementById('notesOnlyToggle').checked;
 
                 let body = '';
@@ -1340,15 +1368,21 @@ ${data.Notes || ''}
 `;
                 }
 
+                const to = data.EmailTo || '';
                 const cc = 'aiyana.natarisalazar@retailodyssey.com,tyson.gauthier@retailodyssey.com';
                 const subject = `KOMPASS EOD FM${data.StoreNumberPadded} ${data.DateMMDDYYYY}`;
-                const mailtoUrl = `mailto:?cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                const mailtoUrl = `mailto:${encodeURIComponent(to)}?cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
                 loading.classList.remove('show');
 
                 showConfirm(
-                    'Open Email Client',
-                    'Email body prepared. Click OK to open your email client.<br><br><strong>Remember to attach:</strong><br>- EOD Cover Sheet PDF<br>- Photos of Kompass cart (before/after)<br>- Sign-off sheets',
+                    'PDF Generated & Email Ready',
+                    `<strong>PDF Created Successfully!</strong><br><br>` +
+                    `<strong>Filename:</strong> ${pdfFilename}<br>` +
+                    `<strong>Location:</strong> Your Downloads folder<br><br>` +
+                    `The PDF includes all photos and has been downloaded to your device.<br><br>` +
+                    `Click OK to open your email client.<br><br>` +
+                    `<strong>Remember to attach the PDF from your Downloads folder!</strong>`,
                     () => {
                         window.location.href = mailtoUrl;
                     }
@@ -1357,6 +1391,213 @@ ${data.Notes || ''}
                 console.error('Error generating email:', error);
                 loading.classList.remove('show');
                 showAlert('Error', 'Failed to generate email: ' + error.message);
+            }
+        }
+
+        // Internal PDF generation function (called by generateEmail)
+        async function generatePDFInternal(data, filename) {
+            console.log('Starting PDF generation...');
+
+            // Check if PDFLib is loaded
+            if (typeof PDFLib === 'undefined') {
+                throw new Error('PDF library not loaded. Please refresh the page.');
+            }
+
+            console.log('Data collected:', data);
+
+            // Load the PDF template - try multiple paths
+            let pdfBytes;
+            const pdfPaths = [
+                'End Of Day Cover Sheet Form Editable Template.pdf',
+                './End_Of_Day_Cover_Sheet_Form_Editable_Template.pdf',
+                'End%20Of%20Day%20Cover%20Sheet%20Form%20Editable%20Template.pdf'
+            ];
+
+            let loadError;
+            for (let pdfUrl of pdfPaths) {
+                try {
+                    console.log('Trying to load PDF from:', pdfUrl);
+                    const response = await fetch(pdfUrl);
+                    if (response.ok) {
+                        pdfBytes = await response.arrayBuffer();
+                        console.log('PDF loaded successfully from:', pdfUrl);
+                        break;
+                    }
+                } catch (e) {
+                    loadError = e;
+                    console.warn('Failed to load from:', pdfUrl, e);
+                }
+            }
+
+            if (!pdfBytes) {
+                throw new Error('PDF template not found. Please ensure "End Of Day Cover Sheet Form Editable Template.pdf" is in the same directory as this HTML file. Error: ' + (loadError ? loadError.message : 'Not found'));
+            }
+
+            console.log('Loading PDF document...');
+            const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
+            console.log('Getting form...');
+            const form = pdfDoc.getForm();
+
+            console.log('Filling form fields...');
+            // Fill form fields with error handling for each field
+            try {
+                form.getTextField('LeadName').setText(data.LeadName || '');
+                form.getTextField('DateISO').setText(data.DateMMDDYYYY || '');
+                form.getTextField('StoreNumber').setText(data.StoreNumber || '');
+                form.getTextField('CheckInManager').setText(data.CheckInManager || '');
+                form.getTextField('IssueCommodities').setText(data.IssueCommodities || '');
+                form.getTextField('WhatIsIssue').setText(data.WhatIsIssue || '');
+                form.getTextField('TempSolution').setText(data.TempSolution || '');
+                form.getTextField('CheckOutManager').setText(data.CheckOutManager || '');
+                console.log('Text fields filled successfully');
+            } catch (e) {
+                console.error('Error filling text fields:', e);
+                throw new Error('Error filling text fields: ' + e.message);
+            }
+
+            console.log('Setting radio buttons...');
+            // Radio buttons with error handling
+            try {
+                const beforeDone = data.photos.before.length > 0 || data.BeforeComplete;
+                const signoffDone = data.photos.signoff.length > 0 || data.SignoffComplete;
+                const afterDone = data.photos.after.length > 0 || data.AfterComplete;
+
+                form.getRadioGroup('BeforePicPosted').select(pickYN(beforeDone));
+                form.getRadioGroup('CalledHotline').select(pickYN(data.CalledHotline));
+                form.getRadioGroup('IssueResolved').select(pickYNN(data.IssueResolved));
+                form.getRadioGroup('SignedOutPROD').select(pickYN(data.SignedOutPROD));
+                form.getRadioGroup('SignedOutSI').select(pickYN(data.SignedOutSI));
+                form.getRadioGroup('SignoutSheetAttachedEmail').select(pickYN(signoffDone));
+                form.getRadioGroup('SignoutSheetAttachedPROD').select(pickYN(signoffDone));
+                form.getRadioGroup('AfterPicPosted').select(pickYN(afterDone));
+                console.log('Radio buttons set successfully');
+            } catch (e) {
+                console.error('Error setting radio buttons:', e);
+                throw new Error('Error setting radio buttons: ' + e.message);
+            }
+
+            console.log('Embedding signature...');
+            // Embed signature
+            if (data.signatureDataURL) {
+                try {
+                    const sigBytes = await fetch(data.signatureDataURL).then(r => r.arrayBuffer());
+                    const sigImage = await pdfDoc.embedPng(sigBytes);
+                    form.getButton('LeadSignatureImage').setImage(sigImage);
+                    console.log('Signature embedded successfully');
+                } catch (e) {
+                    console.error('Error embedding signature:', e);
+                    // Don't fail the whole PDF for signature issues
+                    console.warn('Continuing without signature');
+                }
+            }
+
+            console.log('Adding photo pages...');
+            // Add photos to additional pages
+            if (data.photos.before.length > 0 || data.photos.signoff.length > 0 || data.photos.after.length > 0) {
+                try {
+                    let currentPage = pdfDoc.addPage([612, 792]); // Letter size
+                    let y = 750;
+
+                    const addPhotoToPage = async (photoData, title) => {
+                        if (y < 100) {
+                            currentPage = pdfDoc.addPage([612, 792]);
+                            y = 750;
+                        }
+
+                        currentPage.drawText(title, { x: 50, y, size: 14 });
+                        y -= 20;
+
+                        try {
+                            const imgBytes = await fetch(photoData).then(r => r.arrayBuffer());
+                            let img;
+
+                            // Determine image type
+                            if (photoData.includes('data:image/png')) {
+                                img = await pdfDoc.embedPng(imgBytes);
+                            } else if (photoData.includes('data:image/jpeg') || photoData.includes('data:image/jpg')) {
+                                img = await pdfDoc.embedJpg(imgBytes);
+                            } else {
+                                // Try PNG first, then JPG
+                                try {
+                                    img = await pdfDoc.embedPng(imgBytes);
+                                } catch {
+                                    img = await pdfDoc.embedJpg(imgBytes);
+                                }
+                            }
+
+                            const scale = Math.min(400 / img.width, 300 / img.height);
+                            const width = img.width * scale;
+                            const height = img.height * scale;
+
+                            currentPage.drawImage(img, { x: 50, y: y - height, width, height });
+                            y -= height + 30;
+                        } catch (e) {
+                            console.error('Error adding photo:', title, e);
+                            currentPage.drawText(`[Error loading ${title}]`, { x: 50, y, size: 10 });
+                            y -= 30;
+                        }
+                    };
+
+                    // Add all photos
+                    console.log('Adding before photos:', data.photos.before.length);
+                    for (let photo of data.photos.before) {
+                        await addPhotoToPage(photo, 'Kompass Cart - Before');
+                    }
+
+                    console.log('Adding after photos:', data.photos.after.length);
+                    for (let photo of data.photos.after) {
+                        await addPhotoToPage(photo, 'Kompass Cart - After');
+                    }
+                    
+                    console.log('Adding signoff photos:', data.photos.signoff.length);
+                    for (let i = 0; i < data.photos.signoff.length; i++) {
+                        await addPhotoToPage(data.photos.signoff[i], `Sign-Off Sheet ${i + 1}`);
+                    }
+
+                    console.log('Photos added successfully');
+                } catch (e) {
+                    console.error('Error adding photo pages:', e);
+                    // Continue even if photos fail
+                    console.warn('Continuing without photo pages');
+                }
+            }
+
+            console.log('Flattening form...');
+            form.flatten();
+
+            console.log('Saving PDF...');
+            const finalPdfBytes = await pdfDoc.save();
+
+            console.log('Creating download...');
+            // Download
+            const blob = new Blob([finalPdfBytes], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            console.log('PDF generated successfully!');
+        }
+
+        // Keep the original generatePDF function for backward compatibility or manual use
+        async function generatePDF() {
+            const loading = document.getElementById('loadingOverlay');
+            loading.classList.add('show');
+
+            try {
+                const data = await collectData();
+                const pdfFilename = `KOMPASS EOD Cover Sheet FM${data.StoreNumberPadded} ${data.DateForFilename}.pdf`;
+                await generatePDFInternal(data, pdfFilename);
+                showAlert('Success', 'PDF generated successfully!');
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                showAlert('Error', 'Failed to generate PDF:<br><br>' + error.message + '<br><br>Check the browser console (F12) for more details.');
+            } finally {
+                loading.classList.remove('show');
             }
         }
 
