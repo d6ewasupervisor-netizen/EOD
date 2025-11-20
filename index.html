@@ -492,6 +492,19 @@
             border: 5px solid #0d4f8b;
             cursor: pointer;
             transition: transform 0.1s;
+            position: relative;
+        }
+
+        .capture-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: #0d4f8b;
         }
 
         .capture-button:active {
@@ -1429,11 +1442,35 @@
                     try {
                         const sigBytes = await fetch(data.signatureDataURL).then(r => r.arrayBuffer());
                         const sigImage = await pdfDoc.embedPng(sigBytes);
-                        form.getButton('LeadSignatureImage').setImage(sigImage);
-                        console.log('Signature embedded successfully');
+                        
+                        // Try to set as button image first
+                        try {
+                            form.getButton('LeadSignatureImage').setImage(sigImage);
+                            console.log('Signature embedded as button image');
+                        } catch (buttonError) {
+                            console.warn('Could not set button image, trying alternative method:', buttonError);
+                            
+                            // Alternative: Draw signature directly on the first page
+                            const pages = pdfDoc.getPages();
+                            const firstPage = pages[0];
+                            
+                            // Adjust these coordinates based on where signature should appear on your form
+                            const sigWidth = 150;
+                            const sigHeight = 50;
+                            const sigX = 400; // Adjust X position
+                            const sigY = 100; // Adjust Y position
+                            
+                            firstPage.drawImage(sigImage, {
+                                x: sigX,
+                                y: sigY,
+                                width: sigWidth,
+                                height: sigHeight,
+                            });
+                            
+                            console.log('Signature drawn directly on page');
+                        }
                     } catch (e) {
                         console.error('Error embedding signature:', e);
-                        // Don't fail the whole PDF for signature issues
                         console.warn('Continuing without signature');
                     }
                 }
@@ -1713,11 +1750,35 @@ ${data.Notes || ''}
                 try {
                     const sigBytes = await fetch(data.signatureDataURL).then(r => r.arrayBuffer());
                     const sigImage = await pdfDoc.embedPng(sigBytes);
-                    form.getButton('LeadSignatureImage').setImage(sigImage);
-                    console.log('Signature embedded successfully');
+                    
+                    // Try to set as button image first
+                    try {
+                        form.getButton('LeadSignatureImage').setImage(sigImage);
+                        console.log('Signature embedded as button image');
+                    } catch (buttonError) {
+                        console.warn('Could not set button image, trying alternative method:', buttonError);
+                        
+                        // Alternative: Draw signature directly on the first page
+                        const pages = pdfDoc.getPages();
+                        const firstPage = pages[0];
+                        
+                        // Adjust these coordinates based on where signature should appear on your form
+                        const sigWidth = 150;
+                        const sigHeight = 50;
+                        const sigX = 400; // Adjust X position
+                        const sigY = 100; // Adjust Y position
+                        
+                        firstPage.drawImage(sigImage, {
+                            x: sigX,
+                            y: sigY,
+                            width: sigWidth,
+                            height: sigHeight,
+                        });
+                        
+                        console.log('Signature drawn directly on page');
+                    }
                 } catch (e) {
                     console.error('Error embedding signature:', e);
-                    // Don't fail the whole PDF for signature issues
                     console.warn('Continuing without signature');
                 }
             }
@@ -1812,24 +1873,6 @@ ${data.Notes || ''}
             URL.revokeObjectURL(url);
 
             console.log('PDF generated successfully!');
-        }
-
-        // Keep the original generatePDF function for backward compatibility or manual use
-        async function generatePDF() {
-            const loading = document.getElementById('loadingOverlay');
-            loading.classList.add('show');
-
-            try {
-                const data = await collectData();
-                const pdfFilename = `KOMPASS EOD Cover Sheet FM${data.StoreNumberPadded} ${data.DateForFilename}.pdf`;
-                await generatePDFInternal(data, pdfFilename);
-                showAlert('Success', 'PDF generated successfully!');
-            } catch (error) {
-                console.error('Error generating PDF:', error);
-                showAlert('Error', 'Failed to generate PDF:<br><br>' + error.message + '<br><br>Check the browser console (F12) for more details.');
-            } finally {
-                loading.classList.remove('show');
-            }
         }
 
         // Reset form
