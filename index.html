@@ -14,7 +14,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #374151;          /* X area = old container color */
+            background: #374151;
             min-height: 100vh;
             padding: 20px;
             color: #f9fafb;
@@ -23,7 +23,7 @@
         .container {
             max-width: 800px;
             margin: 0 auto;
-            background: #111827;          /* O area = darker than before */
+            background: #111827;
             border-radius: 15px;
             padding: 30px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -54,7 +54,7 @@
         }
 
         .section {
-            background: #020617;          /* inner panels a bit darker still */
+            background: #020617;
             padding: 20px;
             border-radius: 10px;
             margin-bottom: 20px;
@@ -142,6 +142,12 @@
             gap: 10px;
         }
 
+        .photo-button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
         .photo-button {
             padding: 12px 20px;
             background: #0d4f8b;
@@ -156,6 +162,8 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
+            flex: 1;
+            min-width: 150px;
         }
 
         .photo-button:hover {
@@ -176,6 +184,7 @@
             border-radius: 8px;
             overflow: hidden;
             aspect-ratio: 4/3;
+            cursor: pointer;
         }
 
         .photo-item img {
@@ -199,6 +208,25 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            z-index: 2;
+        }
+
+        .photo-edit {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: #0d4f8b;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
         }
 
         .signature-section {
@@ -417,6 +445,302 @@
         .sig-toolbar {
             display: flex;
             align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: #0d4f8b;
+            color: #fff;
+        }
+
+        #sigFsCanvas {
+            flex: 1;
+            background: #fff;
+            touch-action: none;
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .camera-fullscreen-overlay {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            display: none;
+            z-index: 10003;
+            flex-direction: column;
+        }
+
+        .camera-fullscreen-overlay.show {
+            display: flex;
+        }
+
+        .camera-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: rgba(13, 79, 139, 0.9);
+            color: #fff;
+            gap: 8px;
+        }
+
+        .camera-toolbar-left {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .camera-toolbar-right {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        #cameraVideo {
+            width: 100%;
+            height: 0;
+            flex-grow: 1;
+            object-fit: cover;
+            background: #000;
+        }
+
+        .camera-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(13, 79, 139, 0.9);
+            gap: 15px;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .capture-button {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: #fff;
+            border: 5px solid #0d4f8b;
+            cursor: pointer;
+            transition: transform 0.1s;
+            position: relative;
+        }
+
+        .capture-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: #0d4f8b;
+        }
+
+        .capture-button:active {
+            transform: scale(0.95);
+        }
+
+        .flash-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .flash-toggle.active {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .photo-count {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        canvas {
+            display: none;
+        }
+
+        /* Image Editor Styles */
+        .image-editor-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            z-index: 10004;
+            flex-direction: column;
+        }
+
+        .image-editor-overlay.show {
+            display: flex;
+        }
+
+        .editor-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: #0d4f8b;
+            color: #fff;
+            gap: 8px;
+        }
+
+        .editor-controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .editor-canvas-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: auto;
+            padding: 20px;
+        }
+
+        #editorCanvas {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+            border: 2px solid #0d4f8b;
+        }
+
+        .editor-button {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+
+        .editor-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .editor-button:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header" onclick="openQuickView()">
+            <img src="rologo.png" alt="Retail Odyssey Logo" class="header-logo" onerror="this.style.display='none'">
+            <h1>KOMPASS</h1>
+            <p>END OF DAY COVER SHEET</p>
+            <p>GENERATOR</p>
+        </div>
+
+        <!-- Basic Info -->
+        <div class="section">
+            <div class="section-title">Store Information</div>
+            <div class="field-group">
+                <div class="field">
+                    <label>Store #:</label>
+                    <input type="text" id="storeNumber" placeholder="###">
+                </div>
+                <div class="field">
+                    <label>Date:</label>
+                    <input type="date" id="workDate">
+                </div>
+                <div class="field">
+                    <label>Lead Name:</label>
+                    <input type="text" id="leadName" placeholder="Your name">
+                </div>
+            </div>
+        </div>
+
+        <!-- Photos Section -->
+        <div class="section">
+            <div class="section-title">📸 Photos</div>
+
+            <div class="photo-section">
+                <label class="field label">Kompass Cart - Before:</label>
+                <div class="checkbox-group" style="margin-top: 4px;">
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="beforeComplete">
+                        <label for="beforeComplete">Kompass cart before picture taken.</label>
+                    </div>
+                </div>
+                <div class="photo-button-group">
+                    <button class="photo-button" onclick="openPhotoCamera('before')">
+                        📷 Take Photo
+                    </button>
+                    <button class="photo-button" onclick="document.getElementById('photoBefore').click()">
+                        📁 Upload Image
+                    </button>
+                </div>
+                <input type="file" id="photoBefore" accept="image/*" onchange="handlePhoto(this, 'before')">
+                <div id="previewBefore" class="photo-preview"></div>
+            </div>
+
+            <div class="photo-section">
+                <label class="field label">Kompass Cart - After:</label>
+                <div class="checkbox-group" style="margin-top: 4px;">
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="afterComplete">
+                        <label for="afterComplete">Kompass cart after picture taken.</label>
+                    </div>
+                </div>
+                <div class="photo-button-group">
+                    <button class="photo-button" onclick="openPhotoCamera('after')">
+                        📷 Take Photo
+                    </button>
+                    <button class="photo-button" onclick="document.getElementById('photoAfter').click()">
+                        📁 Upload Image
+                    </button>
+                </div>
+                <input type="file" id="photoAfter" accept="image/*" onchange="handlePhoto(this, 'after')">
+                <div id="previewAfter" class="photo-preview"></div>
+            </div>
+            
+            <div class="photo-section">
+                <label class="field label">Sign-Off Sheets:</label>
+                <div class="checkbox-group" style="margin-top: 4px;">
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="signoffComplete">
+                        <label for="signoffComplete">All sign-off sheets have been photographed.</label>
+                    </div>
+                </div>
+                <div class="photo-button-group">
+                    <button class="photo-button" onclick="openSignoffCamera()">
+                        📷 Take Photos
+                    </button>
+                    <button class="photo-button" onclick="document.getElementById('photoSignoff').click()">
+                        📁 Upload Images
+                    </button>
+                </div>
+                <input type="file" id="photoSignoff" accept="image/*" multiple onchange="handlePhoto(this, 'signoff')">
+                <div id="previewSignoff" class="photo-preview"></div>
+            </div>
+
+        </div>
+
+        <!-- EOD Fields -->
+        <div class="section">
+            <div class="section-title">EOD Cover Sheet</div>
+
+            <div class="field">
+                <label>Manager checked in with:</label>
+                <input type="text" id="checkInManager" placeholder="Manager name">
+            </div>
+
+            <div class="field" style="margin-top: 15px;">
+                <label>Did you call the KOMPASS Hotline?</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-option">
+                        <input type="checkbox" id   align-items: center;
             gap: 8px;
             padding: 8px;
             background: #0d4f8b;
