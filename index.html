@@ -1264,21 +1264,58 @@
             autoSave();
         }
 
-        // Photo handling
-        function handlePhoto(input, type) {
+        // Photo handling with orientation correction
+        async function handlePhoto(input, type) {
             const files = input.files;
             if (!files || files.length === 0) return;
 
             for (let file of files) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    photos[type].push(e.target.result);
+                try {
+                    // Process image with orientation correction
+                    const correctedDataUrl = await processImageWithOrientation(file);
+                    photos[type].push(correctedDataUrl);
                     renderPhotos(type);
                     autoSave();
-                };
-                reader.readAsDataURL(file);
+                } catch (error) {
+                    console.error('Error processing image:', error);
+                    // Fallback to basic loading if orientation correction fails
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        photos[type].push(e.target.result);
+                        renderPhotos(type);
+                        autoSave();
+                    };
+                    reader.readAsDataURL(file);
+                }
             }
             input.value = '';
+        }
+
+        // Process image and correct orientation using canvas
+        async function processImageWithOrientation(file) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Create canvas to draw the properly oriented image
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    // Set canvas dimensions to match image
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
+
+                    // Draw the image - modern browsers handle EXIF orientation automatically
+                    ctx.drawImage(img, 0, 0);
+
+                    // Convert to high-quality JPEG
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+                    resolve(dataUrl);
+                };
+                img.onerror = reject;
+
+                // Create object URL to load the image
+                img.src = URL.createObjectURL(file);
+            });
         }
 
         function renderPhotos(type) {
@@ -1499,8 +1536,8 @@
             const ctx = captureCanvas.getContext('2d');
             ctx.drawImage(cameraVideo, 0, 0);
 
-            // Convert to data URL and add to photos
-            const photoData = captureCanvas.toDataURL('image/jpeg', 0.9);
+            // Convert to data URL with high quality for signoff sheets
+            const photoData = captureCanvas.toDataURL('image/jpeg', 0.95);
             photos.signoff.push(photoData);
             tempSignoffPhotos++;
             
@@ -1848,6 +1885,99 @@
                             }
                         };
 
+                        // Function to add signoff sheet as full-page portrait image
+                        const addSignoffSheetPage = async (photoData, title) => {
+                            try {
+                                const imgBytes = await fetch(photoData).then(r => r.arrayBuffer());
+                                let img;
+
+                                // Determine image type
+                                if (photoData.includes('data:image/png')) {
+                                    img = await pdfDoc.embedPng(imgBytes);
+                                } else if (photoData.includes('data:image/jpeg') || photoData.includes('data:image/jpg')) {
+                                    img = await pdfDoc.embedJpg(imgBytes);
+                                } else {
+                                    try {
+                                        img = await pdfDoc.embedPng(imgBytes);
+                                    } catch {
+                                        img = await pdfDoc.embedJpg(imgBytes);
+                                    }
+                                }
+
+                                // Create a new page for each signoff sheet (Letter size portrait: 612 x 792)
+                                const pageWidth = 612;
+                                const pageHeight = 792;
+                                const margin = 20; // Small margin for high quality display
+                                const availableWidth = pageWidth - (margin * 2);
+                                const availableHeight = pageHeight - (margin * 2);
+
+                                const signoffPage = pdfDoc.addPage([pageWidth, pageHeight]);
+
+                                // Calculate scale to fit image at maximum size while maintaining aspect ratio
+                                const imgWidth = img.width;
+                                const imgHeight = img.height;
+
+                                // Determine if image needs rotation (landscape image on portrait page)
+                                const imgIsLandscape = imgWidth > imgHeight;
+
+                                let finalWidth, finalHeight, x, y, rotation;
+
+                                if (imgIsLandscape) {
+                                    // Rotate landscape image 90 degrees to fit portrait page
+                                    // When rotated, width becomes height and vice versa
+                                    const rotatedWidth = imgHeight;
+                                    const rotatedHeight = imgWidth;
+
+                                    const scaleX = availableWidth / rotatedWidth;
+                                    const scaleY = availableHeight / rotatedHeight;
+                                    const scale = Math.min(scaleX, scaleY);
+
+                                    finalWidth = imgWidth * scale;
+                                    finalHeight = imgHeight * scale;
+
+                                    // Center the rotated image
+                                    // After 90-degree rotation, we need to position differently
+                                    x = margin + (availableWidth - imgHeight * scale) / 2;
+                                    y = margin + (availableHeight - imgWidth * scale) / 2;
+
+                                    // Draw rotated image
+                                    signoffPage.drawImage(img, {
+                                        x: x + imgHeight * scale,
+                                        y: y,
+                                        width: finalWidth,
+                                        height: finalHeight,
+                                        rotate: { type: 'degrees', angle: 90 }
+                                    });
+                                } else {
+                                    // Portrait image - scale to fit full page
+                                    const scaleX = availableWidth / imgWidth;
+                                    const scaleY = availableHeight / imgHeight;
+                                    const scale = Math.min(scaleX, scaleY);
+
+                                    finalWidth = imgWidth * scale;
+                                    finalHeight = imgHeight * scale;
+
+                                    // Center the image on the page
+                                    x = margin + (availableWidth - finalWidth) / 2;
+                                    y = margin + (availableHeight - finalHeight) / 2;
+
+                                    signoffPage.drawImage(img, {
+                                        x: x,
+                                        y: y,
+                                        width: finalWidth,
+                                        height: finalHeight
+                                    });
+                                }
+
+                                console.log(`Added signoff sheet: ${title}, original: ${imgWidth}x${imgHeight}, final: ${Math.round(finalWidth)}x${Math.round(finalHeight)}, rotated: ${imgIsLandscape}`);
+                            } catch (e) {
+                                console.error('Error adding signoff sheet:', title, e);
+                                // Create error page
+                                const errorPage = pdfDoc.addPage([612, 792]);
+                                errorPage.drawText(`Error loading ${title}`, { x: 50, y: 400, size: 14 });
+                            }
+                        };
+
                         // Add all photos
                         console.log('Adding before photos:', data.photos.before.length);
                         for (let photo of data.photos.before) {
@@ -1860,8 +1990,9 @@
                         }
                         
                         console.log('Adding signoff photos:', data.photos.signoff.length);
+                        // Add each signoff sheet as a full-page image in portrait orientation
                         for (let i = 0; i < data.photos.signoff.length; i++) {
-                            await addPhotoToPage(data.photos.signoff[i], `Sign-Off Sheet ${i + 1}`);
+                            await addSignoffSheetPage(data.photos.signoff[i], `Sign-Off Sheet ${i + 1}`);
                         }
 
                         console.log('Photos added successfully');
