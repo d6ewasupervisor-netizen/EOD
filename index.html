@@ -566,70 +566,44 @@
             display: none;
         }
 
-        /* Image Editor Styles */
-        .image-editor-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.95);
-            display: none;
-            z-index: 10004;
-            flex-direction: column;
+        /* Quick View Modal Styles */
+        .quick-view-content {
+            font-size: 0.95em;
+            line-height: 1.6;
         }
 
-        .image-editor-overlay.show {
+        .quick-view-content .qv-row {
             display: flex;
-        }
-
-        .editor-toolbar {
-            display: flex;
-            align-items: center;
             justify-content: space-between;
-            padding: 12px;
-            background: #0d4f8b;
-            color: #fff;
-            gap: 8px;
+            padding: 6px 0;
+            border-bottom: 1px solid #4b5563;
         }
 
-        .editor-controls {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            align-items: center;
+        .quick-view-content .qv-row:last-child {
+            border-bottom: none;
         }
 
-        .editor-canvas-container {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: auto;
-            padding: 20px;
+        .quick-view-content .qv-label {
+            color: #88c4ed;
+            font-weight: 600;
         }
 
-        #editorCanvas {
-            max-width: 100%;
-            max-height: 100%;
-            display: block;
-            border: 2px solid #0d4f8b;
+        .quick-view-content .qv-value {
+            color: #f9fafb;
+            text-align: right;
+            max-width: 60%;
         }
 
-        .editor-button {
-            padding: 8px 16px;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: all 0.2s;
+        .quick-view-content .qv-section {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 2px solid #0d4f8b;
         }
 
-        .editor-button:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .editor-button:active {
-            transform: scale(0.95);
+        .quick-view-content .qv-section-title {
+            color: #88c4ed;
+            font-weight: bold;
+            margin-bottom: 8px;
         }
     </style>
 </head>
@@ -663,7 +637,7 @@
 
         <!-- Photos Section -->
         <div class="section">
-            <div class="section-title">📸 Photos</div>
+            <div class="section-title">Photos</div>
 
             <div class="photo-section">
                 <label class="field label">Kompass Cart - Before:</label>
@@ -675,10 +649,10 @@
                 </div>
                 <div class="photo-button-group">
                     <button class="photo-button" onclick="openPhotoCamera('before')">
-                        📷 Take Photo
+                        Take Photo
                     </button>
                     <button class="photo-button" onclick="document.getElementById('photoBefore').click()">
-                        📁 Upload Image
+                        Upload Image
                     </button>
                 </div>
                 <input type="file" id="photoBefore" accept="image/*" onchange="handlePhoto(this, 'before')">
@@ -695,16 +669,16 @@
                 </div>
                 <div class="photo-button-group">
                     <button class="photo-button" onclick="openPhotoCamera('after')">
-                        📷 Take Photo
+                        Take Photo
                     </button>
                     <button class="photo-button" onclick="document.getElementById('photoAfter').click()">
-                        📁 Upload Image
+                        Upload Image
                     </button>
                 </div>
                 <input type="file" id="photoAfter" accept="image/*" onchange="handlePhoto(this, 'after')">
                 <div id="previewAfter" class="photo-preview"></div>
             </div>
-            
+
             <div class="photo-section">
                 <label class="field label">Sign-Off Sheets:</label>
                 <div class="checkbox-group" style="margin-top: 4px;">
@@ -715,230 +689,12 @@
                 </div>
                 <div class="photo-button-group">
                     <button class="photo-button" onclick="openSignoffCamera()">
-                        📷 Take Photos
+                        Take Photos
                     </button>
                     <button class="photo-button" onclick="document.getElementById('photoSignoff').click()">
-                        📁 Upload Images
+                        Upload Images
                     </button>
                 </div>
-                <input type="file" id="photoSignoff" accept="image/*" multiple onchange="handlePhoto(this, 'signoff')">
-                <div id="previewSignoff" class="photo-preview"></div>
-            </div>
-
-        </div>
-
-        <!-- EOD Fields -->
-        <div class="section">
-            <div class="section-title">EOD Cover Sheet</div>
-
-            <div class="field">
-                <label>Manager checked in with:</label>
-                <input type="text" id="checkInManager" placeholder="Manager name">
-            </div>
-
-            <div class="field" style="margin-top: 15px;">
-                <label>Did you call the KOMPASS Hotline?</label>
-                <div class="checkbox-group">
-                    <div class="checkbox-option">
-                        <input type="checkbox" id   align-items: center;
-            gap: 8px;
-            padding: 8px;
-            background: #0d4f8b;
-            color: #fff;
-        }
-
-        #sigFsCanvas {
-            flex: 1;
-            background: #fff;
-            touch-action: none;
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-
-        .camera-fullscreen-overlay {
-            position: fixed;
-            inset: 0;
-            background: #000;
-            display: none;
-            z-index: 10003;
-            flex-direction: column;
-        }
-
-        .camera-fullscreen-overlay.show {
-            display: flex;
-        }
-
-        .camera-toolbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px;
-            background: rgba(13, 79, 139, 0.9);
-            color: #fff;
-            gap: 8px;
-        }
-
-        .camera-toolbar-left {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .camera-toolbar-right {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        #cameraVideo {
-            width: 100%;
-            height: 0;
-            flex-grow: 1;
-            object-fit: cover;
-            background: #000;
-        }
-        
-        .camera-controls {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            background: rgba(13, 79, 139, 0.9);
-            gap: 15px;
-            flex-shrink: 0;
-            z-index: 10;
-         }
-
-        .capture-button {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            background: #fff;
-            border: 5px solid #0d4f8b;
-            cursor: pointer;
-            transition: transform 0.1s;
-            position: relative;
-        }
-
-        .capture-button::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 55px;
-            height: 55px;
-            border-radius: 50%;
-            background: #0d4f8b;
-        }
-
-        .capture-button:active {
-            transform: scale(0.95);
-        }
-
-        .flash-toggle {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        .flash-toggle.active {
-            background: rgba(255, 255, 255, 0.4);
-        }
-
-        .photo-count {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-weight: bold;
-        }
-
-        canvas {
-            display: none;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header" onclick="openQuickView()">
-            <img src="rologo.png" alt="Retail Odyssey Logo" class="header-logo" onerror="this.style.display='none'">
-            <h1>KOMPASS</h1>
-            <p>END OF DAY COVER SHEET</p>
-            <p>GENERATOR</p>
-        </div>
-
-        <!-- Basic Info -->
-        <div class="section">
-            <div class="section-title">Store Information</div>
-            <div class="field-group">
-                <div class="field">
-                    <label>Store #:</label>
-                    <input type="text" id="storeNumber" placeholder="###">
-                </div>
-                <div class="field">
-                    <label>Date:</label>
-                    <input type="date" id="workDate">
-                </div>
-                <div class="field">
-                    <label>Lead Name:</label>
-                    <input type="text" id="leadName" placeholder="Your name">
-                </div>
-            </div>
-        </div>
-
-        <!-- Photos Section -->
-        <div class="section">
-            <div class="section-title">📸 Photos</div>
-
-            <div class="photo-section">
-                <label class="field label">Kompass Cart - Before:</label>
-                <div class="checkbox-group" style="margin-top: 4px;">
-                    <div class="checkbox-option">
-                        <input type="checkbox" id="beforeComplete">
-                        <label for="beforeComplete">Kompass cart before picture taken.</label>
-                    </div>
-                </div>
-                <button class="photo-button" onclick="document.getElementById('photoBefore').click()">
-                    📷 Take Photo / Upload Image
-                </button>
-                <input type="file" id="photoBefore" accept="image/*" onchange="handlePhoto(this, 'before')">
-                <div id="previewBefore" class="photo-preview"></div>
-            </div>
-
-            <div class="photo-section">
-                <label class="field label">Kompass Cart - After:</label>
-                <div class="checkbox-group" style="margin-top: 4px;">
-                    <div class="checkbox-option">
-                        <input type="checkbox" id="afterComplete">
-                        <label for="afterComplete">Kompass cart after picture taken.</label>
-                    </div>
-                </div>
-                <button class="photo-button" onclick="document.getElementById('photoAfter').click()">
-                    📷 Take Photo / Upload Image
-                </button>
-                <input type="file" id="photoAfter" accept="image/*" onchange="handlePhoto(this, 'after')">
-                <div id="previewAfter" class="photo-preview"></div>
-            </div>
-            
-            <div class="photo-section">
-                <label class="field label">Sign-Off Sheets:</label>
-                <div class="checkbox-group" style="margin-top: 4px;">
-                    <div class="checkbox-option">
-                        <input type="checkbox" id="signoffComplete">
-                        <label for="signoffComplete">All sign-off sheets have been photographed.</label>
-                    </div>
-                </div>
-                <button class="photo-button" onclick="openSignoffCamera()">
-                    📷 Take Sign-Off Photos (Camera)
-                </button>
-                <button class="photo-button" onclick="document.getElementById('photoSignoff').click()" style="margin-top: 10px;">
-                    📁 Upload Sign-Off Images
-                </button>
                 <input type="file" id="photoSignoff" accept="image/*" multiple onchange="handlePhoto(this, 'signoff')">
                 <div id="previewSignoff" class="photo-preview"></div>
             </div>
@@ -1045,13 +801,13 @@
         <div class="section signature-section">
             <div class="section-title">Signature</div>
             <div id="signaturePreview" class="signature-preview">Tap "Sign" to add signature</div>
-            <button class="photo-button" onclick="openSignature()" style="margin-top: 10px;">✍️ Sign</button>
+            <button class="photo-button" onclick="openSignature()" style="margin-top: 10px;">Sign</button>
             <canvas id="signaturePad" style="display:none;"></canvas>
         </div>
 
         <!-- Email To Field -->
         <div class="section">
-            <div class="section-title">📧 Email Settings</div>
+            <div class="section-title">Email Settings</div>
             <div class="field">
                 <label>Send To:</label>
                 <input type="email" id="emailTo" placeholder="recipient@example.com">
@@ -1067,9 +823,9 @@
                 </label>
                 <label class="toggle-switch-label" for="notesOnlyToggle">Notes Only</label>
             </div>
-            <button class="btn btn-success" onclick="generateEmail()">📧 Generate Email</button>
-            <button class="btn btn-secondary" onclick="testSetup()">🔧 Test Setup</button>
-            <button class="btn btn-secondary" onclick="resetForm()">🔄 Reset</button>
+            <button class="btn btn-success" onclick="generateEmail()">Generate Email</button>
+            <button class="btn btn-secondary" onclick="testSetup()">Test Setup</button>
+            <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
         </div>
     </div>
 
@@ -1082,7 +838,7 @@
     <div id="modal" class="modal-overlay">
         <div class="modal-dialog">
             <h2 id="modalTitle">Title</h2>
-            <p id="modalMessage">Message</p>
+            <div id="modalMessage">Message</div>
             <div class="button-group">
                 <button class="btn btn-secondary" id="modalCancel">Cancel</button>
                 <button class="btn btn-primary" id="modalConfirm">OK</button>
@@ -1111,8 +867,8 @@
             </div>
             <div class="camera-toolbar-right">
                 <div class="flash-toggle" id="flashToggle">
-                    <span>⚡</span>
-                    <span id="flashStatus">Flash Off</span>
+                    <span>Flash</span>
+                    <span id="flashStatus">Off</span>
                 </div>
             </div>
         </div>
@@ -1327,7 +1083,7 @@
                 item.className = 'photo-item';
                 item.innerHTML = `
                     <img src="${photo}" alt="${type} photo">
-                    <button class="photo-remove" onclick="removePhoto('${type}', ${index})">×</button>
+                    <button class="photo-remove" onclick="removePhoto('${type}', ${index})">x</button>
                 `;
                 container.appendChild(item);
             });
@@ -1453,7 +1209,7 @@
             preview.textContent = 'Tap "Sign" to add signature';
         }
 
-        // Camera handling for sign-off sheets
+        // Camera handling for photos
         const cameraOverlay = document.getElementById('cameraFullOverlay');
         const cameraVideo = document.getElementById('cameraVideo');
         const captureCanvas = document.getElementById('captureCanvas');
@@ -1462,17 +1218,28 @@
         const flashStatus = document.getElementById('flashStatus');
         const photoCount = document.getElementById('photoCount');
         const cameraClose = document.getElementById('cameraClose');
-        
+
         let cameraStream = null;
         let flashEnabled = false;
-        let tempSignoffPhotos = 0;
+        let tempPhotoCount = 0;
+        let currentCameraType = 'signoff';
+
+        async function openPhotoCamera(type) {
+            currentCameraType = type;
+            await openCameraOverlay(false);
+        }
 
         async function openSignoffCamera() {
+            currentCameraType = 'signoff';
+            await openCameraOverlay(true);
+        }
+
+        async function openCameraOverlay(multiplePhotos) {
             try {
                 cameraOverlay.classList.add('show');
-                tempSignoffPhotos = 0;
+                tempPhotoCount = 0;
                 updatePhotoCount();
-                
+
                 // Request camera with flash support
                 const constraints = {
                     video: {
@@ -1488,7 +1255,7 @@
                 // Check if flash is supported
                 const track = cameraStream.getVideoTracks()[0];
                 const capabilities = track.getCapabilities();
-                
+
                 if (!capabilities.torch) {
                     flashToggle.style.display = 'none';
                 } else {
@@ -1502,22 +1269,22 @@
         }
 
         function updatePhotoCount() {
-            const count = photos.signoff.length + tempSignoffPhotos;
+            const count = photos[currentCameraType].length + tempPhotoCount;
             photoCount.textContent = `${count} photo${count !== 1 ? 's' : ''}`;
         }
 
         flashToggle.addEventListener('click', async () => {
             if (!cameraStream) return;
-            
+
             flashEnabled = !flashEnabled;
             const track = cameraStream.getVideoTracks()[0];
-            
+
             try {
                 await track.applyConstraints({
                     advanced: [{ torch: flashEnabled }]
                 });
-                
-                flashStatus.textContent = flashEnabled ? 'Flash On' : 'Flash Off';
+
+                flashStatus.textContent = flashEnabled ? 'On' : 'Off';
                 flashToggle.classList.toggle('active', flashEnabled);
             } catch (error) {
                 console.error('Error toggling flash:', error);
@@ -1533,15 +1300,15 @@
             captureCanvas.height = cameraVideo.videoHeight;
 
             // Draw the video frame to canvas
-            const ctx = captureCanvas.getContext('2d');
-            ctx.drawImage(cameraVideo, 0, 0);
+            const captureCtx = captureCanvas.getContext('2d');
+            captureCtx.drawImage(cameraVideo, 0, 0);
 
-            // Convert to data URL with high quality for signoff sheets
+            // Convert to data URL with high quality
             const photoData = captureCanvas.toDataURL('image/jpeg', 0.95);
-            photos.signoff.push(photoData);
-            tempSignoffPhotos++;
-            
-            renderPhotos('signoff');
+            photos[currentCameraType].push(photoData);
+            tempPhotoCount++;
+
+            renderPhotos(currentCameraType);
             updatePhotoCount();
             autoSave();
 
@@ -1550,6 +1317,13 @@
             setTimeout(() => {
                 captureCanvas.style.display = 'none';
             }, 100);
+
+            // For single photo types (before/after), close camera after capture
+            if (currentCameraType === 'before' || currentCameraType === 'after') {
+                setTimeout(() => {
+                    closeCameraOverlay();
+                }, 300);
+            }
         });
 
         cameraClose.addEventListener('click', () => {
@@ -1562,9 +1336,9 @@
                 tracks.forEach(track => track.stop());
                 cameraStream = null;
             }
-            
+
             flashEnabled = false;
-            flashStatus.textContent = 'Flash Off';
+            flashStatus.textContent = 'Off';
             flashToggle.classList.remove('active');
             cameraOverlay.classList.remove('show');
         }
@@ -1712,325 +1486,6 @@
             };
         }
 
-        // Generate PDF
-        async function generatePDF() {
-            const loading = document.getElementById('loadingOverlay');
-            loading.classList.add('show');
-
-            try {
-                console.log('Starting PDF generation...');
-
-                // Check if PDFLib is loaded
-                if (typeof PDFLib === 'undefined') {
-                    throw new Error('PDF library not loaded. Please refresh the page.');
-                }
-
-                const data = await collectData();
-                console.log('Data collected:', data);
-
-                // Load the PDF template - try multiple paths
-                let pdfBytes;
-                const pdfPaths = [
-                    'End Of Day Cover Sheet Form Editable Template.pdf',
-                    './End_Of_Day_Cover_Sheet_Form_Editable_Template.pdf',
-                    'End%20Of%20Day%20Cover%20Sheet%20Form%20Editable%20Template.pdf'
-                ];
-
-                let loadError;
-                for (let pdfUrl of pdfPaths) {
-                    try {
-                        console.log('Trying to load PDF from:', pdfUrl);
-                        const response = await fetch(pdfUrl);
-                        if (response.ok) {
-                            pdfBytes = await response.arrayBuffer();
-                            console.log('PDF loaded successfully from:', pdfUrl);
-                            break;
-                        }
-                    } catch (e) {
-                        loadError = e;
-                        console.warn('Failed to load from:', pdfUrl, e);
-                    }
-                }
-
-                if (!pdfBytes) {
-                    throw new Error('PDF template not found. Please ensure "End Of Day Cover Sheet Form Editable Template.pdf" is in the same directory as this HTML file. Error: ' + (loadError ? loadError.message : 'Not found'));
-                }
-
-                console.log('Loading PDF document...');
-                const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
-                console.log('Getting form...');
-                const form = pdfDoc.getForm();
-
-                console.log('Filling form fields...');
-                // Fill form fields with error handling for each field
-                try {
-                    form.getTextField('LeadName').setText(data.LeadName || '');
-                    form.getTextField('DateISO').setText(data.DateMMDDYYYY || '');
-                    form.getTextField('StoreNumber').setText(data.StoreNumber || '');
-                    form.getTextField('CheckInManager').setText(data.CheckInManager || '');
-                    form.getTextField('IssueCommodities').setText(data.IssueCommodities || '');
-                    form.getTextField('WhatIsIssue').setText(data.WhatIsIssue || '');
-                    form.getTextField('TempSolution').setText(data.TempSolution || '');
-                    form.getTextField('CheckOutManager').setText(data.CheckOutManager || '');
-                    console.log('Text fields filled successfully');
-                } catch (e) {
-                    console.error('Error filling text fields:', e);
-                    throw new Error('Error filling text fields: ' + e.message);
-                }
-
-                console.log('Setting radio buttons...');
-                // Radio buttons with error handling
-                try {
-                    const beforeDone = data.photos.before.length > 0 || data.BeforeComplete;
-                    const signoffDone = data.photos.signoff.length > 0 || data.SignoffComplete;
-                    const afterDone = data.photos.after.length > 0 || data.AfterComplete;
-
-                    form.getRadioGroup('BeforePicPosted').select(pickYN(beforeDone));
-                    form.getRadioGroup('CalledHotline').select(pickYN(data.CalledHotline));
-                    form.getRadioGroup('IssueResolved').select(pickYNN(data.IssueResolved));
-                    form.getRadioGroup('SignedOutPROD').select(pickYN(data.SignedOutPROD));
-                    form.getRadioGroup('SignedOutSI').select(pickYN(data.SignedOutSI));
-                    form.getRadioGroup('SignoutSheetAttachedEmail').select(pickYN(signoffDone));
-                    form.getRadioGroup('SignoutSheetAttachedPROD').select(pickYN(signoffDone));
-                    form.getRadioGroup('AfterPicPosted').select(pickYN(afterDone));
-                    console.log('Radio buttons set successfully');
-                } catch (e) {
-                    console.error('Error setting radio buttons:', e);
-                    throw new Error('Error setting radio buttons: ' + e.message);
-                }
-
-                console.log('Embedding signature...');
-                // Embed signature
-                if (data.signatureDataURL) {
-                    try {
-                        const sigBytes = await fetch(data.signatureDataURL).then(r => r.arrayBuffer());
-                        const sigImage = await pdfDoc.embedPng(sigBytes);
-                        
-                        // Try to set as button image first
-                        try {
-                            form.getButton('LeadSignatureImage').setImage(sigImage);
-                            console.log('Signature embedded as button image');
-                        } catch (buttonError) {
-                            console.warn('Could not set button image, trying alternative method:', buttonError);
-                            
-                            // Alternative: Draw signature directly on the first page
-                            const pages = pdfDoc.getPages();
-                            const firstPage = pages[0];
-                            
-                            // Adjust these coordinates based on where signature should appear on your form
-                            const sigWidth = 150;
-                            const sigHeight = 50;
-                            const sigX = 400; // Adjust X position
-                            const sigY = 100; // Adjust Y position
-                            
-                            firstPage.drawImage(sigImage, {
-                                x: sigX,
-                                y: sigY,
-                                width: sigWidth,
-                                height: sigHeight,
-                            });
-                            
-                            console.log('Signature drawn directly on page');
-                        }
-                    } catch (e) {
-                        console.error('Error embedding signature:', e);
-                        console.warn('Continuing without signature');
-                    }
-                }
-
-                console.log('Adding photo pages...');
-                // Add photos to additional pages
-                if (data.photos.before.length > 0 || data.photos.signoff.length > 0 || data.photos.after.length > 0) {
-                    try {
-                        let currentPage = pdfDoc.addPage([612, 792]); // Letter size
-                        let y = 750;
-
-                        const addPhotoToPage = async (photoData, title) => {
-                            if (y < 100) {
-                                currentPage = pdfDoc.addPage([612, 792]);
-                                y = 750;
-                            }
-
-                            currentPage.drawText(title, { x: 50, y, size: 14 });
-                            y -= 20;
-
-                            try {
-                                const imgBytes = await fetch(photoData).then(r => r.arrayBuffer());
-                                let img;
-
-                                // Determine image type
-                                if (photoData.includes('data:image/png')) {
-                                    img = await pdfDoc.embedPng(imgBytes);
-                                } else if (photoData.includes('data:image/jpeg') || photoData.includes('data:image/jpg')) {
-                                    img = await pdfDoc.embedJpg(imgBytes);
-                                } else {
-                                    // Try PNG first, then JPG
-                                    try {
-                                        img = await pdfDoc.embedPng(imgBytes);
-                                    } catch {
-                                        img = await pdfDoc.embedJpg(imgBytes);
-                                    }
-                                }
-
-                                const scale = Math.min(400 / img.width, 300 / img.height);
-                                const width = img.width * scale;
-                                const height = img.height * scale;
-
-                                currentPage.drawImage(img, { x: 50, y: y - height, width, height });
-                                y -= height + 30;
-                            } catch (e) {
-                                console.error('Error adding photo:', title, e);
-                                currentPage.drawText(`[Error loading ${title}]`, { x: 50, y, size: 10 });
-                                y -= 30;
-                            }
-                        };
-
-                        // Function to add signoff sheet as full-page portrait image
-                        const addSignoffSheetPage = async (photoData, title) => {
-                            try {
-                                const imgBytes = await fetch(photoData).then(r => r.arrayBuffer());
-                                let img;
-
-                                // Determine image type
-                                if (photoData.includes('data:image/png')) {
-                                    img = await pdfDoc.embedPng(imgBytes);
-                                } else if (photoData.includes('data:image/jpeg') || photoData.includes('data:image/jpg')) {
-                                    img = await pdfDoc.embedJpg(imgBytes);
-                                } else {
-                                    try {
-                                        img = await pdfDoc.embedPng(imgBytes);
-                                    } catch {
-                                        img = await pdfDoc.embedJpg(imgBytes);
-                                    }
-                                }
-
-                                // Create a new page for each signoff sheet (Letter size portrait: 612 x 792)
-                                const pageWidth = 612;
-                                const pageHeight = 792;
-                                const margin = 20; // Small margin for high quality display
-                                const availableWidth = pageWidth - (margin * 2);
-                                const availableHeight = pageHeight - (margin * 2);
-
-                                const signoffPage = pdfDoc.addPage([pageWidth, pageHeight]);
-
-                                // Calculate scale to fit image at maximum size while maintaining aspect ratio
-                                const imgWidth = img.width;
-                                const imgHeight = img.height;
-
-                                // Determine if image needs rotation (landscape image on portrait page)
-                                const imgIsLandscape = imgWidth > imgHeight;
-
-                                let finalWidth, finalHeight, x, y, rotation;
-
-                                if (imgIsLandscape) {
-                                    // Rotate landscape image 90 degrees to fit portrait page
-                                    // When rotated, width becomes height and vice versa
-                                    const rotatedWidth = imgHeight;
-                                    const rotatedHeight = imgWidth;
-
-                                    const scaleX = availableWidth / rotatedWidth;
-                                    const scaleY = availableHeight / rotatedHeight;
-                                    const scale = Math.min(scaleX, scaleY);
-
-                                    finalWidth = imgWidth * scale;
-                                    finalHeight = imgHeight * scale;
-
-                                    // Center the rotated image
-                                    // After 90-degree rotation, we need to position differently
-                                    x = margin + (availableWidth - imgHeight * scale) / 2;
-                                    y = margin + (availableHeight - imgWidth * scale) / 2;
-
-                                    // Draw rotated image
-                                    signoffPage.drawImage(img, {
-                                        x: x + imgHeight * scale,
-                                        y: y,
-                                        width: finalWidth,
-                                        height: finalHeight,
-                                        rotate: { type: 'degrees', angle: 90 }
-                                    });
-                                } else {
-                                    // Portrait image - scale to fit full page
-                                    const scaleX = availableWidth / imgWidth;
-                                    const scaleY = availableHeight / imgHeight;
-                                    const scale = Math.min(scaleX, scaleY);
-
-                                    finalWidth = imgWidth * scale;
-                                    finalHeight = imgHeight * scale;
-
-                                    // Center the image on the page
-                                    x = margin + (availableWidth - finalWidth) / 2;
-                                    y = margin + (availableHeight - finalHeight) / 2;
-
-                                    signoffPage.drawImage(img, {
-                                        x: x,
-                                        y: y,
-                                        width: finalWidth,
-                                        height: finalHeight
-                                    });
-                                }
-
-                                console.log(`Added signoff sheet: ${title}, original: ${imgWidth}x${imgHeight}, final: ${Math.round(finalWidth)}x${Math.round(finalHeight)}, rotated: ${imgIsLandscape}`);
-                            } catch (e) {
-                                console.error('Error adding signoff sheet:', title, e);
-                                // Create error page
-                                const errorPage = pdfDoc.addPage([612, 792]);
-                                errorPage.drawText(`Error loading ${title}`, { x: 50, y: 400, size: 14 });
-                            }
-                        };
-
-                        // Add all photos
-                        console.log('Adding before photos:', data.photos.before.length);
-                        for (let photo of data.photos.before) {
-                            await addPhotoToPage(photo, 'Kompass Cart - Before');
-                        }
-
-                        console.log('Adding after photos:', data.photos.after.length);
-                        for (let photo of data.photos.after) {
-                            await addPhotoToPage(photo, 'Kompass Cart - After');
-                        }
-                        
-                        console.log('Adding signoff photos:', data.photos.signoff.length);
-                        // Add each signoff sheet as a full-page image in portrait orientation
-                        for (let i = 0; i < data.photos.signoff.length; i++) {
-                            await addSignoffSheetPage(data.photos.signoff[i], `Sign-Off Sheet ${i + 1}`);
-                        }
-
-                        console.log('Photos added successfully');
-                    } catch (e) {
-                        console.error('Error adding photo pages:', e);
-                        // Continue even if photos fail
-                        console.warn('Continuing without photo pages');
-                    }
-                }
-
-                console.log('Flattening form...');
-                form.flatten();
-
-                console.log('Saving PDF...');
-                const finalPdfBytes = await pdfDoc.save();
-
-                console.log('Creating download...');
-                // Download
-                const blob = new Blob([finalPdfBytes], { type: 'application/pdf' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `KOMPASS EOD Cover Sheet FM${data.StoreNumberPadded} ${data.DateForFilename}.pdf`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-
-                console.log('PDF generated successfully!');
-                showAlert('Success', 'PDF generated successfully!');
-            } catch (error) {
-                console.error('Error generating PDF:', error);
-                showAlert('Error', 'Failed to generate PDF:<br><br>' + error.message + '<br><br>Check the browser console (F12) for more details.');
-            } finally {
-                loading.classList.remove('show');
-            }
-        }
-
         // Generate Email
         async function generateEmail() {
             const loading = document.getElementById('loadingOverlay');
@@ -2038,10 +1493,10 @@
 
             try {
                 const data = await collectData();
-                
+
                 // First, generate the PDF
                 const pdfFilename = `KOMPASS EOD Cover Sheet FM${data.StoreNumberPadded} ${data.DateForFilename}.pdf`;
-                
+
                 try {
                     await generatePDFInternal(data, pdfFilename);
                 } catch (pdfError) {
@@ -2207,31 +1662,31 @@ ${data.Notes || ''}
                 try {
                     const sigBytes = await fetch(data.signatureDataURL).then(r => r.arrayBuffer());
                     const sigImage = await pdfDoc.embedPng(sigBytes);
-                    
+
                     // Try to set as button image first
                     try {
                         form.getButton('LeadSignatureImage').setImage(sigImage);
                         console.log('Signature embedded as button image');
                     } catch (buttonError) {
                         console.warn('Could not set button image, trying alternative method:', buttonError);
-                        
+
                         // Alternative: Draw signature directly on the first page
                         const pages = pdfDoc.getPages();
                         const firstPage = pages[0];
-                        
+
                         // Adjust these coordinates based on where signature should appear on your form
                         const sigWidth = 150;
                         const sigHeight = 50;
                         const sigX = 400; // Adjust X position
                         const sigY = 100; // Adjust Y position
-                        
+
                         firstPage.drawImage(sigImage, {
                             x: sigX,
                             y: sigY,
                             width: sigWidth,
                             height: sigHeight,
                         });
-                        
+
                         console.log('Signature drawn directly on page');
                     }
                 } catch (e) {
@@ -2287,6 +1742,93 @@ ${data.Notes || ''}
                         }
                     };
 
+                    // Function to add signoff sheet as full-page portrait image
+                    const addSignoffSheetPage = async (photoData, title) => {
+                        try {
+                            const imgBytes = await fetch(photoData).then(r => r.arrayBuffer());
+                            let img;
+
+                            // Determine image type
+                            if (photoData.includes('data:image/png')) {
+                                img = await pdfDoc.embedPng(imgBytes);
+                            } else if (photoData.includes('data:image/jpeg') || photoData.includes('data:image/jpg')) {
+                                img = await pdfDoc.embedJpg(imgBytes);
+                            } else {
+                                try {
+                                    img = await pdfDoc.embedPng(imgBytes);
+                                } catch {
+                                    img = await pdfDoc.embedJpg(imgBytes);
+                                }
+                            }
+
+                            // Create a new page for each signoff sheet (Letter size portrait: 612 x 792)
+                            const pageWidth = 612;
+                            const pageHeight = 792;
+                            const margin = 20;
+                            const availableWidth = pageWidth - (margin * 2);
+                            const availableHeight = pageHeight - (margin * 2);
+
+                            const signoffPage = pdfDoc.addPage([pageWidth, pageHeight]);
+
+                            // Calculate scale to fit image at maximum size while maintaining aspect ratio
+                            const imgWidth = img.width;
+                            const imgHeight = img.height;
+
+                            // Determine if image needs rotation (landscape image on portrait page)
+                            const imgIsLandscape = imgWidth > imgHeight;
+
+                            let finalWidth, finalHeight, x, py, rotation;
+
+                            if (imgIsLandscape) {
+                                // Rotate landscape image 90 degrees to fit portrait page
+                                const rotatedWidth = imgHeight;
+                                const rotatedHeight = imgWidth;
+
+                                const scaleX = availableWidth / rotatedWidth;
+                                const scaleY = availableHeight / rotatedHeight;
+                                const scale = Math.min(scaleX, scaleY);
+
+                                finalWidth = imgWidth * scale;
+                                finalHeight = imgHeight * scale;
+
+                                x = margin + (availableWidth - imgHeight * scale) / 2;
+                                py = margin + (availableHeight - imgWidth * scale) / 2;
+
+                                signoffPage.drawImage(img, {
+                                    x: x + imgHeight * scale,
+                                    y: py,
+                                    width: finalWidth,
+                                    height: finalHeight,
+                                    rotate: { type: 'degrees', angle: 90 }
+                                });
+                            } else {
+                                // Portrait image - scale to fit full page
+                                const scaleX = availableWidth / imgWidth;
+                                const scaleY = availableHeight / imgHeight;
+                                const scale = Math.min(scaleX, scaleY);
+
+                                finalWidth = imgWidth * scale;
+                                finalHeight = imgHeight * scale;
+
+                                x = margin + (availableWidth - finalWidth) / 2;
+                                py = margin + (availableHeight - finalHeight) / 2;
+
+                                signoffPage.drawImage(img, {
+                                    x: x,
+                                    y: py,
+                                    width: finalWidth,
+                                    height: finalHeight
+                                });
+                            }
+
+                            console.log(`Added signoff sheet: ${title}, original: ${imgWidth}x${imgHeight}, final: ${Math.round(finalWidth)}x${Math.round(finalHeight)}, rotated: ${imgIsLandscape}`);
+                        } catch (e) {
+                            console.error('Error adding signoff sheet:', title, e);
+                            const errorPage = pdfDoc.addPage([612, 792]);
+                            errorPage.drawText(`Error loading ${title}`, { x: 50, y: 400, size: 14 });
+                        }
+                    };
+
                     // Add all photos
                     console.log('Adding before photos:', data.photos.before.length);
                     for (let photo of data.photos.before) {
@@ -2297,16 +1839,15 @@ ${data.Notes || ''}
                     for (let photo of data.photos.after) {
                         await addPhotoToPage(photo, 'Kompass Cart - After');
                     }
-                    
+
                     console.log('Adding signoff photos:', data.photos.signoff.length);
                     for (let i = 0; i < data.photos.signoff.length; i++) {
-                        await addPhotoToPage(data.photos.signoff[i], `Sign-Off Sheet ${i + 1}`);
+                        await addSignoffSheetPage(data.photos.signoff[i], `Sign-Off Sheet ${i + 1}`);
                     }
 
                     console.log('Photos added successfully');
                 } catch (e) {
                     console.error('Error adding photo pages:', e);
-                    // Continue even if photos fail
                     console.warn('Continuing without photo pages');
                 }
             }
@@ -2387,9 +1928,40 @@ ${data.Notes || ''}
             document.getElementById('modal').classList.remove('show');
         });
 
-        // Quick view (Easter egg)
-        function openQuickView() {
-            showAlert('Quick View', 'Coming soon! This will show a condensed view of all EOD fields for quick completion.');
+        // Quick view (Easter egg) - shows current form data
+        async function openQuickView() {
+            const data = await collectData();
+            const beforeDone = data.photos.before.length > 0 || data.BeforeComplete;
+            const signoffDone = data.photos.signoff.length > 0 || data.SignoffComplete;
+            const afterDone = data.photos.after.length > 0 || data.AfterComplete;
+            const hasSig = data.signatureDataURL ? 'Yes' : 'No';
+
+            const content = `
+                <div class="quick-view-content">
+                    <div class="qv-row"><span class="qv-label">Store #</span><span class="qv-value">${data.StoreNumber || '-'}</span></div>
+                    <div class="qv-row"><span class="qv-label">Date</span><span class="qv-value">${data.DateMMDDYYYY || '-'}</span></div>
+                    <div class="qv-row"><span class="qv-label">Lead</span><span class="qv-value">${data.LeadName || '-'}</span></div>
+
+                    <div class="qv-section">
+                        <div class="qv-section-title">Photos</div>
+                        <div class="qv-row"><span class="qv-label">Before</span><span class="qv-value">${beforeDone ? 'Done' : 'Missing'} (${data.photos.before.length})</span></div>
+                        <div class="qv-row"><span class="qv-label">After</span><span class="qv-value">${afterDone ? 'Done' : 'Missing'} (${data.photos.after.length})</span></div>
+                        <div class="qv-row"><span class="qv-label">Sign-off</span><span class="qv-value">${signoffDone ? 'Done' : 'Missing'} (${data.photos.signoff.length})</span></div>
+                    </div>
+
+                    <div class="qv-section">
+                        <div class="qv-section-title">EOD Details</div>
+                        <div class="qv-row"><span class="qv-label">Check-in</span><span class="qv-value">${data.CheckInManager || '-'}</span></div>
+                        <div class="qv-row"><span class="qv-label">Check-out</span><span class="qv-value">${data.CheckOutManager || '-'}</span></div>
+                        <div class="qv-row"><span class="qv-label">Hotline</span><span class="qv-value">${pickYN(data.CalledHotline)}</span></div>
+                        <div class="qv-row"><span class="qv-label">PROD</span><span class="qv-value">${pickYN(data.SignedOutPROD)}</span></div>
+                        <div class="qv-row"><span class="qv-label">SI</span><span class="qv-value">${pickYN(data.SignedOutSI)}</span></div>
+                        <div class="qv-row"><span class="qv-label">Signature</span><span class="qv-value">${hasSig}</span></div>
+                    </div>
+                </div>
+            `;
+
+            showAlert('Current Status', content);
         }
 
         // Test setup function
@@ -2400,7 +1972,7 @@ ${data.Notes || ''}
             let results = [];
 
             // Test 1: Check if PDFLib is loaded
-            results.push('1. PDF Library: ' + (typeof PDFLib !== 'undefined' ? '✅ Loaded' : '❌ Not loaded'));
+            results.push('1. PDF Library: ' + (typeof PDFLib !== 'undefined' ? 'Loaded' : 'Not loaded'));
 
             // Test 2: Try to load PDF template
             const pdfPaths = [
@@ -2414,7 +1986,7 @@ ${data.Notes || ''}
                 try {
                     const response = await fetch(path);
                     if (response.ok) {
-                        results.push(`2. PDF Template: ✅ Found at "${path}"`);
+                        results.push(`2. PDF Template: Found at "${path}"`);
                         pdfFound = true;
                         break;
                     }
@@ -2424,31 +1996,31 @@ ${data.Notes || ''}
             }
 
             if (!pdfFound) {
-                results.push('2. PDF Template: ❌ Not found. Please ensure "End Of Day Cover Sheet Form Editable Template.pdf" is in the same directory as this HTML file.');
+                results.push('2. PDF Template: Not found. Please ensure "End Of Day Cover Sheet Form Editable Template.pdf" is in the same directory as this HTML file.');
             }
 
             // Test 3: Check logo
             try {
                 const logoResponse = await fetch('rologo.png');
-                results.push('3. Logo Image: ' + (logoResponse.ok ? '✅ Found' : '❌ Not found'));
+                results.push('3. Logo Image: ' + (logoResponse.ok ? 'Found' : 'Not found'));
             } catch (e) {
-                results.push('3. Logo Image: ❌ Error loading');
+                results.push('3. Logo Image: Error loading');
             }
 
             // Test 4: Check localStorage
-            results.push('4. LocalStorage: ' + (typeof localStorage !== 'undefined' ? '✅ Available' : '❌ Not available'));
+            results.push('4. LocalStorage: ' + (typeof localStorage !== 'undefined' ? 'Available' : 'Not available'));
 
             // Test 5: Check saved data
             const saved = localStorage.getItem('kompassEOD');
-            results.push('5. Saved Data: ' + (saved ? `✅ Found (${(saved.length / 1024).toFixed(1)} KB)` : '⚠️ None'));
+            results.push('5. Saved Data: ' + (saved ? `Found (${(saved.length / 1024).toFixed(1)} KB)` : 'None'));
 
             // Test 6: Check photos
             const photoCount = photos.before.length + photos.signoff.length + photos.after.length;
-            results.push(`6. Photos: ${photoCount > 0 ? '✅' : '⚠️'} ${photoCount} total (Before: ${photos.before.length}, Signoff: ${photos.signoff.length}, After: ${photos.after.length})`);
+            results.push(`6. Photos: ${photoCount} total (Before: ${photos.before.length}, Signoff: ${photos.signoff.length}, After: ${photos.after.length})`);
 
             // Test 7: Check signature
             const sigData = await getSignatureDataURL();
-            results.push('7. Signature: ' + (sigData ? '✅ Present' : '⚠️ Not signed'));
+            results.push('7. Signature: ' + (sigData ? 'Present' : 'Not signed'));
 
             loading.classList.remove('show');
 
