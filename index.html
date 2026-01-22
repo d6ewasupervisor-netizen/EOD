@@ -1742,7 +1742,7 @@ ${data.Notes || ''}
                         }
                     };
 
-                    // Function to add signoff sheet as full-page portrait image
+                    // Function to add signoff sheet as full-page image (fills entire page)
                     const addSignoffSheetPage = async (photoData, title) => {
                         try {
                             const imgBytes = await fetch(photoData).then(r => r.arrayBuffer());
@@ -1761,48 +1761,33 @@ ${data.Notes || ''}
                                 }
                             }
 
-                            // Create a new page for each signoff sheet (Letter size portrait: 612 x 792)
-                            const pageWidth = 612;
-                            const pageHeight = 792;
-                            const margin = 20;
-                            const availableWidth = pageWidth - (margin * 2);
-                            const availableHeight = pageHeight - (margin * 2);
-
-                            const signoffPage = pdfDoc.addPage([pageWidth, pageHeight]);
-
-                            // Calculate scale to fit image at maximum size while maintaining aspect ratio
+                            // Get original image dimensions
                             const imgWidth = img.width;
                             const imgHeight = img.height;
 
-                            // Determine if image needs rotation (landscape image on portrait page)
+                            // Determine if image is landscape or portrait
                             const imgIsLandscape = imgWidth > imgHeight;
 
-                            let finalWidth, finalHeight, x, py, rotation;
+                            // Use minimal margin (10 points = ~0.14 inches)
+                            const margin = 10;
+
+                            // Letter size dimensions in points
+                            const letterWidth = 612;
+                            const letterHeight = 792;
+
+                            let pageWidth, pageHeight, availableWidth, availableHeight;
+                            let finalWidth, finalHeight, x, y;
 
                             if (imgIsLandscape) {
-                                // Rotate landscape image 90 degrees to fit portrait page
-                                const rotatedWidth = imgHeight;
-                                const rotatedHeight = imgWidth;
+                                // For landscape images, create a landscape page
+                                pageWidth = letterHeight;  // 792
+                                pageHeight = letterWidth;  // 612
+                                availableWidth = pageWidth - (margin * 2);   // 772
+                                availableHeight = pageHeight - (margin * 2); // 592
 
-                                const scaleX = availableWidth / rotatedWidth;
-                                const scaleY = availableHeight / rotatedHeight;
-                                const scale = Math.min(scaleX, scaleY);
+                                const signoffPage = pdfDoc.addPage([pageWidth, pageHeight]);
 
-                                finalWidth = imgWidth * scale;
-                                finalHeight = imgHeight * scale;
-
-                                x = margin + (availableWidth - imgHeight * scale) / 2;
-                                py = margin + (availableHeight - imgWidth * scale) / 2;
-
-                                signoffPage.drawImage(img, {
-                                    x: x + imgHeight * scale,
-                                    y: py,
-                                    width: finalWidth,
-                                    height: finalHeight,
-                                    rotate: { type: 'degrees', angle: 90 }
-                                });
-                            } else {
-                                // Portrait image - scale to fit full page
+                                // Scale image to fill the landscape page
                                 const scaleX = availableWidth / imgWidth;
                                 const scaleY = availableHeight / imgHeight;
                                 const scale = Math.min(scaleX, scaleY);
@@ -1810,18 +1795,48 @@ ${data.Notes || ''}
                                 finalWidth = imgWidth * scale;
                                 finalHeight = imgHeight * scale;
 
+                                // Center the image on the page
                                 x = margin + (availableWidth - finalWidth) / 2;
-                                py = margin + (availableHeight - finalHeight) / 2;
+                                y = margin + (availableHeight - finalHeight) / 2;
 
                                 signoffPage.drawImage(img, {
                                     x: x,
-                                    y: py,
+                                    y: y,
                                     width: finalWidth,
                                     height: finalHeight
                                 });
-                            }
 
-                            console.log(`Added signoff sheet: ${title}, original: ${imgWidth}x${imgHeight}, final: ${Math.round(finalWidth)}x${Math.round(finalHeight)}, rotated: ${imgIsLandscape}`);
+                                console.log(`Added signoff sheet (landscape page): ${title}, original: ${imgWidth}x${imgHeight}, final: ${Math.round(finalWidth)}x${Math.round(finalHeight)}`);
+                            } else {
+                                // For portrait images, create a portrait page
+                                pageWidth = letterWidth;   // 612
+                                pageHeight = letterHeight; // 792
+                                availableWidth = pageWidth - (margin * 2);   // 592
+                                availableHeight = pageHeight - (margin * 2); // 772
+
+                                const signoffPage = pdfDoc.addPage([pageWidth, pageHeight]);
+
+                                // Scale image to fill the portrait page
+                                const scaleX = availableWidth / imgWidth;
+                                const scaleY = availableHeight / imgHeight;
+                                const scale = Math.min(scaleX, scaleY);
+
+                                finalWidth = imgWidth * scale;
+                                finalHeight = imgHeight * scale;
+
+                                // Center the image on the page
+                                x = margin + (availableWidth - finalWidth) / 2;
+                                y = margin + (availableHeight - finalHeight) / 2;
+
+                                signoffPage.drawImage(img, {
+                                    x: x,
+                                    y: y,
+                                    width: finalWidth,
+                                    height: finalHeight
+                                });
+
+                                console.log(`Added signoff sheet (portrait page): ${title}, original: ${imgWidth}x${imgHeight}, final: ${Math.round(finalWidth)}x${Math.round(finalHeight)}`);
+                            }
                         } catch (e) {
                             console.error('Error adding signoff sheet:', title, e);
                             const errorPage = pdfDoc.addPage([612, 792]);
