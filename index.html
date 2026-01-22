@@ -863,6 +863,12 @@
                 <button class="btn btn-primary" id="emailOpenApp" style="width: 100%;">
                     Open Email App
                 </button>
+                <button class="btn btn-secondary" id="emailOpenOutlook" style="width: 100%;">
+                    Open in Outlook.com
+                </button>
+                <button class="btn btn-secondary" id="emailDownloadEml" style="width: 100%;">
+                    Download Email File (.eml)
+                </button>
                 <button class="btn btn-secondary" id="emailCopyAll" style="width: 100%;">
                     Copy Email Details
                 </button>
@@ -1586,15 +1592,18 @@ ${data.Notes || ''}
                 }
 
                 const to = data.EmailTo || '';
-                let cc = 'aiyana.natarisalazar@retailodyssey.com,tyson.gauthier@retailodyssey.com';
+                let ccList = ['aiyana.natarisalazar@retailodyssey.com', 'tyson.gauthier@retailodyssey.com'];
 
                 // Add Retail Odyssey Team emails if checkbox is checked
                 if (document.getElementById('addRetailOdysseyTeam').checked) {
-                    const retailOdysseyTeam = 'KNix@retailodyssey.com,MAshabranner@retailodyssey.com,seth.newman@retailodyssey.com,tyson.gauthier@retailodyssey.com';
-                    cc = cc + ',' + retailOdysseyTeam;
-                    // Remove duplicate tyson.gauthier since he's in both lists
-                    cc = [...new Set(cc.split(','))].join(',');
+                    const retailOdysseyTeam = ['KNix@retailodyssey.com', 'MAshabranner@retailodyssey.com', 'seth.newman@retailodyssey.com', 'tyson.gauthier@retailodyssey.com'];
+                    ccList = ccList.concat(retailOdysseyTeam);
+                    // Remove duplicates
+                    ccList = [...new Set(ccList)];
                 }
+
+                // Use semicolons as separator (Outlook standard)
+                const cc = ccList.join('; ');
 
                 const subject = `KOMPASS EOD FM${data.StoreNumberPadded} ${data.DateMMDDYYYY}`;
                 const mailtoUrl = `mailto:${encodeURIComponent(to)}?cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -1992,6 +2001,53 @@ ${data.Notes || ''}
                 // Final fallback
                 window.location.href = mailtoUrl;
             }
+        });
+
+        // Open in Outlook.com (web)
+        document.getElementById('emailOpenOutlook').addEventListener('click', () => {
+            const { to, cc, subject, body } = window.pendingEmailData;
+            // Outlook.com compose URL format
+            const outlookUrl = `https://outlook.live.com/mail/0/deeplink/compose?to=${encodeURIComponent(to)}&cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.open(outlookUrl, '_blank');
+        });
+
+        // Download email as .eml file
+        document.getElementById('emailDownloadEml').addEventListener('click', () => {
+            const { to, cc, subject, body, pdfFilename } = window.pendingEmailData;
+
+            // Create .eml file content (RFC 2822 format)
+            const emlContent = [
+                `To: ${to}`,
+                `Cc: ${cc}`,
+                `Subject: ${subject}`,
+                `X-Unsent: 1`,
+                `MIME-Version: 1.0`,
+                `Content-Type: text/plain; charset=utf-8`,
+                ``,
+                body,
+                ``,
+                `---`,
+                `Note: Please attach "${pdfFilename}" from your Downloads folder before sending.`
+            ].join('\r\n');
+
+            // Create and download the .eml file
+            const blob = new Blob([emlContent], { type: 'message/rfc822' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `KOMPASS EOD ${window.pendingEmailData.subject.replace(/[^a-zA-Z0-9 ]/g, '')}.eml`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            const msg = document.getElementById('copySuccessMsg');
+            msg.textContent = 'Email file downloaded!';
+            msg.style.display = 'block';
+            setTimeout(() => {
+                msg.textContent = 'Copied to clipboard!';
+                msg.style.display = 'none';
+            }, 2000);
         });
 
         // Copy email details to clipboard
