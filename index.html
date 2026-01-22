@@ -1377,12 +1377,16 @@
             photos[type].forEach((photo, index) => {
                 const item = document.createElement('div');
                 item.className = 'photo-item';
-                // Add edit button only for signoff photos
-                const editBtn = type === 'signoff'
+                // Add edit button and clickable image only for signoff photos
+                const isSignoff = type === 'signoff';
+                const editBtn = isSignoff
                     ? `<button class="photo-edit" onclick="openImageEditor(${index})" title="Edit">&#9998;</button>`
                     : '';
+                const imgClick = isSignoff
+                    ? `onclick="openImageEditor(${index})" style="cursor: pointer;" title="Tap to edit"`
+                    : '';
                 item.innerHTML = `
-                    <img src="${photo}" alt="${type} photo">
+                    <img src="${photo}" alt="${type} photo" ${imgClick}>
                     ${editBtn}
                     <button class="photo-remove" onclick="removePhoto('${type}', ${index})">x</button>
                 `;
