@@ -767,11 +767,11 @@
                 <label>All sets signed out in PROD?</label>
                 <div class="checkbox-group">
                     <div class="checkbox-option">
-                        <input type="checkbox" id="prodYes" name="prod" value="Yes" onchange="toggleRadio('prod')">
+                        <input type="checkbox" id="prodYes" name="prod" value="Yes" onchange="toggleRadio('prod', this)">
                         <label for="prodYes">Yes</label>
                     </div>
                     <div class="checkbox-option">
-                        <input type="checkbox" id="prodNo" name="prod" value="No" onchange="toggleRadio('prod')">
+                        <input type="checkbox" id="prodNo" name="prod" value="No" onchange="toggleRadio('prod', this)">
                         <label for="prodNo">No</label>
                     </div>
                 </div>
@@ -781,11 +781,11 @@
                 <label>All sets signed out in SI?</label>
                 <div class="checkbox-group">
                     <div class="checkbox-option">
-                        <input type="checkbox" id="siYes" name="si" value="Yes" onchange="toggleRadio('si')">
+                        <input type="checkbox" id="siYes" name="si" value="Yes" onchange="toggleRadio('si', this)">
                         <label for="siYes">Yes</label>
                     </div>
                     <div class="checkbox-option">
-                        <input type="checkbox" id="siNo" name="si" value="No" onchange="toggleRadio('si')">
+                        <input type="checkbox" id="siNo" name="si" value="No" onchange="toggleRadio('si', this)">
                         <label for="siNo">No</label>
                     </div>
                 </div>
@@ -811,6 +811,14 @@
             <div class="field">
                 <label>Send To:</label>
                 <input type="email" id="emailTo" placeholder="recipient@example.com">
+            </div>
+            <div class="field" style="margin-top: 10px;">
+                <div class="checkbox-group">
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="addRetailOdysseyTeam" onchange="autoSave()">
+                        <label for="addRetailOdysseyTeam">Add Retail Odyssey Team to EOD</label>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -842,6 +850,31 @@
             <div class="button-group">
                 <button class="btn btn-secondary" id="modalCancel">Cancel</button>
                 <button class="btn btn-primary" id="modalConfirm">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Options Modal -->
+    <div id="emailOptionsModal" class="modal-overlay">
+        <div class="modal-dialog" style="max-width: 400px;">
+            <h2>PDF Generated Successfully</h2>
+            <div id="emailOptionsMessage" style="margin-bottom: 15px; font-size: 13px;"></div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="btn btn-primary" id="emailOpenApp" style="width: 100%;">
+                    Open Email App
+                </button>
+                <button class="btn btn-secondary" id="emailCopyAll" style="width: 100%;">
+                    Copy Email Details
+                </button>
+                <button class="btn btn-secondary" id="emailShare" style="width: 100%; display: none;">
+                    Share via Device
+                </button>
+                <button class="btn btn-secondary" id="emailOptionsClose" style="width: 100%; margin-top: 5px;">
+                    Close
+                </button>
+            </div>
+            <div id="copySuccessMsg" style="display: none; margin-top: 10px; padding: 8px; background: #1a5c2a; border-radius: 4px; font-size: 12px; text-align: center;">
+                Copied to clipboard!
             </div>
         </div>
     </div>
@@ -915,6 +948,7 @@
                 beforeComplete: document.getElementById('beforeComplete')?.checked || false,
                 signoffComplete: document.getElementById('signoffComplete')?.checked || false,
                 afterComplete: document.getElementById('afterComplete')?.checked || false,
+                addRetailOdysseyTeam: document.getElementById('addRetailOdysseyTeam')?.checked || false,
                 photos: photos
             };
             localStorage.setItem('kompassEOD', JSON.stringify(data));
@@ -961,6 +995,9 @@
                 if (typeof data.afterComplete === 'boolean') {
                     document.getElementById('afterComplete').checked = data.afterComplete;
                 }
+                if (typeof data.addRetailOdysseyTeam === 'boolean') {
+                    document.getElementById('addRetailOdysseyTeam').checked = data.addRetailOdysseyTeam;
+                }
 
                 if (data.photos) {
                     Object.assign(photos, data.photos);
@@ -978,10 +1015,10 @@
         });
 
         // Toggle functions
-        function toggleRadio(groupName) {
+        function toggleRadio(groupName, clickedBox) {
             const checkboxes = document.querySelectorAll(`input[name="${groupName}"]`);
-            const clickedBox = document.querySelector(`input[name="${groupName}"]:checked`);
-            if (clickedBox) {
+            if (clickedBox && clickedBox.checked) {
+                // Uncheck all other checkboxes in the group
                 checkboxes.forEach(box => {
                     if (box !== clickedBox) box.checked = false;
                 });
@@ -1549,24 +1586,25 @@ ${data.Notes || ''}
                 }
 
                 const to = data.EmailTo || '';
-                const cc = 'aiyana.natarisalazar@retailodyssey.com,tyson.gauthier@retailodyssey.com';
+                let cc = 'aiyana.natarisalazar@retailodyssey.com,tyson.gauthier@retailodyssey.com';
+
+                // Add Retail Odyssey Team emails if checkbox is checked
+                if (document.getElementById('addRetailOdysseyTeam').checked) {
+                    const retailOdysseyTeam = 'KNix@retailodyssey.com,MAshabranner@retailodyssey.com,seth.newman@retailodyssey.com,tyson.gauthier@retailodyssey.com';
+                    cc = cc + ',' + retailOdysseyTeam;
+                    // Remove duplicate tyson.gauthier since he's in both lists
+                    cc = [...new Set(cc.split(','))].join(',');
+                }
+
                 const subject = `KOMPASS EOD FM${data.StoreNumberPadded} ${data.DateMMDDYYYY}`;
                 const mailtoUrl = `mailto:${encodeURIComponent(to)}?cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
+                // Store email data for the various send methods
+                window.pendingEmailData = { to, cc, subject, body, pdfFilename };
+
                 loading.classList.remove('show');
 
-                showConfirm(
-                    'PDF Generated & Email Ready',
-                    `<strong>PDF Created Successfully!</strong><br><br>` +
-                    `<strong>Filename:</strong> ${pdfFilename}<br>` +
-                    `<strong>Location:</strong> Your Downloads folder<br><br>` +
-                    `The PDF includes all photos and has been downloaded to your device.<br><br>` +
-                    `Click OK to open your email client.<br><br>` +
-                    `<strong>Remember to attach the PDF from your Downloads folder!</strong>`,
-                    () => {
-                        window.location.href = mailtoUrl;
-                    }
-                );
+                showEmailOptions(pdfFilename);
             } catch (error) {
                 console.error('Error generating email:', error);
                 loading.classList.remove('show');
@@ -1742,13 +1780,14 @@ ${data.Notes || ''}
                         }
                     };
 
-                    // Function to add signoff sheet as full-page image (fills entire page)
+                    // Function to add signoff sheet as full-page image with label at top
+                    // Always portrait orientation (8.5x11), narrow margins, high quality
                     const addSignoffSheetPage = async (photoData, title) => {
                         try {
                             const imgBytes = await fetch(photoData).then(r => r.arrayBuffer());
                             let img;
 
-                            // Determine image type
+                            // Determine image type and embed with high quality
                             if (photoData.includes('data:image/png')) {
                                 img = await pdfDoc.embedPng(imgBytes);
                             } else if (photoData.includes('data:image/jpeg') || photoData.includes('data:image/jpg')) {
@@ -1765,78 +1804,51 @@ ${data.Notes || ''}
                             const imgWidth = img.width;
                             const imgHeight = img.height;
 
-                            // Determine if image is landscape or portrait
-                            const imgIsLandscape = imgWidth > imgHeight;
+                            // Always use portrait orientation: 8.5 x 11 inches (612 x 792 points)
+                            const pageWidth = 612;
+                            const pageHeight = 792;
 
-                            // Use minimal margin (10 points = ~0.14 inches)
-                            const margin = 10;
+                            // Narrow margins: 0.25 inch (18 points) on sides, 0.5 inch (36 points) top for label
+                            const sideMargin = 18;
+                            const topMargin = 40;  // Room for title at top
+                            const bottomMargin = 18;
+                            const labelHeight = 20;
 
-                            // Letter size dimensions in points
-                            const letterWidth = 612;
-                            const letterHeight = 792;
+                            // Calculate available space for image
+                            const availableWidth = pageWidth - (sideMargin * 2);
+                            const availableHeight = pageHeight - topMargin - bottomMargin;
 
-                            let pageWidth, pageHeight, availableWidth, availableHeight;
-                            let finalWidth, finalHeight, x, y;
+                            // Create portrait page
+                            const signoffPage = pdfDoc.addPage([pageWidth, pageHeight]);
 
-                            if (imgIsLandscape) {
-                                // For landscape images, create a landscape page
-                                pageWidth = letterHeight;  // 792
-                                pageHeight = letterWidth;  // 612
-                                availableWidth = pageWidth - (margin * 2);   // 772
-                                availableHeight = pageHeight - (margin * 2); // 592
+                            // Draw title label at top of page
+                            signoffPage.drawText(title, {
+                                x: sideMargin,
+                                y: pageHeight - topMargin + 5,
+                                size: 14,
+                                color: PDFLib.rgb(0, 0, 0)
+                            });
 
-                                const signoffPage = pdfDoc.addPage([pageWidth, pageHeight]);
+                            // Scale image to fit available space while maintaining aspect ratio
+                            const scaleX = availableWidth / imgWidth;
+                            const scaleY = availableHeight / imgHeight;
+                            const scale = Math.min(scaleX, scaleY);
 
-                                // Scale image to fill the landscape page
-                                const scaleX = availableWidth / imgWidth;
-                                const scaleY = availableHeight / imgHeight;
-                                const scale = Math.min(scaleX, scaleY);
+                            const finalWidth = imgWidth * scale;
+                            const finalHeight = imgHeight * scale;
 
-                                finalWidth = imgWidth * scale;
-                                finalHeight = imgHeight * scale;
+                            // Center image horizontally, position below title
+                            const x = sideMargin + (availableWidth - finalWidth) / 2;
+                            const y = bottomMargin + (availableHeight - finalHeight) / 2;
 
-                                // Center the image on the page
-                                x = margin + (availableWidth - finalWidth) / 2;
-                                y = margin + (availableHeight - finalHeight) / 2;
+                            signoffPage.drawImage(img, {
+                                x: x,
+                                y: y,
+                                width: finalWidth,
+                                height: finalHeight
+                            });
 
-                                signoffPage.drawImage(img, {
-                                    x: x,
-                                    y: y,
-                                    width: finalWidth,
-                                    height: finalHeight
-                                });
-
-                                console.log(`Added signoff sheet (landscape page): ${title}, original: ${imgWidth}x${imgHeight}, final: ${Math.round(finalWidth)}x${Math.round(finalHeight)}`);
-                            } else {
-                                // For portrait images, create a portrait page
-                                pageWidth = letterWidth;   // 612
-                                pageHeight = letterHeight; // 792
-                                availableWidth = pageWidth - (margin * 2);   // 592
-                                availableHeight = pageHeight - (margin * 2); // 772
-
-                                const signoffPage = pdfDoc.addPage([pageWidth, pageHeight]);
-
-                                // Scale image to fill the portrait page
-                                const scaleX = availableWidth / imgWidth;
-                                const scaleY = availableHeight / imgHeight;
-                                const scale = Math.min(scaleX, scaleY);
-
-                                finalWidth = imgWidth * scale;
-                                finalHeight = imgHeight * scale;
-
-                                // Center the image on the page
-                                x = margin + (availableWidth - finalWidth) / 2;
-                                y = margin + (availableHeight - finalHeight) / 2;
-
-                                signoffPage.drawImage(img, {
-                                    x: x,
-                                    y: y,
-                                    width: finalWidth,
-                                    height: finalHeight
-                                });
-
-                                console.log(`Added signoff sheet (portrait page): ${title}, original: ${imgWidth}x${imgHeight}, final: ${Math.round(finalWidth)}x${Math.round(finalHeight)}`);
-                            }
+                            console.log(`Added signoff sheet (portrait 8.5x11): ${title}, original: ${imgWidth}x${imgHeight}, final: ${Math.round(finalWidth)}x${Math.round(finalHeight)}`);
                         } catch (e) {
                             console.error('Error adding signoff sheet:', title, e);
                             const errorPage = pdfDoc.addPage([612, 792]);
@@ -1941,6 +1953,104 @@ ${data.Notes || ''}
 
         document.getElementById('modalConfirm').addEventListener('click', () => {
             document.getElementById('modal').classList.remove('show');
+        });
+
+        // Email options modal functions
+        function showEmailOptions(pdfFilename) {
+            const modal = document.getElementById('emailOptionsModal');
+            const { to, cc, subject, body } = window.pendingEmailData;
+
+            document.getElementById('emailOptionsMessage').innerHTML =
+                `<strong>Filename:</strong> ${pdfFilename}<br>` +
+                `<strong>Location:</strong> Downloads folder<br><br>` +
+                `<strong>To:</strong> ${to || '(not set)'}<br>` +
+                `<strong>CC:</strong> ${cc}<br><br>` +
+                `<em>Remember to attach the PDF from your Downloads folder!</em>`;
+
+            // Show share button if Web Share API is available
+            if (navigator.share) {
+                document.getElementById('emailShare').style.display = 'block';
+            }
+
+            modal.classList.add('show');
+        }
+
+        // Open email app (mailto)
+        document.getElementById('emailOpenApp').addEventListener('click', () => {
+            const { to, cc, subject, body } = window.pendingEmailData;
+            const mailtoUrl = `mailto:${encodeURIComponent(to)}?cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+            // Try different methods to open email
+            try {
+                // First try window.open for better compatibility on some devices
+                const emailWindow = window.open(mailtoUrl, '_blank');
+                if (!emailWindow || emailWindow.closed) {
+                    // Fallback to location.href
+                    window.location.href = mailtoUrl;
+                }
+            } catch (e) {
+                // Final fallback
+                window.location.href = mailtoUrl;
+            }
+        });
+
+        // Copy email details to clipboard
+        document.getElementById('emailCopyAll').addEventListener('click', async () => {
+            const { to, cc, subject, body, pdfFilename } = window.pendingEmailData;
+            const emailText = `TO: ${to}
+CC: ${cc}
+SUBJECT: ${subject}
+
+${body}
+
+---
+ATTACHMENT: ${pdfFilename} (in Downloads folder)`;
+
+            try {
+                await navigator.clipboard.writeText(emailText);
+                const msg = document.getElementById('copySuccessMsg');
+                msg.style.display = 'block';
+                setTimeout(() => { msg.style.display = 'none'; }, 2000);
+            } catch (e) {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = emailText;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                const msg = document.getElementById('copySuccessMsg');
+                msg.style.display = 'block';
+                setTimeout(() => { msg.style.display = 'none'; }, 2000);
+            }
+        });
+
+        // Share via device (Web Share API)
+        document.getElementById('emailShare').addEventListener('click', async () => {
+            const { to, cc, subject, body, pdfFilename } = window.pendingEmailData;
+            const shareText = `TO: ${to}
+CC: ${cc}
+
+${body}
+
+---
+Attach PDF: ${pdfFilename}`;
+
+            try {
+                await navigator.share({
+                    title: subject,
+                    text: shareText
+                });
+            } catch (e) {
+                if (e.name !== 'AbortError') {
+                    showAlert('Share Error', 'Unable to share. Try copying the email details instead.');
+                }
+            }
+        });
+
+        // Close email options modal
+        document.getElementById('emailOptionsClose').addEventListener('click', () => {
+            document.getElementById('emailOptionsModal').classList.remove('show');
         });
 
         // Quick view (Easter egg) - shows current form data
