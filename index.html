@@ -566,6 +566,211 @@
             display: none;
         }
 
+        /* Image Editor Overlay Styles */
+        .image-editor-overlay {
+            position: fixed;
+            inset: 0;
+            background: #111827;
+            display: none;
+            z-index: 10004;
+            flex-direction: column;
+        }
+
+        .image-editor-overlay.show {
+            display: flex;
+        }
+
+        .editor-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: #0d4f8b;
+            color: #fff;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .editor-toolbar-left {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .editor-toolbar-right {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .editor-canvas-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            background: #1f2937;
+        }
+
+        #editorCanvas {
+            display: block !important;
+            max-width: 100%;
+            max-height: 100%;
+            touch-action: none;
+        }
+
+        .crop-overlay {
+            position: absolute;
+            pointer-events: none;
+            display: none;
+        }
+
+        .crop-overlay.active {
+            display: block;
+        }
+
+        .crop-box {
+            position: absolute;
+            border: 2px dashed #88c4ed;
+            background: transparent;
+            cursor: move;
+            pointer-events: auto;
+        }
+
+        .crop-handle {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #0d4f8b;
+            border: 2px solid #88c4ed;
+            border-radius: 50%;
+            pointer-events: auto;
+        }
+
+        .crop-handle.tl { top: -10px; left: -10px; cursor: nw-resize; }
+        .crop-handle.tr { top: -10px; right: -10px; cursor: ne-resize; }
+        .crop-handle.bl { bottom: -10px; left: -10px; cursor: sw-resize; }
+        .crop-handle.br { bottom: -10px; right: -10px; cursor: se-resize; }
+
+        .crop-shade {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.6);
+            pointer-events: none;
+        }
+
+        .editor-controls {
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            background: rgba(13, 79, 139, 0.9);
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .editor-control-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .editor-control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+
+        .editor-control-label {
+            color: #fff;
+            font-size: 0.9em;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .editor-slider {
+            width: 120px;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #374151;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .editor-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #88c4ed;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .editor-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #88c4ed;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        .editor-btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #4b5563;
+            color: #fff;
+        }
+
+        .editor-btn:hover {
+            background: #5a6573;
+        }
+
+        .editor-btn.active {
+            background: #0d4f8b;
+        }
+
+        .editor-btn-icon {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+        }
+
+        .slider-value {
+            color: #88c4ed;
+            font-size: 0.85em;
+            min-width: 35px;
+            text-align: center;
+        }
+
+        @media (max-width: 480px) {
+            .editor-slider {
+                width: 80px;
+            }
+            .editor-control-group {
+                padding: 6px 10px;
+            }
+            .editor-btn {
+                padding: 6px 10px;
+                font-size: 0.85em;
+            }
+        }
+
         /* Quick View Modal Styles */
         .quick-view-content {
             font-size: 0.95em;
@@ -918,6 +1123,54 @@
         <canvas id="captureCanvas"></canvas>
     </div>
 
+    <!-- Image Editor Overlay for Sign-off Sheets -->
+    <div id="imageEditorOverlay" class="image-editor-overlay">
+        <div class="editor-toolbar">
+            <div class="editor-toolbar-left">
+                <button class="btn btn-secondary" id="editorCancel">Cancel</button>
+            </div>
+            <div class="editor-toolbar-right">
+                <button class="btn btn-secondary" id="editorReset">Reset</button>
+                <button class="btn btn-primary" id="editorSave">Save</button>
+            </div>
+        </div>
+        <div class="editor-canvas-container" id="editorCanvasContainer">
+            <canvas id="editorCanvas"></canvas>
+            <div class="crop-overlay" id="cropOverlay">
+                <div class="crop-shade" id="cropShadeTop"></div>
+                <div class="crop-shade" id="cropShadeRight"></div>
+                <div class="crop-shade" id="cropShadeBottom"></div>
+                <div class="crop-shade" id="cropShadeLeft"></div>
+                <div class="crop-box" id="cropBox">
+                    <div class="crop-handle tl" data-handle="tl"></div>
+                    <div class="crop-handle tr" data-handle="tr"></div>
+                    <div class="crop-handle bl" data-handle="bl"></div>
+                    <div class="crop-handle br" data-handle="br"></div>
+                </div>
+            </div>
+        </div>
+        <div class="editor-controls">
+            <div class="editor-control-row">
+                <div class="editor-control-group">
+                    <span class="editor-control-label">Brightness</span>
+                    <input type="range" id="brightnessSlider" class="editor-slider" min="-100" max="100" value="0">
+                    <span class="slider-value" id="brightnessValue">0</span>
+                </div>
+                <div class="editor-control-group">
+                    <span class="editor-control-label">Contrast</span>
+                    <input type="range" id="contrastSlider" class="editor-slider" min="-100" max="100" value="0">
+                    <span class="slider-value" id="contrastValue">0</span>
+                </div>
+            </div>
+            <div class="editor-control-row">
+                <button class="editor-btn editor-btn-icon" id="rotateLeft" title="Rotate Left">&#8634;</button>
+                <button class="editor-btn editor-btn-icon" id="rotateRight" title="Rotate Right">&#8635;</button>
+                <button class="editor-btn" id="toggleCrop">Crop</button>
+                <button class="editor-btn" id="applyCrop" style="display: none;">Apply Crop</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Initialize
         const photos = {
@@ -1124,8 +1377,13 @@
             photos[type].forEach((photo, index) => {
                 const item = document.createElement('div');
                 item.className = 'photo-item';
+                // Add edit button only for signoff photos
+                const editBtn = type === 'signoff'
+                    ? `<button class="photo-edit" onclick="openImageEditor(${index})" title="Edit">&#9998;</button>`
+                    : '';
                 item.innerHTML = `
                     <img src="${photo}" alt="${type} photo">
+                    ${editBtn}
                     <button class="photo-remove" onclick="removePhoto('${type}', ${index})">x</button>
                 `;
                 container.appendChild(item);
@@ -1385,6 +1643,365 @@
             flashToggle.classList.remove('active');
             cameraOverlay.classList.remove('show');
         }
+
+        // Image Editor functionality
+        const imageEditorOverlay = document.getElementById('imageEditorOverlay');
+        const editorCanvas = document.getElementById('editorCanvas');
+        const editorCtx = editorCanvas.getContext('2d');
+        const editorCanvasContainer = document.getElementById('editorCanvasContainer');
+        const brightnessSlider = document.getElementById('brightnessSlider');
+        const contrastSlider = document.getElementById('contrastSlider');
+        const brightnessValue = document.getElementById('brightnessValue');
+        const contrastValue = document.getElementById('contrastValue');
+        const cropOverlay = document.getElementById('cropOverlay');
+        const cropBox = document.getElementById('cropBox');
+
+        let editorOriginalImage = null;
+        let editorCurrentPhotoIndex = -1;
+        let editorRotation = 0;
+        let editorBrightness = 0;
+        let editorContrast = 0;
+        let cropMode = false;
+        let cropRect = { x: 0, y: 0, width: 0, height: 0 };
+        let isDragging = false;
+        let dragType = null;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let cropStartRect = null;
+
+        function openImageEditor(photoIndex) {
+            editorCurrentPhotoIndex = photoIndex;
+            const photoData = photos.signoff[photoIndex];
+
+            // Reset all editor state
+            editorRotation = 0;
+            editorBrightness = 0;
+            editorContrast = 0;
+            brightnessSlider.value = 0;
+            contrastSlider.value = 0;
+            brightnessValue.textContent = '0';
+            contrastValue.textContent = '0';
+            cropMode = false;
+            document.getElementById('toggleCrop').classList.remove('active');
+            document.getElementById('applyCrop').style.display = 'none';
+            cropOverlay.classList.remove('active');
+
+            // Load the image
+            editorOriginalImage = new Image();
+            editorOriginalImage.onload = () => {
+                imageEditorOverlay.classList.add('show');
+                renderEditorCanvas();
+            };
+            editorOriginalImage.src = photoData;
+        }
+
+        function renderEditorCanvas() {
+            if (!editorOriginalImage) return;
+
+            const img = editorOriginalImage;
+            const container = editorCanvasContainer;
+
+            // Calculate rotated dimensions
+            const isRotated90 = Math.abs(editorRotation % 180) === 90;
+            const srcWidth = isRotated90 ? img.height : img.width;
+            const srcHeight = isRotated90 ? img.width : img.height;
+
+            // Scale to fit container while maintaining aspect ratio
+            const maxWidth = container.clientWidth - 20;
+            const maxHeight = container.clientHeight - 20;
+            const scale = Math.min(maxWidth / srcWidth, maxHeight / srcHeight, 1);
+
+            const displayWidth = Math.floor(srcWidth * scale);
+            const displayHeight = Math.floor(srcHeight * scale);
+
+            editorCanvas.width = displayWidth;
+            editorCanvas.height = displayHeight;
+
+            // Clear and draw with transformations
+            editorCtx.save();
+            editorCtx.clearRect(0, 0, displayWidth, displayHeight);
+
+            // Apply brightness and contrast via filter
+            const brightnessPercent = 100 + editorBrightness;
+            const contrastPercent = 100 + editorContrast;
+            editorCtx.filter = `brightness(${brightnessPercent}%) contrast(${contrastPercent}%)`;
+
+            // Center and rotate
+            editorCtx.translate(displayWidth / 2, displayHeight / 2);
+            editorCtx.rotate((editorRotation * Math.PI) / 180);
+
+            // Draw the image centered
+            const drawWidth = isRotated90 ? displayHeight : displayWidth;
+            const drawHeight = isRotated90 ? displayWidth : displayHeight;
+            editorCtx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+
+            editorCtx.restore();
+
+            // Update crop overlay if active
+            if (cropMode) {
+                updateCropOverlay();
+            }
+        }
+
+        function initCrop() {
+            const canvasRect = editorCanvas.getBoundingClientRect();
+            const containerRect = editorCanvasContainer.getBoundingClientRect();
+
+            // Position crop overlay over canvas
+            cropOverlay.style.left = (canvasRect.left - containerRect.left) + 'px';
+            cropOverlay.style.top = (canvasRect.top - containerRect.top) + 'px';
+            cropOverlay.style.width = canvasRect.width + 'px';
+            cropOverlay.style.height = canvasRect.height + 'px';
+
+            // Initialize crop rect to full image with margin
+            const margin = Math.min(canvasRect.width, canvasRect.height) * 0.1;
+            cropRect = {
+                x: margin,
+                y: margin,
+                width: canvasRect.width - margin * 2,
+                height: canvasRect.height - margin * 2
+            };
+
+            updateCropOverlay();
+        }
+
+        function updateCropOverlay() {
+            const overlayWidth = parseFloat(cropOverlay.style.width);
+            const overlayHeight = parseFloat(cropOverlay.style.height);
+
+            // Update crop box position
+            cropBox.style.left = cropRect.x + 'px';
+            cropBox.style.top = cropRect.y + 'px';
+            cropBox.style.width = cropRect.width + 'px';
+            cropBox.style.height = cropRect.height + 'px';
+
+            // Update shade areas
+            document.getElementById('cropShadeTop').style.cssText =
+                `top: 0; left: 0; width: 100%; height: ${cropRect.y}px;`;
+            document.getElementById('cropShadeBottom').style.cssText =
+                `bottom: 0; left: 0; width: 100%; height: ${overlayHeight - cropRect.y - cropRect.height}px;`;
+            document.getElementById('cropShadeLeft').style.cssText =
+                `top: ${cropRect.y}px; left: 0; width: ${cropRect.x}px; height: ${cropRect.height}px;`;
+            document.getElementById('cropShadeRight').style.cssText =
+                `top: ${cropRect.y}px; right: 0; width: ${overlayWidth - cropRect.x - cropRect.width}px; height: ${cropRect.height}px;`;
+        }
+
+        // Crop drag handlers
+        function handleCropStart(e) {
+            if (!cropMode) return;
+
+            e.preventDefault();
+            const touch = e.touches ? e.touches[0] : e;
+            const rect = cropOverlay.getBoundingClientRect();
+            dragStartX = touch.clientX - rect.left;
+            dragStartY = touch.clientY - rect.top;
+
+            const target = e.target;
+            if (target.classList.contains('crop-handle')) {
+                dragType = target.dataset.handle;
+            } else if (target === cropBox) {
+                dragType = 'move';
+            } else {
+                return;
+            }
+
+            isDragging = true;
+            cropStartRect = { ...cropRect };
+        }
+
+        function handleCropMove(e) {
+            if (!isDragging || !cropMode) return;
+
+            e.preventDefault();
+            const touch = e.touches ? e.touches[0] : e;
+            const rect = cropOverlay.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            const dx = x - dragStartX;
+            const dy = y - dragStartY;
+
+            const overlayWidth = rect.width;
+            const overlayHeight = rect.height;
+            const minSize = 50;
+
+            if (dragType === 'move') {
+                cropRect.x = Math.max(0, Math.min(overlayWidth - cropRect.width, cropStartRect.x + dx));
+                cropRect.y = Math.max(0, Math.min(overlayHeight - cropRect.height, cropStartRect.y + dy));
+            } else if (dragType === 'tl') {
+                const newX = Math.max(0, Math.min(cropStartRect.x + cropStartRect.width - minSize, cropStartRect.x + dx));
+                const newY = Math.max(0, Math.min(cropStartRect.y + cropStartRect.height - minSize, cropStartRect.y + dy));
+                cropRect.width = cropStartRect.width + (cropStartRect.x - newX);
+                cropRect.height = cropStartRect.height + (cropStartRect.y - newY);
+                cropRect.x = newX;
+                cropRect.y = newY;
+            } else if (dragType === 'tr') {
+                const newWidth = Math.max(minSize, Math.min(overlayWidth - cropStartRect.x, cropStartRect.width + dx));
+                const newY = Math.max(0, Math.min(cropStartRect.y + cropStartRect.height - minSize, cropStartRect.y + dy));
+                cropRect.width = newWidth;
+                cropRect.height = cropStartRect.height + (cropStartRect.y - newY);
+                cropRect.y = newY;
+            } else if (dragType === 'bl') {
+                const newX = Math.max(0, Math.min(cropStartRect.x + cropStartRect.width - minSize, cropStartRect.x + dx));
+                const newHeight = Math.max(minSize, Math.min(overlayHeight - cropStartRect.y, cropStartRect.height + dy));
+                cropRect.width = cropStartRect.width + (cropStartRect.x - newX);
+                cropRect.height = newHeight;
+                cropRect.x = newX;
+            } else if (dragType === 'br') {
+                cropRect.width = Math.max(minSize, Math.min(overlayWidth - cropStartRect.x, cropStartRect.width + dx));
+                cropRect.height = Math.max(minSize, Math.min(overlayHeight - cropStartRect.y, cropStartRect.height + dy));
+            }
+
+            updateCropOverlay();
+        }
+
+        function handleCropEnd() {
+            isDragging = false;
+            dragType = null;
+        }
+
+        // Add crop event listeners
+        cropOverlay.addEventListener('mousedown', handleCropStart);
+        cropOverlay.addEventListener('touchstart', handleCropStart, { passive: false });
+        document.addEventListener('mousemove', handleCropMove);
+        document.addEventListener('touchmove', handleCropMove, { passive: false });
+        document.addEventListener('mouseup', handleCropEnd);
+        document.addEventListener('touchend', handleCropEnd);
+
+        // Editor button handlers
+        brightnessSlider.addEventListener('input', (e) => {
+            editorBrightness = parseInt(e.target.value);
+            brightnessValue.textContent = editorBrightness;
+            renderEditorCanvas();
+        });
+
+        contrastSlider.addEventListener('input', (e) => {
+            editorContrast = parseInt(e.target.value);
+            contrastValue.textContent = editorContrast;
+            renderEditorCanvas();
+        });
+
+        document.getElementById('rotateLeft').addEventListener('click', () => {
+            editorRotation = (editorRotation - 90 + 360) % 360;
+            renderEditorCanvas();
+            if (cropMode) {
+                setTimeout(initCrop, 50);
+            }
+        });
+
+        document.getElementById('rotateRight').addEventListener('click', () => {
+            editorRotation = (editorRotation + 90) % 360;
+            renderEditorCanvas();
+            if (cropMode) {
+                setTimeout(initCrop, 50);
+            }
+        });
+
+        document.getElementById('toggleCrop').addEventListener('click', () => {
+            cropMode = !cropMode;
+            document.getElementById('toggleCrop').classList.toggle('active', cropMode);
+            document.getElementById('applyCrop').style.display = cropMode ? 'inline-block' : 'none';
+            cropOverlay.classList.toggle('active', cropMode);
+
+            if (cropMode) {
+                setTimeout(initCrop, 50);
+            }
+        });
+
+        document.getElementById('applyCrop').addEventListener('click', () => {
+            if (!cropMode) return;
+
+            // Get the crop area in canvas coordinates
+            const canvasRect = editorCanvas.getBoundingClientRect();
+            const scaleX = editorCanvas.width / canvasRect.width;
+            const scaleY = editorCanvas.height / canvasRect.height;
+
+            const cropX = cropRect.x * scaleX;
+            const cropY = cropRect.y * scaleY;
+            const cropW = cropRect.width * scaleX;
+            const cropH = cropRect.height * scaleY;
+
+            // Create a temporary canvas with the cropped region
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = cropW;
+            tempCanvas.height = cropH;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            // Draw the cropped portion
+            tempCtx.drawImage(editorCanvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+
+            // Create a new image from the cropped canvas
+            const croppedImage = new Image();
+            croppedImage.onload = () => {
+                editorOriginalImage = croppedImage;
+                editorRotation = 0;
+
+                // Exit crop mode
+                cropMode = false;
+                document.getElementById('toggleCrop').classList.remove('active');
+                document.getElementById('applyCrop').style.display = 'none';
+                cropOverlay.classList.remove('active');
+
+                renderEditorCanvas();
+            };
+            croppedImage.src = tempCanvas.toDataURL('image/jpeg', 0.95);
+        });
+
+        document.getElementById('editorReset').addEventListener('click', () => {
+            // Reload original image
+            const photoData = photos.signoff[editorCurrentPhotoIndex];
+            editorRotation = 0;
+            editorBrightness = 0;
+            editorContrast = 0;
+            brightnessSlider.value = 0;
+            contrastSlider.value = 0;
+            brightnessValue.textContent = '0';
+            contrastValue.textContent = '0';
+            cropMode = false;
+            document.getElementById('toggleCrop').classList.remove('active');
+            document.getElementById('applyCrop').style.display = 'none';
+            cropOverlay.classList.remove('active');
+
+            editorOriginalImage = new Image();
+            editorOriginalImage.onload = () => {
+                renderEditorCanvas();
+            };
+            editorOriginalImage.src = photoData;
+        });
+
+        document.getElementById('editorCancel').addEventListener('click', () => {
+            imageEditorOverlay.classList.remove('show');
+            editorOriginalImage = null;
+            editorCurrentPhotoIndex = -1;
+        });
+
+        document.getElementById('editorSave').addEventListener('click', () => {
+            if (editorCurrentPhotoIndex < 0) return;
+
+            // Get the final image data URL
+            const finalDataUrl = editorCanvas.toDataURL('image/jpeg', 0.95);
+
+            // Update the photo in the array
+            photos.signoff[editorCurrentPhotoIndex] = finalDataUrl;
+
+            // Re-render and save
+            renderPhotos('signoff');
+            autoSave();
+
+            // Close editor
+            imageEditorOverlay.classList.remove('show');
+            editorOriginalImage = null;
+            editorCurrentPhotoIndex = -1;
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (imageEditorOverlay.classList.contains('show')) {
+                renderEditorCanvas();
+                if (cropMode) {
+                    setTimeout(initCrop, 50);
+                }
+            }
+        });
 
         // Format helpers
         function getFormattedDate(isoDate) {
