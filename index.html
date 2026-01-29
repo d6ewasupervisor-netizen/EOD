@@ -1352,10 +1352,23 @@
             return photoArray.some(existing => existing.substring(0, 1000) === newPhotoPrefix);
         }
 
+        // Processing guard to prevent duplicate uploads from rapid event firing
+        const photoProcessingGuard = {};
+
         // Photo handling with orientation correction and HEIC support
         async function handlePhoto(input, type) {
+            // Prevent concurrent processing for the same type (fixes duplicate uploads)
+            if (photoProcessingGuard[type]) {
+                console.log('Skipping concurrent photo processing for:', type);
+                return;
+            }
+            photoProcessingGuard[type] = true;
+
             const files = input.files;
-            if (!files || files.length === 0) return;
+            if (!files || files.length === 0) {
+                photoProcessingGuard[type] = false;
+                return;
+            }
 
             for (let file of files) {
                 try {
@@ -1401,6 +1414,7 @@
                 }
             }
             input.value = '';
+            photoProcessingGuard[type] = false;
         }
 
         // Check if a file is HEIC format
