@@ -1184,7 +1184,11 @@
 
         // Auto-save to localStorage
         function autoSave() {
+            // Preserve existing data (like signature) that may be saved separately
+            const existingData = JSON.parse(localStorage.getItem('kompassEOD') || '{}');
+
             const data = {
+                ...existingData, // Preserve signature and any other existing fields
                 storeNumber: document.getElementById('storeNumber').value,
                 date: document.getElementById('workDate').value,
                 leadName: document.getElementById('leadName').value,
@@ -1259,10 +1263,33 @@
                 }
 
                 if (data.photos) {
-                    Object.assign(photos, data.photos);
+                    // Deduplicate photos when loading (clean up any existing duplicates)
+                    const deduplicatePhotos = (photoArray) => {
+                        if (!Array.isArray(photoArray)) return [];
+                        const seen = new Set();
+                        return photoArray.filter(photo => {
+                            const prefix = photo.substring(0, 1000);
+                            if (seen.has(prefix)) return false;
+                            seen.add(prefix);
+                            return true;
+                        });
+                    };
+
+                    photos.before = deduplicatePhotos(data.photos.before);
+                    photos.signoff = deduplicatePhotos(data.photos.signoff);
+                    photos.after = deduplicatePhotos(data.photos.after);
+
                     renderPhotos('before');
                     renderPhotos('signoff');
                     renderPhotos('after');
+
+                    // Save back any cleaned up duplicates
+                    if (photos.before.length !== (data.photos.before?.length || 0) ||
+                        photos.signoff.length !== (data.photos.signoff?.length || 0) ||
+                        photos.after.length !== (data.photos.after?.length || 0)) {
+                        console.log('Cleaned up duplicate photos');
+                        autoSave();
+                    }
                 }
             }
         }
@@ -1316,6 +1343,12 @@
             autoSave();
         }
 
+        // Check if a photo already exists in the array (compare first 1000 chars to avoid expensive full comparison)
+        function isPhotoAlreadyAdded(photoArray, newPhoto) {
+            const newPhotoPrefix = newPhoto.substring(0, 1000);
+            return photoArray.some(existing => existing.substring(0, 1000) === newPhotoPrefix);
+        }
+
         // Photo handling with orientation correction
         async function handlePhoto(input, type) {
             const files = input.files;
@@ -1325,17 +1358,27 @@
                 try {
                     // Process image with orientation correction
                     const correctedDataUrl = await processImageWithOrientation(file);
-                    photos[type].push(correctedDataUrl);
-                    renderPhotos(type);
-                    autoSave();
+                    // Only add if not a duplicate
+                    if (!isPhotoAlreadyAdded(photos[type], correctedDataUrl)) {
+                        photos[type].push(correctedDataUrl);
+                        renderPhotos(type);
+                        autoSave();
+                    } else {
+                        console.log('Skipping duplicate photo');
+                    }
                 } catch (error) {
                     console.error('Error processing image:', error);
                     // Fallback to basic loading if orientation correction fails
                     const reader = new FileReader();
                     reader.onload = (e) => {
-                        photos[type].push(e.target.result);
-                        renderPhotos(type);
-                        autoSave();
+                        // Only add if not a duplicate
+                        if (!isPhotoAlreadyAdded(photos[type], e.target.result)) {
+                            photos[type].push(e.target.result);
+                            renderPhotos(type);
+                            autoSave();
+                        } else {
+                            console.log('Skipping duplicate photo');
+                        }
                     };
                     reader.readAsDataURL(file);
                 }
