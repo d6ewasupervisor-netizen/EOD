@@ -1370,7 +1370,11 @@
                 return;
             }
 
-            for (let file of files) {
+            // Clear input immediately to prevent re-firing
+            const fileList = Array.from(files);
+            input.value = '';
+
+            for (let file of fileList) {
                 try {
                     let processedFile = file;
 
@@ -1413,7 +1417,6 @@
                     reader.readAsDataURL(file);
                 }
             }
-            input.value = '';
             photoProcessingGuard[type] = false;
         }
 
@@ -1690,6 +1693,7 @@
         let flashEnabled = false;
         let tempPhotoCount = 0;
         let currentCameraType = 'signoff';
+        let captureInProgress = false;
 
         async function openPhotoCamera(type) {
             currentCameraType = type;
@@ -1760,7 +1764,8 @@
         });
 
         captureButton.addEventListener('click', () => {
-            if (!cameraStream) return;
+            if (!cameraStream || captureInProgress) return;
+            captureInProgress = true;
 
             // Set canvas size to match video
             captureCanvas.width = cameraVideo.videoWidth;
@@ -1789,7 +1794,13 @@
             if (currentCameraType === 'before' || currentCameraType === 'after') {
                 setTimeout(() => {
                     closeCameraOverlay();
+                    captureInProgress = false;
                 }, 300);
+            } else {
+                // Re-enable capture for multi-photo mode after brief delay
+                setTimeout(() => {
+                    captureInProgress = false;
+                }, 500);
             }
         });
 
@@ -1798,6 +1809,7 @@
         });
 
         function closeCameraOverlay() {
+            captureInProgress = false;
             if (cameraStream) {
                 const tracks = cameraStream.getTracks();
                 tracks.forEach(track => track.stop());
