@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>KOMPASS EOD COVER SHEET</title>
     <script src="https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -860,7 +861,7 @@
                         Upload Image
                     </button>
                 </div>
-                <input type="file" id="photoBefore" accept="image/*" onchange="handlePhoto(this, 'before')">
+                <input type="file" id="photoBefore" accept="image/*,.heic,.heif" onchange="handlePhoto(this, 'before')">
                 <div id="previewBefore" class="photo-preview"></div>
             </div>
 
@@ -880,7 +881,7 @@
                         Upload Image
                     </button>
                 </div>
-                <input type="file" id="photoAfter" accept="image/*" onchange="handlePhoto(this, 'after')">
+                <input type="file" id="photoAfter" accept="image/*,.heic,.heif" onchange="handlePhoto(this, 'after')">
                 <div id="previewAfter" class="photo-preview"></div>
             </div>
 
@@ -900,7 +901,7 @@
                         Upload Images
                     </button>
                 </div>
-                <input type="file" id="photoSignoff" accept="image/*" multiple onchange="handlePhoto(this, 'signoff')">
+                <input type="file" id="photoSignoff" accept="image/*,.heic,.heif" multiple onchange="handlePhoto(this, 'signoff')">
                 <div id="previewSignoff" class="photo-preview"></div>
             </div>
 
@@ -1095,11 +1096,13 @@
         <div class="sig-toolbar">
             <button class="btn btn-secondary" id="sigClose">Close</button>
             <div style="margin-left:auto; display:flex; gap:8px;">
+                <button class="btn btn-secondary" id="sigLoadPhoto">Load Photo</button>
                 <button class="btn btn-secondary" id="sigClear">Clear</button>
                 <button class="btn btn-primary" id="sigAccept">Accept</button>
             </div>
         </div>
         <canvas id="sigFsCanvas"></canvas>
+        <input type="file" id="signaturePhotoInput" accept="image/*,.heic,.heif" style="display:none;">
     </div>
 
     <!-- Camera Fullscreen Overlay for Sign-off Sheets -->
@@ -1349,15 +1352,29 @@
             return photoArray.some(existing => existing.substring(0, 1000) === newPhotoPrefix);
         }
 
-        // Photo handling with orientation correction
+        // Photo handling with orientation correction and HEIC support
         async function handlePhoto(input, type) {
             const files = input.files;
             if (!files || files.length === 0) return;
 
             for (let file of files) {
                 try {
+                    let processedFile = file;
+
+                    // Convert HEIC files to JPEG first
+                    if (isHeicFile(file)) {
+                        try {
+                            processedFile = await convertHeicToJpeg(file);
+                            console.log('HEIC file converted to JPEG');
+                        } catch (heicError) {
+                            console.error('HEIC conversion failed:', heicError);
+                            showAlert('Could not convert HEIC image. Please try a different photo or convert it to JPEG first.');
+                            continue;
+                        }
+                    }
+
                     // Process image with orientation correction
-                    const correctedDataUrl = await processImageWithOrientation(file);
+                    const correctedDataUrl = await processImageWithOrientation(processedFile);
                     // Only add if not a duplicate
                     if (!isPhotoAlreadyAdded(photos[type], correctedDataUrl)) {
                         photos[type].push(correctedDataUrl);
@@ -1384,6 +1401,34 @@
                 }
             }
             input.value = '';
+        }
+
+        // Check if a file is HEIC format
+        function isHeicFile(file) {
+            const name = file.name.toLowerCase();
+            const type = file.type.toLowerCase();
+            return name.endsWith('.heic') || name.endsWith('.heif') ||
+                   type === 'image/heic' || type === 'image/heif';
+        }
+
+        // Convert HEIC file to JPEG blob
+        async function convertHeicToJpeg(file) {
+            try {
+                const blob = await heic2any({
+                    blob: file,
+                    toType: 'image/jpeg',
+                    quality: 0.92
+                });
+                // heic2any can return a single blob or an array (for multi-image HEIC files)
+                const resultBlob = Array.isArray(blob) ? blob[0] : blob;
+                // Create a new File object with the converted blob
+                return new File([resultBlob], file.name.replace(/\.heic$/i, '.jpg').replace(/\.heif$/i, '.jpg'), {
+                    type: 'image/jpeg'
+                });
+            } catch (error) {
+                console.error('HEIC conversion error:', error);
+                throw new Error('Failed to convert HEIC image: ' + error.message);
+            }
         }
 
         // Process image and correct orientation using canvas
@@ -1542,6 +1587,66 @@
 
         document.getElementById('sigClose').addEventListener('click', () => {
             fsOverlay.classList.remove('show');
+        });
+
+        // Signature photo loading
+        document.getElementById('sigLoadPhoto').addEventListener('click', () => {
+            document.getElementById('signaturePhotoInput').click();
+        });
+
+        document.getElementById('signaturePhotoInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                let processedFile = file;
+
+                // Convert HEIC files to JPEG first
+                if (isHeicFile(file)) {
+                    try {
+                        processedFile = await convertHeicToJpeg(file);
+                        console.log('Signature HEIC file converted to JPEG');
+                    } catch (heicError) {
+                        console.error('HEIC conversion failed:', heicError);
+                        showAlert('Could not convert HEIC image. Please try a different photo or convert it to JPEG first.');
+                        e.target.value = '';
+                        return;
+                    }
+                }
+
+                // Load and draw the image onto the signature canvas
+                const img = new Image();
+                img.onload = () => {
+                    // Clear the canvas first
+                    fsCtx.clearRect(0, 0, fsCanvas.width, fsCanvas.height);
+
+                    // Calculate scaling to fit the image within the canvas while maintaining aspect ratio
+                    const scale = Math.min(
+                        (fsCanvas.width * 0.9) / img.width,
+                        (fsCanvas.height * 0.9) / img.height
+                    );
+                    const dw = img.width * scale;
+                    const dh = img.height * scale;
+                    const dx = (fsCanvas.width - dw) / 2;
+                    const dy = (fsCanvas.height - dh) / 2;
+
+                    // Draw white background behind the image (in case it has transparency)
+                    fsCtx.fillStyle = '#ffffff';
+                    fsCtx.fillRect(dx, dy, dw, dh);
+
+                    // Draw the signature image
+                    fsCtx.drawImage(img, 0, 0, img.width, img.height, dx, dy, dw, dh);
+                };
+                img.onerror = () => {
+                    showAlert('Could not load the selected image. Please try a different file.');
+                };
+                img.src = URL.createObjectURL(processedFile);
+            } catch (error) {
+                console.error('Error loading signature photo:', error);
+                showAlert('Error loading signature photo. Please try again.');
+            }
+
+            e.target.value = ''; // Reset the input
         });
 
         function updateSignaturePreview() {
