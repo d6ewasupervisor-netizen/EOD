@@ -133,6 +133,60 @@
             color: #f9fafb;
         }
 
+        /* Email recipient management styles */
+        .email-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .email-input-group input {
+            flex: 1;
+        }
+
+        .add-recipient-btn {
+            white-space: nowrap;
+            padding: 10px 15px;
+        }
+
+        .recipient-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .recipient-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #4b5563;
+            color: #f9fafb;
+            padding: 6px 10px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .recipient-tag .remove-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1;
+            padding: 0;
+        }
+
+        .recipient-tag .remove-btn:hover {
+            background: #dc2626;
+        }
+
         .photo-section {
             margin-top: 15px;
         }
@@ -828,7 +882,136 @@
             <div class="field-group">
                 <div class="field">
                     <label>Store #:</label>
-                    <input type="text" id="storeNumber" placeholder="###">
+                    <input type="text" id="storeNumber" list="storeList" placeholder="Select or enter store #">
+                    <datalist id="storeList">
+                        <option value="5">
+                        <option value="11">
+                        <option value="13">
+                        <option value="17">
+                        <option value="18">
+                        <option value="19">
+                        <option value="21">
+                        <option value="23">
+                        <option value="24">
+                        <option value="25">
+                        <option value="28">
+                        <option value="30">
+                        <option value="31">
+                        <option value="35">
+                        <option value="40">
+                        <option value="41">
+                        <option value="49">
+                        <option value="50">
+                        <option value="53">
+                        <option value="60">
+                        <option value="63">
+                        <option value="70">
+                        <option value="71">
+                        <option value="75">
+                        <option value="90">
+                        <option value="93">
+                        <option value="111">
+                        <option value="122">
+                        <option value="125">
+                        <option value="126">
+                        <option value="127">
+                        <option value="135">
+                        <option value="140">
+                        <option value="143">
+                        <option value="150">
+                        <option value="153">
+                        <option value="156">
+                        <option value="158">
+                        <option value="163">
+                        <option value="165">
+                        <option value="171">
+                        <option value="180">
+                        <option value="185">
+                        <option value="186">
+                        <option value="195">
+                        <option value="196">
+                        <option value="198">
+                        <option value="208">
+                        <option value="209">
+                        <option value="210">
+                        <option value="214">
+                        <option value="215">
+                        <option value="218">
+                        <option value="220">
+                        <option value="224">
+                        <option value="225">
+                        <option value="226">
+                        <option value="227">
+                        <option value="236">
+                        <option value="240">
+                        <option value="242">
+                        <option value="253">
+                        <option value="255">
+                        <option value="260">
+                        <option value="265">
+                        <option value="281">
+                        <option value="285">
+                        <option value="286">
+                        <option value="325">
+                        <option value="328">
+                        <option value="351">
+                        <option value="355">
+                        <option value="360">
+                        <option value="372">
+                        <option value="375">
+                        <option value="377">
+                        <option value="383">
+                        <option value="390">
+                        <option value="391">
+                        <option value="393">
+                        <option value="417">
+                        <option value="424">
+                        <option value="439">
+                        <option value="449">
+                        <option value="457">
+                        <option value="458">
+                        <option value="459">
+                        <option value="460">
+                        <option value="462">
+                        <option value="464">
+                        <option value="482">
+                        <option value="485">
+                        <option value="486">
+                        <option value="516">
+                        <option value="600">
+                        <option value="603">
+                        <option value="604">
+                        <option value="605">
+                        <option value="608">
+                        <option value="613">
+                        <option value="614">
+                        <option value="615">
+                        <option value="649">
+                        <option value="650">
+                        <option value="651">
+                        <option value="652">
+                        <option value="653">
+                        <option value="654">
+                        <option value="655">
+                        <option value="656">
+                        <option value="657">
+                        <option value="658">
+                        <option value="659">
+                        <option value="660">
+                        <option value="661">
+                        <option value="662">
+                        <option value="663">
+                        <option value="665">
+                        <option value="667">
+                        <option value="668">
+                        <option value="681">
+                        <option value="682">
+                        <option value="683">
+                        <option value="685">
+                        <option value="688">
+                        <option value="691">
+                        <option value="694">
+                    </datalist>
                 </div>
                 <div class="field">
                     <label>Date:</label>
@@ -1015,8 +1198,15 @@
         <div class="section">
             <div class="section-title">Email Settings</div>
             <div class="field">
-                <label>Send To:</label>
-                <input type="email" id="emailTo" placeholder="recipient@example.com">
+                <label>Add Recipient:</label>
+                <div class="email-input-group">
+                    <input type="email" id="emailInput" placeholder="recipient@example.com">
+                    <button type="button" class="btn btn-primary add-recipient-btn" onclick="addEmailRecipient()">Add Recipient</button>
+                </div>
+            </div>
+            <div class="field" id="recipientListContainer" style="margin-top: 10px; display: none;">
+                <label>Recipients:</label>
+                <div id="recipientList" class="recipient-list"></div>
             </div>
             <div class="field" style="margin-top: 10px;">
                 <div class="checkbox-group">
@@ -1182,6 +1372,82 @@
             after: []
         };
 
+        // Email recipients array
+        let emailRecipients = [];
+
+        // Add email recipient
+        function addEmailRecipient() {
+            const input = document.getElementById('emailInput');
+            const email = input.value.trim();
+
+            if (!email) {
+                return;
+            }
+
+            // Basic email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showAlert('Invalid Email', 'Please enter a valid email address.');
+                return;
+            }
+
+            // Check for duplicates
+            if (emailRecipients.includes(email.toLowerCase())) {
+                showAlert('Duplicate', 'This email address has already been added.');
+                return;
+            }
+
+            emailRecipients.push(email.toLowerCase());
+            input.value = '';
+            renderRecipientList();
+            autoSave();
+        }
+
+        // Remove email recipient
+        function removeEmailRecipient(index) {
+            emailRecipients.splice(index, 1);
+            renderRecipientList();
+            autoSave();
+        }
+
+        // Render the recipient list
+        function renderRecipientList() {
+            const container = document.getElementById('recipientListContainer');
+            const list = document.getElementById('recipientList');
+
+            if (emailRecipients.length === 0) {
+                container.style.display = 'none';
+                list.innerHTML = '';
+                return;
+            }
+
+            container.style.display = 'block';
+            list.innerHTML = emailRecipients.map((email, index) =>
+                `<span class="recipient-tag">
+                    ${email}
+                    <button type="button" class="remove-btn" onclick="removeEmailRecipient(${index})" title="Remove">&times;</button>
+                </span>`
+            ).join('');
+        }
+
+        // Get semicolon-separated email list
+        function getEmailList() {
+            return emailRecipients.join('; ');
+        }
+
+        // Allow adding recipient with Enter key
+        document.addEventListener('DOMContentLoaded', function() {
+            const emailInput = document.getElementById('emailInput');
+            if (emailInput) {
+                emailInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addEmailRecipient();
+                    }
+                });
+            }
+        });
+
         // Set today's date
         document.getElementById('workDate').valueAsDate = new Date();
 
@@ -1201,7 +1467,7 @@
                 issue: document.getElementById('issue').value,
                 tempSolution: document.getElementById('tempSolution').value,
                 notes: document.getElementById('notes').value,
-                emailTo: document.getElementById('emailTo').value,
+                emailRecipients: emailRecipients,
                 hotlineYes: document.getElementById('hotlineYes').checked,
                 hotlineNo: document.getElementById('hotlineNo').checked,
                 resolvedYes: document.getElementById('resolvedYes').checked,
@@ -1234,7 +1500,15 @@
                 document.getElementById('issue').value = data.issue || '';
                 document.getElementById('tempSolution').value = data.tempSolution || '';
                 document.getElementById('notes').value = data.notes || '';
-                document.getElementById('emailTo').value = data.emailTo || '';
+
+                // Load email recipients (support both old emailTo and new emailRecipients format)
+                if (data.emailRecipients && Array.isArray(data.emailRecipients)) {
+                    emailRecipients = data.emailRecipients;
+                } else if (data.emailTo) {
+                    // Migrate old single email to new array format
+                    emailRecipients = [data.emailTo];
+                }
+                renderRecipientList();
 
                 if (data.hotlineYes) {
                     document.getElementById('hotlineYes').checked = true;
@@ -2308,7 +2582,7 @@
                 SignedOutPROD: document.getElementById('prodYes').checked,
                 SignedOutSI: document.getElementById('siYes').checked,
                 Notes: document.getElementById('notes').value,
-                EmailTo: document.getElementById('emailTo').value,
+                EmailTo: getEmailList(),
                 BeforeComplete: document.getElementById('beforeComplete')?.checked || false,
                 SignoffComplete: document.getElementById('signoffComplete')?.checked || false,
                 AfterComplete: document.getElementById('afterComplete')?.checked || false,
@@ -2707,6 +2981,7 @@ ${data.Notes || ''}
                     photos.before = [];
                     photos.signoff = [];
                     photos.after = [];
+                    emailRecipients = [];
                     document.querySelectorAll('input, textarea').forEach(el => {
                         if (el.type === 'checkbox') el.checked = false;
                         else if (el.type === 'date') el.valueAsDate = new Date();
@@ -2715,6 +2990,7 @@ ${data.Notes || ''}
                     renderPhotos('before');
                     renderPhotos('signoff');
                     renderPhotos('after');
+                    renderRecipientList();
                     updateSignaturePreview();
                     document.getElementById('hotlineDetails').style.display = 'none';
                     document.getElementById('tempSolutionField').style.display = 'none';
