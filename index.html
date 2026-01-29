@@ -2423,9 +2423,9 @@ ${data.Notes || ''}
             // Load the PDF template - try multiple paths
             let pdfBytes;
             const pdfPaths = [
-                'End Of Day Cover Sheet Form Editable Template.pdf',
-                './End_Of_Day_Cover_Sheet_Form_Editable_Template.pdf',
-                'End%20Of%20Day%20Cover%20Sheet%20Form%20Editable%20Template.pdf'
+                'End Of Day Cover Sheet Form Editable Template (1).pdf',
+                './End_Of_Day_Cover_Sheet_Form_Editable_Template_(1).pdf',
+                'End%20Of%20Day%20Cover%20Sheet%20Form%20Editable%20Template%20(1).pdf'
             ];
 
             let loadError;
@@ -2445,7 +2445,7 @@ ${data.Notes || ''}
             }
 
             if (!pdfBytes) {
-                throw new Error('PDF template not found. Please ensure "End Of Day Cover Sheet Form Editable Template.pdf" is in the same directory as this HTML file. Error: ' + (loadError ? loadError.message : 'Not found'));
+                throw new Error('PDF template not found. Please ensure "End Of Day Cover Sheet Form Editable Template (1).pdf" is in the same directory as this HTML file. Error: ' + (loadError ? loadError.message : 'Not found'));
             }
 
             console.log('Loading PDF document...');
@@ -2945,9 +2945,9 @@ Attach PDF: ${pdfFilename}`;
 
             // Test 2: Try to load PDF template
             const pdfPaths = [
-                'End Of Day Cover Sheet Form Editable Template.pdf',
-                './End_Of_Day_Cover_Sheet_Form_Editable_Template.pdf',
-                'End%20Of%20Day%20Cover%20Sheet%20Form%20Editable%20Template.pdf'
+                'End Of Day Cover Sheet Form Editable Template (1).pdf',
+                './End_Of_Day_Cover_Sheet_Form_Editable_Template_(1).pdf',
+                'End%20Of%20Day%20Cover%20Sheet%20Form%20Editable%20Template%20(1).pdf'
             ];
 
             let pdfFound = false;
@@ -2965,7 +2965,7 @@ Attach PDF: ${pdfFilename}`;
             }
 
             if (!pdfFound) {
-                results.push('2. PDF Template: Not found. Please ensure "End Of Day Cover Sheet Form Editable Template.pdf" is in the same directory as this HTML file.');
+                results.push('2. PDF Template: Not found. Please ensure "End Of Day Cover Sheet Form Editable Template (1).pdf" is in the same directory as this HTML file.');
             }
 
             // Test 3: Check logo
