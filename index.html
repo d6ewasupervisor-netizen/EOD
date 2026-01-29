@@ -2164,18 +2164,22 @@
             const parts = isoDate.split('-');
             if (parts.length === 3) {
                 const [y, m, d] = parts;
+                const yy = y.slice(-2);
                 return {
                     mmddyyyy: `${m}/${d}/${y}`,
-                    mm_dd_yyyy: `${m}_${d}_${y}`
+                    mm_dd_yyyy: `${m}_${d}_${y}`,
+                    dd_mm_yy: `${d} ${m} ${yy}`
                 };
             }
             const today = new Date();
             const m = String(today.getMonth() + 1).padStart(2, '0');
             const d = String(today.getDate()).padStart(2, '0');
             const y = today.getFullYear();
+            const yy = String(y).slice(-2);
             return {
                 mmddyyyy: `${m}/${d}/${y}`,
-                mm_dd_yyyy: `${m}_${d}_${y}`
+                mm_dd_yyyy: `${m}_${d}_${y}`,
+                dd_mm_yy: `${d} ${m} ${yy}`
             };
         }
 
@@ -2277,6 +2281,7 @@
                 LeadName: document.getElementById('leadName').value,
                 DateMMDDYYYY: dates.mmddyyyy,
                 DateForFilename: dates.mm_dd_yyyy,
+                DateForPDFFilename: dates.dd_mm_yy,
                 StoreNumber: rawStoreNum,
                 StoreNumberPadded: storeNumPadded,
                 CheckInManager: document.getElementById('checkInManager').value,
@@ -2307,7 +2312,7 @@
                 const data = await collectData();
 
                 // First, generate the PDF
-                const pdfFilename = `KOMPASS EOD Cover Sheet FM${data.StoreNumberPadded} ${data.DateForFilename}.pdf`;
+                const pdfFilename = `FM${data.StoreNumberPadded} KOMPASS EOD ${data.DateForPDFFilename}.PDF`;
 
                 try {
                     await generatePDFInternal(data, pdfFilename);
@@ -2365,7 +2370,7 @@ ${data.Notes || ''}
 
                 // Add Retail Odyssey Team emails if checkbox is checked
                 if (document.getElementById('addRetailOdysseyTeam').checked) {
-                    const retailOdysseyTeam = ['KNix@retailodyssey.com', 'MAshabranner@retailodyssey.com', 'seth.newman@retailodyssey.com', 'tyson.gauthier@retailodyssey.com'];
+                    const retailOdysseyTeam = ['MAshabranner@retailodyssey.com', 'seth.newman@retailodyssey.com', 'tyson.gauthier@retailodyssey.com'];
                     ccList = ccList.concat(retailOdysseyTeam);
                     // Remove duplicates
                     ccList = [...new Set(ccList)];
