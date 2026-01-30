@@ -685,32 +685,66 @@
             display: block;
         }
 
-        .crop-box {
+        .crop-svg {
             position: absolute;
-            border: 2px dashed #88c4ed;
-            background: transparent;
-            cursor: move;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .crop-shade-polygon {
+            fill: rgba(0, 0, 0, 0.6);
+            fill-rule: evenodd;
+        }
+
+        .crop-polygon-outline {
+            fill: none;
+            stroke: #88c4ed;
+            stroke-width: 2;
+            stroke-dasharray: 6, 4;
+        }
+
+        .crop-polygon-line {
+            stroke: #88c4ed;
+            stroke-width: 2;
             pointer-events: auto;
+            cursor: crosshair;
         }
 
         .crop-handle {
             position: absolute;
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             background: #0d4f8b;
-            border: 2px solid #88c4ed;
+            border: 3px solid #88c4ed;
             border-radius: 50%;
             pointer-events: auto;
+            cursor: move;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            touch-action: none;
         }
 
-        .crop-handle.tl { top: -10px; left: -10px; cursor: nw-resize; }
-        .crop-handle.tr { top: -10px; right: -10px; cursor: ne-resize; }
-        .crop-handle.bl { bottom: -10px; left: -10px; cursor: sw-resize; }
-        .crop-handle.br { bottom: -10px; right: -10px; cursor: se-resize; }
+        .crop-handle:hover {
+            background: #1a6fc4;
+            transform: translate(-50%, -50%) scale(1.15);
+        }
 
-        .crop-shade {
+        .crop-handle:active {
+            background: #2a8fe4;
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        .crop-handle-label {
             position: absolute;
-            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            font-size: 10px;
+            font-weight: bold;
+            text-align: center;
+            width: 100%;
+            line-height: 18px;
             pointer-events: none;
         }
 
@@ -1330,16 +1364,17 @@
         <div class="editor-canvas-container" id="editorCanvasContainer">
             <canvas id="editorCanvas"></canvas>
             <div class="crop-overlay" id="cropOverlay">
-                <div class="crop-shade" id="cropShadeTop"></div>
-                <div class="crop-shade" id="cropShadeRight"></div>
-                <div class="crop-shade" id="cropShadeBottom"></div>
-                <div class="crop-shade" id="cropShadeLeft"></div>
-                <div class="crop-box" id="cropBox">
-                    <div class="crop-handle tl" data-handle="tl"></div>
-                    <div class="crop-handle tr" data-handle="tr"></div>
-                    <div class="crop-handle bl" data-handle="bl"></div>
-                    <div class="crop-handle br" data-handle="br"></div>
-                </div>
+                <svg class="crop-svg" id="cropSvg">
+                    <defs>
+                        <mask id="cropMask">
+                            <rect x="0" y="0" width="100%" height="100%" fill="white"/>
+                            <polygon id="cropMaskPolygon" fill="black"/>
+                        </mask>
+                    </defs>
+                    <rect class="crop-shade-polygon" x="0" y="0" width="100%" height="100%" mask="url(#cropMask)"/>
+                    <polygon id="cropPolygonOutline" class="crop-polygon-outline"/>
+                </svg>
+                <div id="cropHandlesContainer"></div>
             </div>
         </div>
         <div class="editor-controls">
@@ -2106,7 +2141,6 @@
         const brightnessValue = document.getElementById('brightnessValue');
         const contrastValue = document.getElementById('contrastValue');
         const cropOverlay = document.getElementById('cropOverlay');
-        const cropBox = document.getElementById('cropBox');
 
         let editorOriginalImage = null;
         let editorCurrentPhotoIndex = -1;
@@ -2114,12 +2148,19 @@
         let editorBrightness = 0;
         let editorContrast = 0;
         let cropMode = false;
-        let cropRect = { x: 0, y: 0, width: 0, height: 0 };
+
+        // Polygon crop variables
+        let polygonPoints = []; // Array of {x, y} coordinates
         let isDragging = false;
-        let dragType = null;
+        let dragPointIndex = -1;
         let dragStartX = 0;
         let dragStartY = 0;
-        let cropStartRect = null;
+        let dragStartPoint = null;
+
+        const cropSvg = document.getElementById('cropSvg');
+        const cropMaskPolygon = document.getElementById('cropMaskPolygon');
+        const cropPolygonOutline = document.getElementById('cropPolygonOutline');
+        const cropHandlesContainer = document.getElementById('cropHandlesContainer');
 
         function openImageEditor(photoIndex) {
             editorCurrentPhotoIndex = photoIndex;
@@ -2205,37 +2246,71 @@
             cropOverlay.style.width = canvasRect.width + 'px';
             cropOverlay.style.height = canvasRect.height + 'px';
 
-            // Initialize crop rect to full image with margin
+            // Initialize polygon points with 4 corners (can add more points later)
             const margin = Math.min(canvasRect.width, canvasRect.height) * 0.1;
-            cropRect = {
-                x: margin,
-                y: margin,
-                width: canvasRect.width - margin * 2,
-                height: canvasRect.height - margin * 2
-            };
+            polygonPoints = [
+                { x: margin, y: margin },                                    // Top-left
+                { x: canvasRect.width - margin, y: margin },                 // Top-right
+                { x: canvasRect.width - margin, y: canvasRect.height - margin }, // Bottom-right
+                { x: margin, y: canvasRect.height - margin }                 // Bottom-left
+            ];
 
             updateCropOverlay();
         }
 
+        function getPolygonPointsString() {
+            return polygonPoints.map(p => `${p.x},${p.y}`).join(' ');
+        }
+
         function updateCropOverlay() {
+            const pointsString = getPolygonPointsString();
+
+            // Update SVG polygon for mask and outline
+            cropMaskPolygon.setAttribute('points', pointsString);
+            cropPolygonOutline.setAttribute('points', pointsString);
+
+            // Update handle positions
+            renderCropHandles();
+        }
+
+        function renderCropHandles() {
+            // Clear existing handles
+            cropHandlesContainer.innerHTML = '';
+
             const overlayWidth = parseFloat(cropOverlay.style.width);
             const overlayHeight = parseFloat(cropOverlay.style.height);
 
-            // Update crop box position
-            cropBox.style.left = cropRect.x + 'px';
-            cropBox.style.top = cropRect.y + 'px';
-            cropBox.style.width = cropRect.width + 'px';
-            cropBox.style.height = cropRect.height + 'px';
+            // Create a handle for each polygon point
+            polygonPoints.forEach((point, index) => {
+                const handle = document.createElement('div');
+                handle.className = 'crop-handle';
+                handle.dataset.pointIndex = index;
+                handle.style.left = point.x + 'px';
+                handle.style.top = point.y + 'px';
 
-            // Update shade areas
-            document.getElementById('cropShadeTop').style.cssText =
-                `top: 0; left: 0; width: 100%; height: ${cropRect.y}px;`;
-            document.getElementById('cropShadeBottom').style.cssText =
-                `bottom: 0; left: 0; width: 100%; height: ${overlayHeight - cropRect.y - cropRect.height}px;`;
-            document.getElementById('cropShadeLeft').style.cssText =
-                `top: ${cropRect.y}px; left: 0; width: ${cropRect.x}px; height: ${cropRect.height}px;`;
-            document.getElementById('cropShadeRight').style.cssText =
-                `top: ${cropRect.y}px; right: 0; width: ${overlayWidth - cropRect.x - cropRect.width}px; height: ${cropRect.height}px;`;
+                // Add point number label
+                const label = document.createElement('span');
+                label.className = 'crop-handle-label';
+                label.textContent = (index + 1).toString();
+                handle.appendChild(label);
+
+                cropHandlesContainer.appendChild(handle);
+            });
+        }
+
+        // Add a new point on line between two existing points
+        function addPointBetween(index1, index2, x, y) {
+            const insertIndex = Math.max(index1, index2);
+            polygonPoints.splice(insertIndex, 0, { x, y });
+            updateCropOverlay();
+        }
+
+        // Remove a point (minimum 3 points required for a polygon)
+        function removePoint(index) {
+            if (polygonPoints.length > 3) {
+                polygonPoints.splice(index, 1);
+                updateCropOverlay();
+            }
         }
 
         // Crop drag handlers
@@ -2245,70 +2320,109 @@
             e.preventDefault();
             const touch = e.touches ? e.touches[0] : e;
             const rect = cropOverlay.getBoundingClientRect();
-            dragStartX = touch.clientX - rect.left;
-            dragStartY = touch.clientY - rect.top;
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
 
             const target = e.target;
             if (target.classList.contains('crop-handle')) {
-                dragType = target.dataset.handle;
-            } else if (target === cropBox) {
-                dragType = 'move';
-            } else {
-                return;
+                dragPointIndex = parseInt(target.dataset.pointIndex);
+                dragStartX = x;
+                dragStartY = y;
+                dragStartPoint = { ...polygonPoints[dragPointIndex] };
+                isDragging = true;
             }
-
-            isDragging = true;
-            cropStartRect = { ...cropRect };
         }
 
         function handleCropMove(e) {
-            if (!isDragging || !cropMode) return;
+            if (!isDragging || !cropMode || dragPointIndex < 0) return;
 
             e.preventDefault();
             const touch = e.touches ? e.touches[0] : e;
             const rect = cropOverlay.getBoundingClientRect();
             const x = touch.clientX - rect.left;
             const y = touch.clientY - rect.top;
-            const dx = x - dragStartX;
-            const dy = y - dragStartY;
 
             const overlayWidth = rect.width;
             const overlayHeight = rect.height;
-            const minSize = 50;
 
-            if (dragType === 'move') {
-                cropRect.x = Math.max(0, Math.min(overlayWidth - cropRect.width, cropStartRect.x + dx));
-                cropRect.y = Math.max(0, Math.min(overlayHeight - cropRect.height, cropStartRect.y + dy));
-            } else if (dragType === 'tl') {
-                const newX = Math.max(0, Math.min(cropStartRect.x + cropStartRect.width - minSize, cropStartRect.x + dx));
-                const newY = Math.max(0, Math.min(cropStartRect.y + cropStartRect.height - minSize, cropStartRect.y + dy));
-                cropRect.width = cropStartRect.width + (cropStartRect.x - newX);
-                cropRect.height = cropStartRect.height + (cropStartRect.y - newY);
-                cropRect.x = newX;
-                cropRect.y = newY;
-            } else if (dragType === 'tr') {
-                const newWidth = Math.max(minSize, Math.min(overlayWidth - cropStartRect.x, cropStartRect.width + dx));
-                const newY = Math.max(0, Math.min(cropStartRect.y + cropStartRect.height - minSize, cropStartRect.y + dy));
-                cropRect.width = newWidth;
-                cropRect.height = cropStartRect.height + (cropStartRect.y - newY);
-                cropRect.y = newY;
-            } else if (dragType === 'bl') {
-                const newX = Math.max(0, Math.min(cropStartRect.x + cropStartRect.width - minSize, cropStartRect.x + dx));
-                const newHeight = Math.max(minSize, Math.min(overlayHeight - cropStartRect.y, cropStartRect.height + dy));
-                cropRect.width = cropStartRect.width + (cropStartRect.x - newX);
-                cropRect.height = newHeight;
-                cropRect.x = newX;
-            } else if (dragType === 'br') {
-                cropRect.width = Math.max(minSize, Math.min(overlayWidth - cropStartRect.x, cropStartRect.width + dx));
-                cropRect.height = Math.max(minSize, Math.min(overlayHeight - cropStartRect.y, cropStartRect.height + dy));
-            }
+            // Update the point position, constrained to overlay bounds
+            polygonPoints[dragPointIndex] = {
+                x: Math.max(0, Math.min(overlayWidth, dragStartPoint.x + (x - dragStartX))),
+                y: Math.max(0, Math.min(overlayHeight, dragStartPoint.y + (y - dragStartY)))
+            };
 
             updateCropOverlay();
         }
 
         function handleCropEnd() {
             isDragging = false;
-            dragType = null;
+            dragPointIndex = -1;
+            dragStartPoint = null;
+        }
+
+        // Find closest point on polygon edge to a given point
+        function findClosestEdgePoint(x, y) {
+            let minDist = Infinity;
+            let closestPoint = null;
+            let edgeIndex = -1;
+
+            for (let i = 0; i < polygonPoints.length; i++) {
+                const p1 = polygonPoints[i];
+                const p2 = polygonPoints[(i + 1) % polygonPoints.length];
+
+                // Project point onto line segment
+                const dx = p2.x - p1.x;
+                const dy = p2.y - p1.y;
+                const len2 = dx * dx + dy * dy;
+
+                if (len2 === 0) continue;
+
+                let t = ((x - p1.x) * dx + (y - p1.y) * dy) / len2;
+                t = Math.max(0, Math.min(1, t));
+
+                const projX = p1.x + t * dx;
+                const projY = p1.y + t * dy;
+                const dist = Math.hypot(x - projX, y - projY);
+
+                if (dist < minDist) {
+                    minDist = dist;
+                    closestPoint = { x: projX, y: projY };
+                    edgeIndex = i;
+                }
+            }
+
+            return { point: closestPoint, distance: minDist, edgeIndex };
+        }
+
+        // Handle double-click to add/remove points
+        function handleCropDoubleClick(e) {
+            if (!cropMode) return;
+
+            e.preventDefault();
+            const touch = e.touches ? e.touches[0] : e;
+            const rect = cropOverlay.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+
+            const target = e.target;
+
+            // Double-click on handle to remove point (if more than 3 points)
+            if (target.classList.contains('crop-handle')) {
+                const pointIndex = parseInt(target.dataset.pointIndex);
+                if (polygonPoints.length > 3) {
+                    polygonPoints.splice(pointIndex, 1);
+                    updateCropOverlay();
+                }
+                return;
+            }
+
+            // Double-click on overlay to add a point on nearest edge
+            const { point, distance, edgeIndex } = findClosestEdgePoint(x, y);
+            if (distance < 30 && point) { // Within 30px of an edge
+                // Insert point after the first point of the edge
+                polygonPoints.splice(edgeIndex + 1, 0, point);
+                updateCropOverlay();
+            }
         }
 
         // Add crop event listeners
@@ -2318,6 +2432,7 @@
         document.addEventListener('touchmove', handleCropMove, { passive: false });
         document.addEventListener('mouseup', handleCropEnd);
         document.addEventListener('touchend', handleCropEnd);
+        cropOverlay.addEventListener('dblclick', handleCropDoubleClick);
 
         // Editor button handlers
         brightnessSlider.addEventListener('input', (e) => {
@@ -2359,27 +2474,222 @@
             }
         });
 
-        document.getElementById('applyCrop').addEventListener('click', () => {
-            if (!cropMode) return;
+        // Perspective transform helper functions
+        function solvePerspectiveMatrix(src, dst) {
+            // Solve for the 3x3 perspective transformation matrix
+            // that maps src points to dst points
+            // Returns the matrix coefficients [a, b, c, d, e, f, g, h]
+            // where the transform is:
+            // x' = (ax + by + c) / (gx + hy + 1)
+            // y' = (dx + ey + f) / (gx + hy + 1)
 
-            // Get the crop area in canvas coordinates
+            const [p0, p1, p2, p3] = src;
+            const [q0, q1, q2, q3] = dst;
+
+            // Set up the system of equations
+            const A = [
+                [p0.x, p0.y, 1, 0, 0, 0, -q0.x * p0.x, -q0.x * p0.y],
+                [0, 0, 0, p0.x, p0.y, 1, -q0.y * p0.x, -q0.y * p0.y],
+                [p1.x, p1.y, 1, 0, 0, 0, -q1.x * p1.x, -q1.x * p1.y],
+                [0, 0, 0, p1.x, p1.y, 1, -q1.y * p1.x, -q1.y * p1.y],
+                [p2.x, p2.y, 1, 0, 0, 0, -q2.x * p2.x, -q2.x * p2.y],
+                [0, 0, 0, p2.x, p2.y, 1, -q2.y * p2.x, -q2.y * p2.y],
+                [p3.x, p3.y, 1, 0, 0, 0, -q3.x * p3.x, -q3.x * p3.y],
+                [0, 0, 0, p3.x, p3.y, 1, -q3.y * p3.x, -q3.y * p3.y]
+            ];
+            const b = [q0.x, q0.y, q1.x, q1.y, q2.x, q2.y, q3.x, q3.y];
+
+            // Solve using Gaussian elimination
+            return gaussianElimination(A, b);
+        }
+
+        function gaussianElimination(A, b) {
+            const n = A.length;
+            const aug = A.map((row, i) => [...row, b[i]]);
+
+            // Forward elimination
+            for (let col = 0; col < n; col++) {
+                // Find pivot
+                let maxRow = col;
+                for (let row = col + 1; row < n; row++) {
+                    if (Math.abs(aug[row][col]) > Math.abs(aug[maxRow][col])) {
+                        maxRow = row;
+                    }
+                }
+                [aug[col], aug[maxRow]] = [aug[maxRow], aug[col]];
+
+                // Eliminate column
+                for (let row = col + 1; row < n; row++) {
+                    const factor = aug[row][col] / aug[col][col];
+                    for (let j = col; j <= n; j++) {
+                        aug[row][j] -= factor * aug[col][j];
+                    }
+                }
+            }
+
+            // Back substitution
+            const x = new Array(n).fill(0);
+            for (let i = n - 1; i >= 0; i--) {
+                x[i] = aug[i][n];
+                for (let j = i + 1; j < n; j++) {
+                    x[i] -= aug[i][j] * x[j];
+                }
+                x[i] /= aug[i][i];
+            }
+            return x;
+        }
+
+        function applyPerspectiveTransform(srcCanvas, srcPoints, dstWidth, dstHeight) {
+            // Create destination canvas
+            const dstCanvas = document.createElement('canvas');
+            dstCanvas.width = dstWidth;
+            dstCanvas.height = dstHeight;
+            const dstCtx = dstCanvas.getContext('2d');
+
+            // Define destination rectangle corners
+            const dstPoints = [
+                { x: 0, y: 0 },
+                { x: dstWidth, y: 0 },
+                { x: dstWidth, y: dstHeight },
+                { x: 0, y: dstHeight }
+            ];
+
+            // Get the inverse perspective transform (dst -> src)
+            const matrix = solvePerspectiveMatrix(dstPoints, srcPoints);
+            const [a, b, c, d, e, f, g, h] = matrix;
+
+            // Get source image data
+            const srcCtx = srcCanvas.getContext('2d');
+            const srcImageData = srcCtx.getImageData(0, 0, srcCanvas.width, srcCanvas.height);
+            const srcData = srcImageData.data;
+            const srcW = srcCanvas.width;
+            const srcH = srcCanvas.height;
+
+            // Create destination image data
+            const dstImageData = dstCtx.createImageData(dstWidth, dstHeight);
+            const dstData = dstImageData.data;
+
+            // Apply the transform with bilinear interpolation
+            for (let dy = 0; dy < dstHeight; dy++) {
+                for (let dx = 0; dx < dstWidth; dx++) {
+                    // Apply inverse perspective transform
+                    const denom = g * dx + h * dy + 1;
+                    const sx = (a * dx + b * dy + c) / denom;
+                    const sy = (d * dx + e * dy + f) / denom;
+
+                    // Bilinear interpolation
+                    if (sx >= 0 && sx < srcW - 1 && sy >= 0 && sy < srcH - 1) {
+                        const x0 = Math.floor(sx);
+                        const y0 = Math.floor(sy);
+                        const x1 = x0 + 1;
+                        const y1 = y0 + 1;
+                        const xFrac = sx - x0;
+                        const yFrac = sy - y0;
+
+                        const idx00 = (y0 * srcW + x0) * 4;
+                        const idx10 = (y0 * srcW + x1) * 4;
+                        const idx01 = (y1 * srcW + x0) * 4;
+                        const idx11 = (y1 * srcW + x1) * 4;
+                        const dstIdx = (dy * dstWidth + dx) * 4;
+
+                        for (let c = 0; c < 4; c++) {
+                            const v00 = srcData[idx00 + c];
+                            const v10 = srcData[idx10 + c];
+                            const v01 = srcData[idx01 + c];
+                            const v11 = srcData[idx11 + c];
+
+                            const v = v00 * (1 - xFrac) * (1 - yFrac) +
+                                      v10 * xFrac * (1 - yFrac) +
+                                      v01 * (1 - xFrac) * yFrac +
+                                      v11 * xFrac * yFrac;
+
+                            dstData[dstIdx + c] = Math.round(v);
+                        }
+                    }
+                }
+            }
+
+            dstCtx.putImageData(dstImageData, 0, 0);
+            return dstCanvas;
+        }
+
+        function calculateOutputDimensions(points) {
+            // Calculate the output dimensions based on the polygon
+            // For a 4-point polygon, use the average of opposite edge lengths
+            if (points.length === 4) {
+                const topWidth = Math.hypot(points[1].x - points[0].x, points[1].y - points[0].y);
+                const bottomWidth = Math.hypot(points[2].x - points[3].x, points[2].y - points[3].y);
+                const leftHeight = Math.hypot(points[3].x - points[0].x, points[3].y - points[0].y);
+                const rightHeight = Math.hypot(points[2].x - points[1].x, points[2].y - points[1].y);
+
+                return {
+                    width: Math.round((topWidth + bottomWidth) / 2),
+                    height: Math.round((leftHeight + rightHeight) / 2)
+                };
+            }
+
+            // For other polygons, use bounding box
+            const xs = points.map(p => p.x);
+            const ys = points.map(p => p.y);
+            return {
+                width: Math.round(Math.max(...xs) - Math.min(...xs)),
+                height: Math.round(Math.max(...ys) - Math.min(...ys))
+            };
+        }
+
+        document.getElementById('applyCrop').addEventListener('click', () => {
+            if (!cropMode || polygonPoints.length < 3) return;
+
+            // Get scale factors from overlay to canvas coordinates
             const canvasRect = editorCanvas.getBoundingClientRect();
             const scaleX = editorCanvas.width / canvasRect.width;
             const scaleY = editorCanvas.height / canvasRect.height;
 
-            const cropX = cropRect.x * scaleX;
-            const cropY = cropRect.y * scaleY;
-            const cropW = cropRect.width * scaleX;
-            const cropH = cropRect.height * scaleY;
+            // Scale polygon points to canvas coordinates
+            const scaledPoints = polygonPoints.map(p => ({
+                x: p.x * scaleX,
+                y: p.y * scaleY
+            }));
 
-            // Create a temporary canvas with the cropped region
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = cropW;
-            tempCanvas.height = cropH;
-            const tempCtx = tempCanvas.getContext('2d');
+            let croppedCanvas;
 
-            // Draw the cropped portion
-            tempCtx.drawImage(editorCanvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+            if (scaledPoints.length === 4) {
+                // For 4 points, use perspective transform
+                const outputDims = calculateOutputDimensions(scaledPoints);
+                croppedCanvas = applyPerspectiveTransform(
+                    editorCanvas,
+                    scaledPoints,
+                    outputDims.width,
+                    outputDims.height
+                );
+            } else {
+                // For other point counts, clip to polygon shape
+                const xs = scaledPoints.map(p => p.x);
+                const ys = scaledPoints.map(p => p.y);
+                const minX = Math.min(...xs);
+                const minY = Math.min(...ys);
+                const maxX = Math.max(...xs);
+                const maxY = Math.max(...ys);
+                const width = maxX - minX;
+                const height = maxY - minY;
+
+                croppedCanvas = document.createElement('canvas');
+                croppedCanvas.width = width;
+                croppedCanvas.height = height;
+                const ctx = croppedCanvas.getContext('2d');
+
+                // Create clipping path
+                ctx.beginPath();
+                ctx.moveTo(scaledPoints[0].x - minX, scaledPoints[0].y - minY);
+                for (let i = 1; i < scaledPoints.length; i++) {
+                    ctx.lineTo(scaledPoints[i].x - minX, scaledPoints[i].y - minY);
+                }
+                ctx.closePath();
+                ctx.clip();
+
+                // Draw the image
+                ctx.drawImage(editorCanvas, -minX, -minY);
+            }
 
             // Create a new image from the cropped canvas
             const croppedImage = new Image();
@@ -2395,7 +2705,7 @@
 
                 renderEditorCanvas();
             };
-            croppedImage.src = tempCanvas.toDataURL('image/jpeg', 0.95);
+            croppedImage.src = croppedCanvas.toDataURL('image/jpeg', 0.95);
         });
 
         document.getElementById('editorReset').addEventListener('click', () => {
