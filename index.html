@@ -1489,7 +1489,12 @@
         // Auto-save to localStorage
         function autoSave() {
             // Preserve existing data (like signature) that may be saved separately
-            const existingData = JSON.parse(localStorage.getItem('kompassEOD') || '{}');
+            let existingData = {};
+            try {
+                existingData = JSON.parse(localStorage.getItem('kompassEOD') || '{}');
+            } catch (e) {
+                console.warn('Could not parse existing data:', e);
+            }
 
             const data = {
                 ...existingData, // Preserve signature and any other existing fields
