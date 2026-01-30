@@ -3021,6 +3021,9 @@
         }
 
         // Crop drag handlers
+        // Touch tolerance for mobile - larger radius makes anchors easier to grab
+        const ANCHOR_TOUCH_TOLERANCE = 50; // pixels
+
         function handleCropStart(e) {
             if (!cropMode) return;
 
@@ -3030,9 +3033,22 @@
             const x = touch.clientX - rect.left;
             const y = touch.clientY - rect.top;
 
+            // First check if target is directly on a handle (mouse clicks)
             const target = e.target;
             if (target.classList.contains('crop-handle')) {
                 dragPointIndex = parseInt(target.dataset.pointIndex);
+                dragStartX = x;
+                dragStartY = y;
+                dragStartPoint = { ...polygonPoints[dragPointIndex] };
+                isDragging = true;
+                return;
+            }
+
+            // For touch events or clicks near anchors, use proximity-based detection
+            // This greatly improves mobile usability where precise taps are difficult
+            const { index, distance } = findClosestAnchorPoint(x, y);
+            if (index >= 0 && distance <= ANCHOR_TOUCH_TOLERANCE) {
+                dragPointIndex = index;
                 dragStartX = x;
                 dragStartY = y;
                 dragStartPoint = { ...polygonPoints[dragPointIndex] };
@@ -3065,6 +3081,23 @@
             isDragging = false;
             dragPointIndex = -1;
             dragStartPoint = null;
+        }
+
+        // Find closest anchor point to a given coordinate (for proximity-based hit detection)
+        function findClosestAnchorPoint(x, y) {
+            let minDist = Infinity;
+            let closestIndex = -1;
+
+            for (let i = 0; i < polygonPoints.length; i++) {
+                const point = polygonPoints[i];
+                const dist = Math.hypot(x - point.x, y - point.y);
+                if (dist < minDist) {
+                    minDist = dist;
+                    closestIndex = i;
+                }
+            }
+
+            return { index: closestIndex, distance: minDist };
         }
 
         // Find closest point on polygon edge to a given point
@@ -3113,11 +3146,22 @@
 
             const target = e.target;
 
-            // Double-click on handle to remove point (if more than 3 points)
+            // Check for direct handle click first (mouse)
             if (target.classList.contains('crop-handle')) {
                 const pointIndex = parseInt(target.dataset.pointIndex);
                 if (polygonPoints.length > 3) {
                     polygonPoints.splice(pointIndex, 1);
+                    updateCropOverlay();
+                }
+                return;
+            }
+
+            // Use proximity detection for removing points (improves mobile double-tap)
+            const { index: anchorIndex, distance: anchorDist } = findClosestAnchorPoint(x, y);
+            if (anchorIndex >= 0 && anchorDist <= ANCHOR_TOUCH_TOLERANCE) {
+                // Double-tap near an anchor point removes it (if more than 3 points)
+                if (polygonPoints.length > 3) {
+                    polygonPoints.splice(anchorIndex, 1);
                     updateCropOverlay();
                 }
                 return;
