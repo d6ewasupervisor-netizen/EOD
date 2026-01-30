@@ -1407,6 +1407,126 @@
             after: []
         };
 
+        // IndexedDB for photo storage (handles large files beyond localStorage 5MB limit)
+        const PhotoDB = {
+            dbName: 'kompassEODPhotos',
+            dbVersion: 1,
+            storeName: 'photos',
+            db: null,
+
+            // Initialize/open the database
+            async init() {
+                if (this.db) return this.db;
+
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.dbName, this.dbVersion);
+
+                    request.onerror = () => {
+                        console.error('IndexedDB error:', request.error);
+                        reject(request.error);
+                    };
+
+                    request.onsuccess = () => {
+                        this.db = request.result;
+                        resolve(this.db);
+                    };
+
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains(this.storeName)) {
+                            db.createObjectStore(this.storeName, { keyPath: 'id' });
+                        }
+                    };
+                });
+            },
+
+            // Save all photos to IndexedDB
+            async savePhotos(photosObj) {
+                try {
+                    const db = await this.init();
+                    const transaction = db.transaction([this.storeName], 'readwrite');
+                    const store = transaction.objectStore(this.storeName);
+
+                    // Store all photo arrays as a single object
+                    const photoData = {
+                        id: 'allPhotos',
+                        before: photosObj.before || [],
+                        signoff: photosObj.signoff || [],
+                        after: photosObj.after || [],
+                        timestamp: Date.now()
+                    };
+
+                    return new Promise((resolve, reject) => {
+                        const request = store.put(photoData);
+                        request.onsuccess = () => resolve(true);
+                        request.onerror = () => {
+                            console.error('Error saving photos to IndexedDB:', request.error);
+                            reject(request.error);
+                        };
+                    });
+                } catch (e) {
+                    console.error('IndexedDB savePhotos error:', e);
+                    return false;
+                }
+            },
+
+            // Load all photos from IndexedDB
+            async loadPhotos() {
+                try {
+                    const db = await this.init();
+                    const transaction = db.transaction([this.storeName], 'readonly');
+                    const store = transaction.objectStore(this.storeName);
+
+                    return new Promise((resolve, reject) => {
+                        const request = store.get('allPhotos');
+                        request.onsuccess = () => {
+                            const data = request.result;
+                            if (data) {
+                                resolve({
+                                    before: data.before || [],
+                                    signoff: data.signoff || [],
+                                    after: data.after || []
+                                });
+                            } else {
+                                resolve({ before: [], signoff: [], after: [] });
+                            }
+                        };
+                        request.onerror = () => {
+                            console.error('Error loading photos from IndexedDB:', request.error);
+                            reject(request.error);
+                        };
+                    });
+                } catch (e) {
+                    console.error('IndexedDB loadPhotos error:', e);
+                    return { before: [], signoff: [], after: [] };
+                }
+            },
+
+            // Clear all photos from IndexedDB
+            async clearPhotos() {
+                try {
+                    const db = await this.init();
+                    const transaction = db.transaction([this.storeName], 'readwrite');
+                    const store = transaction.objectStore(this.storeName);
+
+                    return new Promise((resolve, reject) => {
+                        const request = store.delete('allPhotos');
+                        request.onsuccess = () => resolve(true);
+                        request.onerror = () => {
+                            console.error('Error clearing photos from IndexedDB:', request.error);
+                            reject(request.error);
+                        };
+                    });
+                } catch (e) {
+                    console.error('IndexedDB clearPhotos error:', e);
+                    return false;
+                }
+            }
+        };
+
+        // Initialize IndexedDB on load
+        PhotoDB.init().catch(e => console.warn('Could not initialize IndexedDB:', e));
+
         // Email recipients array
         let emailRecipients = [];
 
@@ -1496,6 +1616,7 @@
                 console.warn('Could not parse existing data:', e);
             }
 
+            // Store form data in localStorage (without photos - they go to IndexedDB)
             const data = {
                 ...existingData, // Preserve signature and any other existing fields
                 storeNumber: document.getElementById('storeNumber').value,
@@ -1520,22 +1641,27 @@
                 beforeComplete: document.getElementById('beforeComplete')?.checked || false,
                 signoffComplete: document.getElementById('signoffComplete')?.checked || false,
                 afterComplete: document.getElementById('afterComplete')?.checked || false,
-                addRetailOdysseyTeam: document.getElementById('addRetailOdysseyTeam')?.checked || false,
-                photos: photos
+                addRetailOdysseyTeam: document.getElementById('addRetailOdysseyTeam')?.checked || false
+                // Note: photos are now stored in IndexedDB, not localStorage
             };
             try {
                 localStorage.setItem('kompassEOD', JSON.stringify(data));
             } catch (e) {
                 if (e.name === 'QuotaExceededError') {
-                    console.warn('localStorage quota exceeded. Consider clearing old data or reducing photo count.');
+                    console.warn('localStorage quota exceeded.');
                 } else {
                     console.warn('Could not save to localStorage:', e);
                 }
             }
+
+            // Save photos to IndexedDB (handles large files)
+            PhotoDB.savePhotos(photos).catch(e => {
+                console.warn('Could not save photos to IndexedDB:', e);
+            });
         }
 
         // Load saved data
-        function loadSaved() {
+        async function loadSaved() {
             const saved = localStorage.getItem('kompassEOD');
             if (saved) {
                 const data = JSON.parse(saved);
@@ -1587,35 +1713,65 @@
                     document.getElementById('addRetailOdysseyTeam').checked = data.addRetailOdysseyTeam;
                 }
 
-                if (data.photos) {
-                    // Deduplicate photos when loading (clean up any existing duplicates)
-                    const deduplicatePhotos = (photoArray) => {
-                        if (!Array.isArray(photoArray)) return [];
-                        const seen = new Set();
-                        return photoArray.filter(photo => {
-                            const prefix = photo.substring(0, 1000);
-                            if (seen.has(prefix)) return false;
-                            seen.add(prefix);
-                            return true;
-                        });
-                    };
+                // Migration: if photos exist in localStorage, migrate them to IndexedDB
+                if (data.photos && (data.photos.before?.length || data.photos.signoff?.length || data.photos.after?.length)) {
+                    console.log('Migrating photos from localStorage to IndexedDB...');
+                    photos.before = data.photos.before || [];
+                    photos.signoff = data.photos.signoff || [];
+                    photos.after = data.photos.after || [];
 
-                    photos.before = deduplicatePhotos(data.photos.before);
-                    photos.signoff = deduplicatePhotos(data.photos.signoff);
-                    photos.after = deduplicatePhotos(data.photos.after);
+                    // Save to IndexedDB
+                    await PhotoDB.savePhotos(photos);
+
+                    // Remove photos from localStorage to free up space
+                    delete data.photos;
+                    try {
+                        localStorage.setItem('kompassEOD', JSON.stringify(data));
+                        console.log('Photos migrated to IndexedDB and removed from localStorage');
+                    } catch (e) {
+                        console.warn('Could not update localStorage after migration:', e);
+                    }
+
+                    renderPhotos('before');
+                    renderPhotos('signoff');
+                    renderPhotos('after');
+                    return; // Photos already loaded from migration, no need to load from IndexedDB
+                }
+            }
+
+            // Load photos from IndexedDB
+            try {
+                const deduplicatePhotos = (photoArray) => {
+                    if (!Array.isArray(photoArray)) return [];
+                    const seen = new Set();
+                    return photoArray.filter(photo => {
+                        const prefix = photo.substring(0, 1000);
+                        if (seen.has(prefix)) return false;
+                        seen.add(prefix);
+                        return true;
+                    });
+                };
+
+                const savedPhotos = await PhotoDB.loadPhotos();
+                if (savedPhotos.before.length || savedPhotos.signoff.length || savedPhotos.after.length) {
+                    photos.before = deduplicatePhotos(savedPhotos.before);
+                    photos.signoff = deduplicatePhotos(savedPhotos.signoff);
+                    photos.after = deduplicatePhotos(savedPhotos.after);
 
                     renderPhotos('before');
                     renderPhotos('signoff');
                     renderPhotos('after');
 
                     // Save back any cleaned up duplicates
-                    if (photos.before.length !== (data.photos.before?.length || 0) ||
-                        photos.signoff.length !== (data.photos.signoff?.length || 0) ||
-                        photos.after.length !== (data.photos.after?.length || 0)) {
+                    if (photos.before.length !== savedPhotos.before.length ||
+                        photos.signoff.length !== savedPhotos.signoff.length ||
+                        photos.after.length !== savedPhotos.after.length) {
                         console.log('Cleaned up duplicate photos');
-                        autoSave();
+                        await PhotoDB.savePhotos(photos);
                     }
                 }
+            } catch (e) {
+                console.warn('Could not load photos from IndexedDB:', e);
             }
         }
 
@@ -3332,6 +3488,8 @@ ${data.Notes || ''}
                 'Are you sure you want to reset all fields? This will clear all data, including photos?',
                 () => {
                     localStorage.removeItem('kompassEOD');
+                    // Clear photos from IndexedDB
+                    PhotoDB.clearPhotos().catch(e => console.warn('Could not clear photos from IndexedDB:', e));
                     photos.before = [];
                     photos.signoff = [];
                     photos.after = [];
