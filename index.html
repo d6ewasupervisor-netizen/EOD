@@ -1930,7 +1930,7 @@
                 const blob = await heic2any({
                     blob: file,
                     toType: 'image/jpeg',
-                    quality: 0.92
+                    quality: 1.0
                 });
                 // heic2any can return a single blob or an array (for multi-image HEIC files)
                 const resultBlob = Array.isArray(blob) ? blob[0] : blob;
@@ -1960,8 +1960,8 @@
                     // Draw the image - modern browsers handle EXIF orientation automatically
                     ctx.drawImage(img, 0, 0);
 
-                    // Convert to high-quality JPEG
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+                    // Convert to maximum quality JPEG for high resolution photos
+                    const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
                     resolve(dataUrl);
                 };
                 img.onerror = reject;
@@ -2208,12 +2208,12 @@
                 tempPhotoCount = 0;
                 updatePhotoCount();
 
-                // Request camera with flash support
+                // Request camera with flash support - use 4K resolution for high quality signoff photos
                 const constraints = {
                     video: {
                         facingMode: 'environment',
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
+                        width: { ideal: 3840 },
+                        height: { ideal: 2160 }
                     }
                 };
 
@@ -2272,8 +2272,8 @@
             const captureCtx = captureCanvas.getContext('2d');
             captureCtx.drawImage(cameraVideo, 0, 0);
 
-            // Convert to data URL with high quality
-            const photoData = captureCanvas.toDataURL('image/jpeg', 0.95);
+            // Convert to data URL with maximum quality for high resolution signoff photos
+            const photoData = captureCanvas.toDataURL('image/jpeg', 1.0);
             photos[currentCameraType].push(photoData);
             tempPhotoCount++;
 
@@ -2893,7 +2893,7 @@
 
                 renderEditorCanvas();
             };
-            croppedImage.src = croppedCanvas.toDataURL('image/jpeg', 0.95);
+            croppedImage.src = croppedCanvas.toDataURL('image/jpeg', 1.0);
         });
 
         document.getElementById('editorReset').addEventListener('click', () => {
@@ -2927,8 +2927,8 @@
         document.getElementById('editorSave').addEventListener('click', () => {
             if (editorCurrentPhotoIndex < 0) return;
 
-            // Get the final image data URL
-            const finalDataUrl = editorCanvas.toDataURL('image/jpeg', 0.95);
+            // Get the final image data URL with maximum quality
+            const finalDataUrl = editorCanvas.toDataURL('image/jpeg', 1.0);
 
             // Update the photo in the array
             photos.signoff[editorCurrentPhotoIndex] = finalDataUrl;
