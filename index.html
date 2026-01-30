@@ -1924,19 +1924,19 @@
                    type === 'image/heic' || type === 'image/heif';
         }
 
-        // Convert HEIC file to JPEG blob
+        // Convert HEIC file to PNG blob (lossless to preserve maximum quality)
         async function convertHeicToJpeg(file) {
             try {
                 const blob = await heic2any({
                     blob: file,
-                    toType: 'image/jpeg',
+                    toType: 'image/png',  // Use PNG for lossless conversion to preserve HEIC quality
                     quality: 1.0
                 });
                 // heic2any can return a single blob or an array (for multi-image HEIC files)
                 const resultBlob = Array.isArray(blob) ? blob[0] : blob;
                 // Create a new File object with the converted blob
-                return new File([resultBlob], file.name.replace(/\.heic$/i, '.jpg').replace(/\.heif$/i, '.jpg'), {
-                    type: 'image/jpeg'
+                return new File([resultBlob], file.name.replace(/\.heic$/i, '.png').replace(/\.heif$/i, '.png'), {
+                    type: 'image/png'
                 });
             } catch (error) {
                 console.error('HEIC conversion error:', error);
@@ -1944,7 +1944,7 @@
             }
         }
 
-        // Process image and correct orientation using canvas
+        // Process image and correct orientation using canvas (uses PNG for lossless quality)
         async function processImageWithOrientation(file) {
             return new Promise((resolve, reject) => {
                 const img = new Image();
@@ -1960,8 +1960,8 @@
                     // Draw the image - modern browsers handle EXIF orientation automatically
                     ctx.drawImage(img, 0, 0);
 
-                    // Convert to maximum quality JPEG for high resolution photos
-                    const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
+                    // Convert to PNG for lossless quality preservation (avoids JPEG recompression artifacts)
+                    const dataUrl = canvas.toDataURL('image/png');
                     resolve(dataUrl);
                 };
                 img.onerror = reject;
@@ -2272,8 +2272,8 @@
             const captureCtx = captureCanvas.getContext('2d');
             captureCtx.drawImage(cameraVideo, 0, 0);
 
-            // Convert to data URL with maximum quality for high resolution signoff photos
-            const photoData = captureCanvas.toDataURL('image/jpeg', 1.0);
+            // Convert to PNG for lossless quality preservation (no JPEG compression artifacts)
+            const photoData = captureCanvas.toDataURL('image/png');
             photos[currentCameraType].push(photoData);
             tempPhotoCount++;
 
@@ -2957,7 +2957,8 @@
 
                 renderEditorCanvas();
             };
-            croppedImage.src = croppedCanvas.toDataURL('image/jpeg', 1.0);
+            // Use PNG for lossless quality during editing (avoids JPEG compression artifacts)
+            croppedImage.src = croppedCanvas.toDataURL('image/png');
         });
 
         document.getElementById('editorReset').addEventListener('click', () => {
@@ -2995,8 +2996,8 @@
             const fullResCanvas = createFullResolutionCanvas();
             if (!fullResCanvas) return;
 
-            // Get the final image data URL with maximum quality at full resolution
-            const finalDataUrl = fullResCanvas.toDataURL('image/jpeg', 1.0);
+            // Get the final image data URL using PNG for lossless quality preservation
+            const finalDataUrl = fullResCanvas.toDataURL('image/png');
 
             // Update the photo in the array
             photos.signoff[editorCurrentPhotoIndex] = finalDataUrl;
