@@ -1489,7 +1489,12 @@
         // Auto-save to localStorage
         function autoSave() {
             // Preserve existing data (like signature) that may be saved separately
-            const existingData = JSON.parse(localStorage.getItem('kompassEOD') || '{}');
+            let existingData = {};
+            try {
+                existingData = JSON.parse(localStorage.getItem('kompassEOD') || '{}');
+            } catch (e) {
+                console.warn('Could not parse existing data:', e);
+            }
 
             const data = {
                 ...existingData, // Preserve signature and any other existing fields
@@ -1518,7 +1523,15 @@
                 addRetailOdysseyTeam: document.getElementById('addRetailOdysseyTeam')?.checked || false,
                 photos: photos
             };
-            localStorage.setItem('kompassEOD', JSON.stringify(data));
+            try {
+                localStorage.setItem('kompassEOD', JSON.stringify(data));
+            } catch (e) {
+                if (e.name === 'QuotaExceededError') {
+                    console.warn('localStorage quota exceeded. Consider clearing old data or reducing photo count.');
+                } else {
+                    console.warn('Could not save to localStorage:', e);
+                }
+            }
         }
 
         // Load saved data
