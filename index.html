@@ -2376,6 +2376,55 @@
             editorOriginalImage.src = photoData;
         }
 
+        // Create a full-resolution canvas with all transformations applied
+        function createFullResolutionCanvas() {
+            if (!editorOriginalImage) return null;
+
+            const img = editorOriginalImage;
+
+            // Calculate rotated dimensions at full resolution
+            const isRotated90 = Math.abs(editorRotation % 180) === 90;
+            const fullWidth = isRotated90 ? img.height : img.width;
+            const fullHeight = isRotated90 ? img.width : img.height;
+
+            // Create full-resolution canvas
+            const fullCanvas = document.createElement('canvas');
+            fullCanvas.width = fullWidth;
+            fullCanvas.height = fullHeight;
+            const fullCtx = fullCanvas.getContext('2d');
+
+            // Apply brightness and contrast via filter
+            const brightnessPercent = 100 + editorBrightness;
+            const contrastPercent = 100 + editorContrast;
+            fullCtx.filter = `brightness(${brightnessPercent}%) contrast(${contrastPercent}%)`;
+
+            // Center and rotate
+            fullCtx.translate(fullWidth / 2, fullHeight / 2);
+            fullCtx.rotate((editorRotation * Math.PI) / 180);
+
+            // Draw the image at full resolution
+            const drawWidth = isRotated90 ? fullHeight : fullWidth;
+            const drawHeight = isRotated90 ? fullWidth : fullHeight;
+            fullCtx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+
+            return fullCanvas;
+        }
+
+        // Get scale factor from display to full resolution
+        function getDisplayToFullScale() {
+            if (!editorOriginalImage) return { scaleX: 1, scaleY: 1 };
+
+            const img = editorOriginalImage;
+            const isRotated90 = Math.abs(editorRotation % 180) === 90;
+            const fullWidth = isRotated90 ? img.height : img.width;
+            const fullHeight = isRotated90 ? img.width : img.height;
+
+            return {
+                scaleX: fullWidth / editorCanvas.width,
+                scaleY: fullHeight / editorCanvas.height
+            };
+        }
+
         function renderEditorCanvas() {
             if (!editorOriginalImage) return;
 
@@ -2828,30 +2877,37 @@
         document.getElementById('applyCrop').addEventListener('click', () => {
             if (!cropMode || polygonPoints.length < 3) return;
 
-            // Get scale factors from overlay to canvas coordinates
-            const canvasRect = editorCanvas.getBoundingClientRect();
-            const scaleX = editorCanvas.width / canvasRect.width;
-            const scaleY = editorCanvas.height / canvasRect.height;
+            // Create full-resolution canvas with current transformations applied
+            const fullResCanvas = createFullResolutionCanvas();
+            if (!fullResCanvas) return;
 
-            // Scale polygon points to canvas coordinates
+            // Get scale factors from overlay (display) to full-resolution coordinates
+            const canvasRect = editorCanvas.getBoundingClientRect();
+            const { scaleX: fullScaleX, scaleY: fullScaleY } = getDisplayToFullScale();
+
+            // Scale from overlay coordinates to display canvas, then to full resolution
+            const overlayToDisplayX = editorCanvas.width / canvasRect.width;
+            const overlayToDisplayY = editorCanvas.height / canvasRect.height;
+
+            // Scale polygon points to full-resolution coordinates
             const scaledPoints = polygonPoints.map(p => ({
-                x: p.x * scaleX,
-                y: p.y * scaleY
+                x: p.x * overlayToDisplayX * fullScaleX,
+                y: p.y * overlayToDisplayY * fullScaleY
             }));
 
             let croppedCanvas;
 
             if (scaledPoints.length === 4) {
-                // For 4 points, use perspective transform
+                // For 4 points, use perspective transform at full resolution
                 const outputDims = calculateOutputDimensions(scaledPoints);
                 croppedCanvas = applyPerspectiveTransform(
-                    editorCanvas,
+                    fullResCanvas,
                     scaledPoints,
                     outputDims.width,
                     outputDims.height
                 );
             } else {
-                // For other point counts, clip to polygon shape
+                // For other point counts, clip to polygon shape at full resolution
                 const xs = scaledPoints.map(p => p.x);
                 const ys = scaledPoints.map(p => p.y);
                 const minX = Math.min(...xs);
@@ -2875,15 +2931,23 @@
                 ctx.closePath();
                 ctx.clip();
 
-                // Draw the image
-                ctx.drawImage(editorCanvas, -minX, -minY);
+                // Draw the full-resolution image
+                ctx.drawImage(fullResCanvas, -minX, -minY);
             }
 
-            // Create a new image from the cropped canvas
+            // Create a new image from the cropped canvas (preserving full resolution)
             const croppedImage = new Image();
             croppedImage.onload = () => {
                 editorOriginalImage = croppedImage;
+                // Reset rotation since it's already applied in the cropped image
                 editorRotation = 0;
+                // Reset brightness/contrast since they're already applied
+                editorBrightness = 0;
+                editorContrast = 0;
+                brightnessSlider.value = 0;
+                contrastSlider.value = 0;
+                brightnessValue.textContent = '0';
+                contrastValue.textContent = '0';
 
                 // Exit crop mode
                 cropMode = false;
@@ -2927,8 +2991,12 @@
         document.getElementById('editorSave').addEventListener('click', () => {
             if (editorCurrentPhotoIndex < 0) return;
 
-            // Get the final image data URL with maximum quality
-            const finalDataUrl = editorCanvas.toDataURL('image/jpeg', 1.0);
+            // Create full-resolution canvas with all transformations applied
+            const fullResCanvas = createFullResolutionCanvas();
+            if (!fullResCanvas) return;
+
+            // Get the final image data URL with maximum quality at full resolution
+            const finalDataUrl = fullResCanvas.toDataURL('image/jpeg', 1.0);
 
             // Update the photo in the array
             photos.signoff[editorCurrentPhotoIndex] = finalDataUrl;
