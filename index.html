@@ -1523,7 +1523,15 @@
                 addRetailOdysseyTeam: document.getElementById('addRetailOdysseyTeam')?.checked || false,
                 photos: photos
             };
-            localStorage.setItem('kompassEOD', JSON.stringify(data));
+            try {
+                localStorage.setItem('kompassEOD', JSON.stringify(data));
+            } catch (e) {
+                if (e.name === 'QuotaExceededError') {
+                    console.warn('localStorage quota exceeded. Consider clearing old data or reducing photo count.');
+                } else {
+                    console.warn('Could not save to localStorage:', e);
+                }
+            }
         }
 
         // Load saved data
