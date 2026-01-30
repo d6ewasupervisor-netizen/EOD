@@ -1665,6 +1665,22 @@
         const photoProcessingGuard = {};
 
         // Photo handling with orientation correction and HEIC support
+        // Auto-check checkbox when photo is added, auto-uncheck when all photos removed
+        function updatePhotoCheckbox(type) {
+            const checkboxMap = {
+                'before': 'beforeComplete',
+                'after': 'afterComplete',
+                'signoff': 'signoffComplete'
+            };
+            const checkboxId = checkboxMap[type];
+            if (checkboxId) {
+                const checkbox = document.getElementById(checkboxId);
+                if (checkbox) {
+                    checkbox.checked = photos[type].length > 0;
+                }
+            }
+        }
+
         async function handlePhoto(input, type) {
             // Prevent concurrent processing for the same type (fixes duplicate uploads)
             if (photoProcessingGuard[type]) {
@@ -1705,6 +1721,7 @@
                     if (!isPhotoAlreadyAdded(photos[type], correctedDataUrl)) {
                         photos[type].push(correctedDataUrl);
                         renderPhotos(type);
+                        updatePhotoCheckbox(type);
                         autoSave();
                     } else {
                         console.log('Skipping duplicate photo');
@@ -1718,6 +1735,7 @@
                         if (!isPhotoAlreadyAdded(photos[type], e.target.result)) {
                             photos[type].push(e.target.result);
                             renderPhotos(type);
+                            updatePhotoCheckbox(type);
                             autoSave();
                         } else {
                             console.log('Skipping duplicate photo');
@@ -1811,6 +1829,7 @@
         function removePhoto(type, index) {
             photos[type].splice(index, 1);
             renderPhotos(type);
+            updatePhotoCheckbox(type);
             autoSave();
         }
 
