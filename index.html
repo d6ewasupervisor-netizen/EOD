@@ -3913,7 +3913,7 @@ ${data.Notes || ''}`;
         function showSendConfirmation(payload, data) {
             const previewHtml = `
                 <div style="text-align:left; font-size:13px; max-height:60vh; overflow-y:auto;">
-                    <p><strong>From:</strong> EOD_FM${data.StoreNumberPadded}_@kompass.retailodyssey.com</p>
+                    <p><strong>From:</strong> EOD_FM${data.StoreNumberPadded}@retail-odyssey.com</p>
                     <p><strong>To:</strong> ${payload.recipients.join(', ') || '(none)'}</p>
                     <p><strong>Subject:</strong> ${payload.subject}</p>
                     ${payload.pdfBase64 ? '<p><strong>Attachment:</strong> ' + payload.pdfFilename + '</p>' : '<p style="color:#fbbf24;"><strong>Attachment:</strong> PDF generation failed</p>'}
