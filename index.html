@@ -2424,6 +2424,84 @@
             });
         }
 
+        // Compress image for PDF embedding - balances quality and file size
+        // Returns a JPEG data URL at optimized resolution for email-friendly PDFs
+        async function compressImageForPDF(dataUrl, maxWidth, maxHeight, quality) {
+            maxWidth = maxWidth || 1600;
+            maxHeight = maxHeight || 1200;
+            quality = quality || 0.82;
+
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    let w = img.naturalWidth;
+                    let h = img.naturalHeight;
+
+                    // Scale down if exceeds max dimensions while maintaining aspect ratio
+                    if (w > maxWidth || h > maxHeight) {
+                        const scale = Math.min(maxWidth / w, maxHeight / h);
+                        w = Math.round(w * scale);
+                        h = Math.round(h * scale);
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+
+                    // Use high-quality image smoothing for downscaling
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, 0, 0, w, h);
+
+                    // Convert to JPEG with specified quality
+                    const compressed = canvas.toDataURL('image/jpeg', quality);
+                    console.log(`Image compressed: ${Math.round(dataUrl.length/1024)}KB -> ${Math.round(compressed.length/1024)}KB (${w}x${h}, q=${quality})`);
+                    resolve(compressed);
+                };
+                img.onerror = reject;
+                img.src = dataUrl;
+            });
+        }
+
+        // Ensure an image is in portrait orientation (taller than wide)
+        // If landscape, rotate 90 degrees clockwise so it reads correctly in portrait
+        async function ensurePortraitOrientation(dataUrl) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    const w = img.naturalWidth;
+                    const h = img.naturalHeight;
+
+                    // Already portrait or square - no rotation needed
+                    if (h >= w) {
+                        resolve(dataUrl);
+                        return;
+                    }
+
+                    // Landscape image - rotate 90 degrees clockwise for portrait
+                    const canvas = document.createElement('canvas');
+                    canvas.width = h;  // Swap dimensions
+                    canvas.height = w;
+                    const ctx = canvas.getContext('2d');
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+
+                    // Rotate 90 degrees clockwise
+                    ctx.translate(h, 0);
+                    ctx.rotate(Math.PI / 2);
+                    ctx.drawImage(img, 0, 0);
+
+                    // Keep as PNG to preserve quality before PDF compression step
+                    const rotated = canvas.toDataURL('image/png');
+                    console.log(`Image rotated to portrait: ${w}x${h} -> ${h}x${w}`);
+                    resolve(rotated);
+                };
+                img.onerror = reject;
+                img.src = dataUrl;
+            });
+        }
+
         function renderPhotos(type) {
             const container = document.getElementById(`preview${type.charAt(0).toUpperCase() + type.slice(1)}`);
             container.innerHTML = '';
@@ -3747,7 +3825,7 @@ ${data.Notes || ''}
                 }
 
                 const to = data.EmailTo || '';
-                let ccList = ['aiyana.natarisalazar@retailodyssey.com', 'tyson.gauthier@retailodyssey.com'];
+                let ccList = ['aiyana.natarisalazar@retailodyssey.com', 'tyson.gauthier@retailodyssey.com', 'amanda.mathews@retailodyssey.com'];
 
                 // Add Retail Odyssey Team emails if checkbox is checked
                 if (document.getElementById('addRetailOdysseyTeam').checked) {
@@ -3914,22 +3992,11 @@ ${data.Notes || ''}
                         y -= 20;
 
                         try {
-                            const imgBytes = await fetch(photoData).then(r => r.arrayBuffer());
-                            let img;
-
-                            // Determine image type
-                            if (photoData.includes('data:image/png')) {
-                                img = await pdfDoc.embedPng(imgBytes);
-                            } else if (photoData.includes('data:image/jpeg') || photoData.includes('data:image/jpg')) {
-                                img = await pdfDoc.embedJpg(imgBytes);
-                            } else {
-                                // Try PNG first, then JPG
-                                try {
-                                    img = await pdfDoc.embedPng(imgBytes);
-                                } catch {
-                                    img = await pdfDoc.embedJpg(imgBytes);
-                                }
-                            }
+                            // Compress before/after cart photos for email-friendly size
+                            // Max 1200x900 at 80% JPEG quality - good balance for cart photos
+                            const compressed = await compressImageForPDF(photoData, 1200, 900, 0.80);
+                            const imgBytes = await fetch(compressed).then(r => r.arrayBuffer());
+                            const img = await pdfDoc.embedJpg(imgBytes);
 
                             const scale = Math.min(400 / img.width, 300 / img.height);
                             const width = img.width * scale;
@@ -3945,26 +4012,19 @@ ${data.Notes || ''}
                     };
 
                     // Function to add signoff sheet as full-page image with label at top
-                    // Always portrait orientation (8.5x11), narrow margins, high quality
+                    // Always portrait orientation (8.5x11), narrow margins, optimized quality
                     const addSignoffSheetPage = async (photoData, title) => {
                         try {
-                            const imgBytes = await fetch(photoData).then(r => r.arrayBuffer());
-                            let img;
+                            // Ensure the sign-off sheet image is in portrait orientation
+                            const portraitData = await ensurePortraitOrientation(photoData);
 
-                            // Determine image type and embed with high quality
-                            if (photoData.includes('data:image/png')) {
-                                img = await pdfDoc.embedPng(imgBytes);
-                            } else if (photoData.includes('data:image/jpeg') || photoData.includes('data:image/jpg')) {
-                                img = await pdfDoc.embedJpg(imgBytes);
-                            } else {
-                                try {
-                                    img = await pdfDoc.embedPng(imgBytes);
-                                } catch {
-                                    img = await pdfDoc.embedJpg(imgBytes);
-                                }
-                            }
+                            // Compress sign-off sheets: higher resolution for readability
+                            // Max 2000x2600 at 85% JPEG quality - sharp enough to read signatures/text
+                            const compressed = await compressImageForPDF(portraitData, 2000, 2600, 0.85);
+                            const imgBytes = await fetch(compressed).then(r => r.arrayBuffer());
+                            const img = await pdfDoc.embedJpg(imgBytes);
 
-                            // Get original image dimensions
+                            // Get image dimensions
                             const imgWidth = img.width;
                             const imgHeight = img.height;
 
@@ -3976,7 +4036,6 @@ ${data.Notes || ''}
                             const sideMargin = 18;
                             const topMargin = 40;  // Room for title at top
                             const bottomMargin = 18;
-                            const labelHeight = 20;
 
                             // Calculate available space for image
                             const availableWidth = pageWidth - (sideMargin * 2);
@@ -4046,8 +4105,13 @@ ${data.Notes || ''}
             console.log('Flattening form...');
             form.flatten();
 
-            console.log('Saving PDF...');
-            const finalPdfBytes = await pdfDoc.save();
+            console.log('Saving and optimizing PDF...');
+            // Save with object streams for smaller file size
+            const finalPdfBytes = await pdfDoc.save({
+                useObjectStreams: true,
+                addDefaultPage: false
+            });
+            console.log(`PDF size: ${Math.round(finalPdfBytes.byteLength / 1024)}KB`);
 
             console.log('Creating download...');
             // Download
