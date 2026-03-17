@@ -2266,7 +2266,14 @@
             };
             localStorage.setItem('kompassProfile', JSON.stringify(profile));
         }
-        document.getElementById('profileName').addEventListener('input', saveProfile);
+        document.getElementById('profileName').addEventListener('input', function() {
+            saveProfile();
+            const leadNameField = document.getElementById('leadName');
+            if (!leadNameField.value.trim()) {
+                leadNameField.value = this.value;
+                autoSave();
+            }
+        });
         document.getElementById('profileEmail').addEventListener('input', saveProfile);
 
         // Add event listeners for auto-save
@@ -4396,6 +4403,15 @@ ${data.Notes || ''}`;
         window.addEventListener('load', () => {
             loadProfile();
             loadSaved();
+            // Auto-populate leadName from profileName if leadName is empty
+            const leadNameField = document.getElementById('leadName');
+            if (!leadNameField.value.trim()) {
+                const profileNameVal = document.getElementById('profileName').value;
+                if (profileNameVal.trim()) {
+                    leadNameField.value = profileNameVal;
+                    autoSave();
+                }
+            }
             updateSignaturePreview();
 
             // Log startup info
