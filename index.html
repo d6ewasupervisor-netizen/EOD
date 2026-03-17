@@ -1515,7 +1515,15 @@
         <div class="section">
             <div class="section-title">Photos</div>
 
-            <div class="photo-section">
+            <!-- No Kompass Cart Present option -->
+            <div class="checkbox-group" style="margin-top: 4px; margin-bottom: 8px;">
+                <div class="checkbox-option">
+                    <input type="checkbox" id="noKompassCart" onchange="toggleNoKompassCart(this)">
+                    <label for="noKompassCart" style="font-weight: 600; color: #fbbf24;">No Kompass Cart Present</label>
+                </div>
+            </div>
+
+            <div class="photo-section" id="beforePhotoSection">
                 <label class="field label">Kompass Cart - Before:</label>
                 <div class="checkbox-group" style="margin-top: 4px;">
                     <div class="checkbox-option">
@@ -1535,7 +1543,7 @@
                 <div id="previewBefore" class="photo-preview"></div>
             </div>
 
-            <div class="photo-section">
+            <div class="photo-section" id="afterPhotoSection">
                 <label class="field label">Kompass Cart - After:</label>
                 <div class="checkbox-group" style="margin-top: 4px;">
                     <div class="checkbox-option">
@@ -1764,6 +1772,25 @@
             </div>
             <div id="copySuccessMsg" style="display: none; margin-top: 10px; padding: 8px; background: #1a5c2a; border-radius: 4px; font-size: 12px; text-align: center;">
                 Copied to clipboard!
+            </div>
+        </div>
+    </div>
+
+    <!-- No Kompass Cart Overlay -->
+    <div id="noKompassOverlay" class="modal-overlay">
+        <div class="modal-dialog">
+            <h2 style="color: #fbbf24;">No Kompass Cart Present</h2>
+            <div style="margin-bottom: 12px; line-height: 1.6;">
+                <p style="margin-bottom: 10px;">Since there is no Kompass cart at this location, you still need to take a picture of:</p>
+                <ul style="margin: 0 0 10px 20px; padding: 0;">
+                    <li style="margin-bottom: 6px;">The <strong>Kompass area</strong></li>
+                    <li style="margin-bottom: 6px;">The <strong>new item area</strong>, cart, or pallet</li>
+                    <li style="margin-bottom: 6px;">Where you <strong>pick up your Vestcom box</strong> each day</li>
+                </ul>
+                <p style="color: #fbbf24; font-weight: 600;">Please use the photo sections below to capture these areas.</p>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="document.getElementById('noKompassOverlay').classList.remove('show')">Got It</button>
             </div>
         </div>
     </div>
@@ -2094,6 +2121,7 @@
                 beforeComplete: document.getElementById('beforeComplete')?.checked || false,
                 signoffComplete: document.getElementById('signoffComplete')?.checked || false,
                 afterComplete: document.getElementById('afterComplete')?.checked || false,
+                noKompassCart: document.getElementById('noKompassCart')?.checked || false,
                 addRetailOdysseyTeam: document.getElementById('addRetailOdysseyTeam')?.checked || false
                 // Note: photos are now stored in IndexedDB, not localStorage
             };
@@ -2161,6 +2189,15 @@
                 }
                 if (typeof data.afterComplete === 'boolean') {
                     document.getElementById('afterComplete').checked = data.afterComplete;
+                }
+                if (typeof data.noKompassCart === 'boolean' && data.noKompassCart) {
+                    const noKompassCheckbox = document.getElementById('noKompassCart');
+                    noKompassCheckbox.checked = true;
+                    // Update labels without showing overlay on load
+                    document.getElementById('beforePhotoSection').querySelector('label.field').textContent = 'Kompass Area - Before:';
+                    document.getElementById('afterPhotoSection').querySelector('label.field').textContent = 'Kompass Area - After:';
+                    document.getElementById('beforeComplete').nextElementSibling.textContent = 'Kompass area before picture taken.';
+                    document.getElementById('afterComplete').nextElementSibling.textContent = 'Kompass area after picture taken.';
                 }
                 if (typeof data.addRetailOdysseyTeam === 'boolean') {
                     document.getElementById('addRetailOdysseyTeam').checked = data.addRetailOdysseyTeam;
@@ -2274,6 +2311,31 @@
             }
 
             tempField.style.display = no.checked ? 'block' : 'none';
+            autoSave();
+        }
+
+        function toggleNoKompassCart(checkbox) {
+            const beforeSection = document.getElementById('beforePhotoSection');
+            const afterSection = document.getElementById('afterPhotoSection');
+            const beforeCheckbox = document.getElementById('beforeComplete');
+            const afterCheckbox = document.getElementById('afterComplete');
+
+            if (checkbox.checked) {
+                // Show the overlay prompt
+                document.getElementById('noKompassOverlay').classList.add('show');
+
+                // Update labels to reflect Kompass area instead of cart
+                beforeSection.querySelector('label.field').textContent = 'Kompass Area - Before:';
+                afterSection.querySelector('label.field').textContent = 'Kompass Area - After:';
+                beforeCheckbox.nextElementSibling.textContent = 'Kompass area before picture taken.';
+                afterCheckbox.nextElementSibling.textContent = 'Kompass area after picture taken.';
+            } else {
+                // Restore original labels
+                beforeSection.querySelector('label.field').textContent = 'Kompass Cart - Before:';
+                afterSection.querySelector('label.field').textContent = 'Kompass Cart - After:';
+                beforeCheckbox.nextElementSibling.textContent = 'Kompass cart before picture taken.';
+                afterCheckbox.nextElementSibling.textContent = 'Kompass cart after picture taken.';
+            }
             autoSave();
         }
 
@@ -3757,6 +3819,7 @@
                 BeforeComplete: document.getElementById('beforeComplete')?.checked || false,
                 SignoffComplete: document.getElementById('signoffComplete')?.checked || false,
                 AfterComplete: document.getElementById('afterComplete')?.checked || false,
+                NoKompassCart: document.getElementById('noKompassCart')?.checked || false,
                 signatureDataURL: await getSignatureDataURL(),
                 photos: photos
             };
@@ -3868,9 +3931,9 @@ ${data.Notes || ''}
             // Load the PDF template - try multiple paths
             let pdfBytes;
             const pdfPaths = [
-                'End Of Day Cover Sheet Form Editable Template (1).pdf',
-                './End_Of_Day_Cover_Sheet_Form_Editable_Template_(1).pdf',
-                'End%20Of%20Day%20Cover%20Sheet%20Form%20Editable%20Template%20(1).pdf'
+                'End Of Day Cover Sheet Form Editable Template NA.pdf',
+                './End_Of_Day_Cover_Sheet_Form_Editable_Template_NA.pdf',
+                'End%20Of%20Day%20Cover%20Sheet%20Form%20Editable%20Template%20NA.pdf'
             ];
 
             let loadError;
@@ -3890,7 +3953,7 @@ ${data.Notes || ''}
             }
 
             if (!pdfBytes) {
-                throw new Error('PDF template not found. Please ensure "End Of Day Cover Sheet Form Editable Template (1).pdf" is in the same directory as this HTML file. Error: ' + (loadError ? loadError.message : 'Not found'));
+                throw new Error('PDF template not found. Please ensure "End Of Day Cover Sheet Form Editable Template NA.pdf" is in the same directory as this HTML file. Error: ' + (loadError ? loadError.message : 'Not found'));
             }
 
             console.log('Loading PDF document...');
@@ -3918,18 +3981,23 @@ ${data.Notes || ''}
             console.log('Setting radio buttons...');
             // Radio buttons with error handling
             try {
+                const noKompass = data.NoKompassCart;
                 const beforeDone = data.photos.before.length > 0 || data.BeforeComplete;
                 const signoffDone = data.photos.signoff.length > 0 || data.SignoffComplete;
                 const afterDone = data.photos.after.length > 0 || data.AfterComplete;
 
-                form.getRadioGroup('BeforePicPosted').select(pickYN(beforeDone));
+                // If no Kompass cart present, select NA for before/after pic fields
+                const beforeValue = noKompass ? 'NA' : pickYN(beforeDone);
+                const afterValue = noKompass ? 'NA' : pickYN(afterDone);
+
+                form.getRadioGroup('BeforePicPosted').select(beforeValue);
                 form.getRadioGroup('CalledHotline').select(pickYN(data.CalledHotline));
                 form.getRadioGroup('IssueResolved').select(pickYNN(data.IssueResolved));
                 form.getRadioGroup('SignedOutPROD').select(pickYN(data.SignedOutPROD));
                 form.getRadioGroup('SignedOutSI').select(pickYN(data.SignedOutSI));
                 form.getRadioGroup('SignoutSheetAttachedEmail').select(pickYN(signoffDone));
                 form.getRadioGroup('SignoutSheetAttachedPROD').select(pickYN(signoffDone));
-                form.getRadioGroup('AfterPicPosted').select(pickYN(afterDone));
+                form.getRadioGroup('AfterPicPosted').select(afterValue);
                 console.log('Radio buttons set successfully');
             } catch (e) {
                 console.error('Error setting radio buttons:', e);
@@ -4153,6 +4221,11 @@ ${data.Notes || ''}
                     updateSignaturePreview();
                     document.getElementById('hotlineDetails').style.display = 'none';
                     document.getElementById('tempSolutionField').style.display = 'none';
+                    // Reset Kompass labels back to default
+                    document.getElementById('beforePhotoSection').querySelector('label.field').textContent = 'Kompass Cart - Before:';
+                    document.getElementById('afterPhotoSection').querySelector('label.field').textContent = 'Kompass Cart - After:';
+                    document.getElementById('beforeComplete').nextElementSibling.textContent = 'Kompass cart before picture taken.';
+                    document.getElementById('afterComplete').nextElementSibling.textContent = 'Kompass cart after picture taken.';
                 }
             );
         }
@@ -4380,9 +4453,9 @@ Attach PDF: ${pdfFilename}`;
 
             // Test 2: Try to load PDF template
             const pdfPaths = [
-                'End Of Day Cover Sheet Form Editable Template (1).pdf',
-                './End_Of_Day_Cover_Sheet_Form_Editable_Template_(1).pdf',
-                'End%20Of%20Day%20Cover%20Sheet%20Form%20Editable%20Template%20(1).pdf'
+                'End Of Day Cover Sheet Form Editable Template NA.pdf',
+                './End_Of_Day_Cover_Sheet_Form_Editable_Template_NA.pdf',
+                'End%20Of%20Day%20Cover%20Sheet%20Form%20Editable%20Template%20NA.pdf'
             ];
 
             let pdfFound = false;
