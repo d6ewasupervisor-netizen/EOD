@@ -1363,6 +1363,21 @@
             <p>GENERATOR</p>
         </div>
 
+        <!-- My Profile -->
+        <div class="section">
+            <div class="section-title">My Profile</div>
+            <div class="field-group">
+                <div class="field">
+                    <label>Your Name:</label>
+                    <input type="text" id="profileName" placeholder="Enter your name">
+                </div>
+                <div class="field">
+                    <label>Your Email:</label>
+                    <input type="email" id="profileEmail" placeholder="you@example.com">
+                </div>
+            </div>
+        </div>
+
         <!-- Basic Info -->
         <div class="section">
             <div class="section-title">Store Information</div>
@@ -1722,7 +1737,7 @@
                 </label>
                 <label class="toggle-switch-label" for="notesOnlyToggle">Notes Only</label>
             </div>
-            <button class="btn btn-success" onclick="generateEmail()">Generate Email</button>
+            <button class="btn btn-success" onclick="generateEmail()">Send Email</button>
             <button class="btn btn-secondary" onclick="testSetup()">Test Setup</button>
             <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
         </div>
@@ -1745,36 +1760,7 @@
         </div>
     </div>
 
-    <!-- Email Options Modal -->
-    <div id="emailOptionsModal" class="modal-overlay">
-        <div class="modal-dialog" style="max-width: 400px;">
-            <h2>PDF Generated Successfully</h2>
-            <div id="emailOptionsMessage" style="margin-bottom: 15px; font-size: 13px;"></div>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <button class="btn btn-primary" id="emailOpenApp" style="width: 100%;">
-                    Open Email App
-                </button>
-                <button class="btn btn-secondary" id="emailOpenOutlook" style="width: 100%;">
-                    Open in Outlook.com
-                </button>
-                <button class="btn btn-secondary" id="emailDownloadEml" style="width: 100%;">
-                    Download Email File (.eml)
-                </button>
-                <button class="btn btn-secondary" id="emailCopyAll" style="width: 100%;">
-                    Copy Email Details
-                </button>
-                <button class="btn btn-secondary" id="emailShare" style="width: 100%; display: none;">
-                    Share via Device
-                </button>
-                <button class="btn btn-secondary" id="emailOptionsClose" style="width: 100%; margin-top: 5px;">
-                    Close
-                </button>
-            </div>
-            <div id="copySuccessMsg" style="display: none; margin-top: 10px; padding: 8px; background: #1a5c2a; border-radius: 4px; font-size: 12px; text-align: center;">
-                Copied to clipboard!
-            </div>
-        </div>
-    </div>
+    <!-- Email Options Modal (legacy, replaced by confirmation flow) -->
 
     <!-- No Kompass Cart Overlay -->
     <div id="noKompassOverlay" class="modal-overlay">
@@ -2264,6 +2250,25 @@
             }
         }
 
+        // Profile load/save (separate localStorage key, never cleared by resetForm)
+        function loadProfile() {
+            const saved = localStorage.getItem('kompassProfile');
+            if (saved) {
+                const profile = JSON.parse(saved);
+                document.getElementById('profileName').value = profile.name || '';
+                document.getElementById('profileEmail').value = profile.email || '';
+            }
+        }
+        function saveProfile() {
+            const profile = {
+                name: document.getElementById('profileName').value,
+                email: document.getElementById('profileEmail').value
+            };
+            localStorage.setItem('kompassProfile', JSON.stringify(profile));
+        }
+        document.getElementById('profileName').addEventListener('input', saveProfile);
+        document.getElementById('profileEmail').addEventListener('input', saveProfile);
+
         // Add event listeners for auto-save
         document.querySelectorAll('input, textarea').forEach(el => {
             el.addEventListener('change', autoSave);
@@ -2606,22 +2611,19 @@
             fsOverlay.classList.add('show');
             resizeFsCanvas();
 
-            // Load existing signature
-            const saved = localStorage.getItem('kompassEOD');
-            if (saved) {
-                const data = JSON.parse(saved);
-                if (data.signature) {
-                    const img = new Image();
-                    img.onload = () => {
-                        const scale = Math.min(fsCanvas.width / img.width, fsCanvas.height / img.height);
-                        const dw = img.width * scale;
-                        const dh = img.height * scale;
-                        const dx = (fsCanvas.width - dw) / 2;
-                        const dy = (fsCanvas.height - dh) / 2;
-                        fsCtx.drawImage(img, 0, 0, img.width, img.height, dx, dy, dw, dh);
-                    };
-                    img.src = data.signature;
-                }
+            // Load existing signature from dedicated key
+            const sigSaved = localStorage.getItem('kompassSignature');
+            if (sigSaved) {
+                const img = new Image();
+                img.onload = () => {
+                    const scale = Math.min(fsCanvas.width / img.width, fsCanvas.height / img.height);
+                    const dw = img.width * scale;
+                    const dh = img.height * scale;
+                    const dx = (fsCanvas.width - dw) / 2;
+                    const dy = (fsCanvas.height - dh) / 2;
+                    fsCtx.drawImage(img, 0, 0, img.width, img.height, dx, dy, dw, dh);
+                };
+                img.src = sigSaved;
             }
         }
 
@@ -2699,10 +2701,8 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(fsCanvas, 0, 0);
 
-            // Save and update preview
-            const data = JSON.parse(localStorage.getItem('kompassEOD') || '{}');
-            data.signature = canvas.toDataURL('image/png');
-            localStorage.setItem('kompassEOD', JSON.stringify(data));
+            // Save signature to dedicated key
+            localStorage.setItem('kompassSignature', canvas.toDataURL('image/png'));
 
             updateSignaturePreview();
             fsOverlay.classList.remove('show');
@@ -2774,13 +2774,10 @@
 
         function updateSignaturePreview() {
             const preview = document.getElementById('signaturePreview');
-            const saved = localStorage.getItem('kompassEOD');
-            if (saved) {
-                const data = JSON.parse(saved);
-                if (data.signature) {
-                    preview.innerHTML = `<img src="${data.signature}" alt="Signature">`;
-                    return;
-                }
+            const sigSaved = localStorage.getItem('kompassSignature');
+            if (sigSaved) {
+                preview.innerHTML = `<img src="${sigSaved}" alt="Signature">`;
+                return;
             }
             preview.textContent = 'Tap "Sign" to add signature';
         }
@@ -3708,15 +3705,13 @@
         }
 
         async function getSignatureDataURL() {
-            const saved = localStorage.getItem('kompassEOD');
-            if (saved) {
-                const data = JSON.parse(saved);
-                if (data.signature) {
+            const sigSaved = localStorage.getItem('kompassSignature');
+            if (sigSaved) {
                     // Auto-crop signature
                     const img = new Image();
                     await new Promise(resolve => {
                         img.onload = resolve;
-                        img.src = data.signature;
+                        img.src = sigSaved;
                     });
 
                     const tempCanvas = document.createElement('canvas');
@@ -3762,7 +3757,6 @@
                     cropCtx.drawImage(tempCanvas, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
 
                     return cropCanvas.toDataURL('image/png');
-                }
             }
             return '';
         }
@@ -3824,91 +3818,83 @@
             };
         }
 
-        // Generate Email
+        // Generate Email - builds payload and shows confirmation preview
         async function generateEmail() {
             const loading = document.getElementById('loadingOverlay');
             loading.classList.add('show');
-
             try {
                 const data = await collectData();
-
-                // First, generate the PDF
                 const pdfFilename = `FM${data.StoreNumberPadded} KOMPASS EOD ${data.DateForPDFFilename}.PDF`;
 
+                // Generate PDF as base64
+                let pdfBase64 = null;
                 try {
-                    await generatePDFInternal(data, pdfFilename);
+                    pdfBase64 = await generatePDFBase64(data);
                 } catch (pdfError) {
                     console.error('Error generating PDF:', pdfError);
-                    loading.classList.remove('show');
-                    showAlert('PDF Generation Error', 'Failed to generate PDF. You can still send the email, but you\'ll need to attach documents manually.<br><br>Error: ' + pdfError.message);
-                    // Continue with email generation even if PDF fails
                 }
 
                 const notesOnly = document.getElementById('notesOnlyToggle').checked;
+                const beforeDone  = data.photos.before.length  > 0 || data.BeforeComplete;
+                const signoffDone = data.photos.signoff.length > 0 || data.SignoffComplete;
+                const afterDone   = data.photos.after.length   > 0 || data.AfterComplete;
 
-                let body = '';
-
-                if (notesOnly) {
-                    body = `
-
-Notes:
-${data.Notes || ''}
-`;
-                } else {
-                    const beforeDone  = data.photos.before.length  > 0 || data.BeforeComplete;
-                    const signoffDone = data.photos.signoff.length > 0 || data.SignoffComplete;
-                    const afterDone   = data.photos.after.length   > 0 || data.AfterComplete;
-
-                    body = `
-Lead Name: ${data.LeadName || ''}
+                const body = notesOnly
+                    ? `Notes:\n${data.Notes || ''}`
+                    : `Lead Name: ${data.LeadName || ''}
 Date: ${data.DateMMDDYYYY || ''}
 Store Number: ${data.StoreNumber || ''}
-
 Before picture of KOMPASS cart taken: ${beforeDone ? 'Yes' : 'No'}
 Manager checked in with: ${data.CheckInManager || ''}
-
 Called KOMPASS Hotline: ${pickYN(data.CalledHotline)}
 Commodities: ${data.IssueCommodities || 'N/A'}
 Issue: ${data.WhatIsIssue || 'N/A'}
 Issue resolved: ${data.IssueResolved || 'N/A'}
 Temporary solution: ${data.TempSolution || 'N/A'}
-
 Manager checked out with: ${data.CheckOutManager || ''}
 Signed out in PROD: ${pickYN(data.SignedOutPROD)}
 Signed out in SI: ${pickYN(data.SignedOutSI)}
-
 After picture of KOMPASS cart taken: ${afterDone ? 'Yes' : 'No'}
 Sign-off sheets photographed: ${signoffDone ? 'Yes' : 'No'}
 Number of sign-off photos: ${data.photos.signoff.length}
-
 Notes:
-${data.Notes || ''}
-`;
-                }
+${data.Notes || ''}`;
 
-                const to = data.EmailTo || '';
-                let ccList = ['aiyana.natarisalazar@retailodyssey.com', 'tyson.gauthier@retailodyssey.com', 'amanda.mathews@retailodyssey.com'];
-
-                // Add Retail Odyssey Team emails if checkbox is checked
+                let recipients = [...emailRecipients];
                 if (document.getElementById('addRetailOdysseyTeam').checked) {
-                    const retailOdysseyTeam = ['MAshabranner@retailodyssey.com', 'seth.newman@retailodyssey.com', 'tyson.gauthier@retailodyssey.com'];
-                    ccList = ccList.concat(retailOdysseyTeam);
-                    // Remove duplicates
-                    ccList = [...new Set(ccList)];
+                    recipients = [...new Set([
+                        ...recipients,
+                        'MAshabranner@retailodyssey.com',
+                        'seth.newman@retailodyssey.com',
+                        'tyson.gauthier@retailodyssey.com'
+                    ])];
                 }
 
-                // Use semicolons as separator (Outlook standard)
-                const cc = ccList.join('; ');
+                // Add user's own email to recipients (deduplicated)
+                const userEmail = document.getElementById('profileEmail').value.trim();
+                if (userEmail) {
+                    recipients = [...new Set([...recipients, userEmail.toLowerCase()])];
+                }
 
+                const userName = document.getElementById('profileName').value.trim();
                 const subject = `KOMPASS EOD FM${data.StoreNumberPadded} ${data.DateMMDDYYYY}`;
-                const mailtoUrl = `mailto:${encodeURIComponent(to)}?cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
-                // Store email data for the various send methods
-                window.pendingEmailData = { to, cc, subject, body, pdfFilename };
+                const payload = {
+                    storeNumber: data.StoreNumber,
+                    subject,
+                    body,
+                    recipients,
+                    pdfFilename,
+                    userName,
+                    userEmail,
+                    signoffPhotos: data.photos.signoff,
+                    ...(pdfBase64 && { pdfBase64 })
+                };
 
                 loading.classList.remove('show');
 
-                showEmailOptions(pdfFilename);
+                // Show confirmation preview before sending
+                showSendConfirmation(payload, data);
             } catch (error) {
                 console.error('Error generating email:', error);
                 loading.classList.remove('show');
@@ -3916,8 +3902,65 @@ ${data.Notes || ''}
             }
         }
 
-        // Internal PDF generation function (called by generateEmail)
-        async function generatePDFInternal(data, filename) {
+        // Show send confirmation modal with email preview
+        function showSendConfirmation(payload, data) {
+            const previewHtml = `
+                <div style="text-align:left; font-size:13px; max-height:60vh; overflow-y:auto;">
+                    <p><strong>From:</strong> EOD_FM${data.StoreNumberPadded}_@kompass.retailodyssey.com</p>
+                    <p><strong>To:</strong> ${payload.recipients.join(', ') || '(none)'}</p>
+                    <p><strong>Subject:</strong> ${payload.subject}</p>
+                    ${payload.pdfBase64 ? '<p><strong>Attachment:</strong> ' + payload.pdfFilename + '</p>' : '<p style="color:#fbbf24;"><strong>Attachment:</strong> PDF generation failed</p>'}
+                    ${payload.signoffPhotos.length > 0 ? '<p><strong>Sign-off photos:</strong> ' + payload.signoffPhotos.length + ' (inline)</p>' : ''}
+                    <hr style="border-color:#4b5563; margin:10px 0;">
+                    <pre style="white-space:pre-wrap; font-size:12px; color:#d1d5db; background:#1f2937; padding:10px; border-radius:6px; max-height:200px; overflow-y:auto;">${payload.body}</pre>
+                    ${payload.userName ? '<p style="margin-top:8px; color:#9ca3af; font-size:12px;">' + payload.userName + '<br>Retail Odyssey' + (payload.userEmail ? '<br>' + payload.userEmail : '') + '</p>' : ''}
+                </div>
+            `;
+
+            const modal = document.getElementById('modal');
+            document.getElementById('modalTitle').textContent = 'Confirm Send';
+            document.getElementById('modalMessage').innerHTML = previewHtml;
+            document.getElementById('modalCancel').style.display = 'inline-block';
+            document.getElementById('modalConfirm').textContent = 'Send';
+            modal.classList.add('show');
+
+            document.getElementById('modalConfirm').onclick = async () => {
+                modal.classList.remove('show');
+                document.getElementById('modalConfirm').textContent = 'OK';
+                await sendEmail(payload);
+            };
+            document.getElementById('modalCancel').onclick = () => {
+                modal.classList.remove('show');
+                document.getElementById('modalConfirm').textContent = 'OK';
+            };
+        }
+
+        // Actually send the email via fetch
+        async function sendEmail(payload) {
+            const loading = document.getElementById('loadingOverlay');
+            loading.classList.add('show');
+            try {
+                const response = await fetch('http://localhost:3001/send-eod', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                loading.classList.remove('show');
+                if (result.success) {
+                    showAlert('Email Sent', `EOD report sent successfully.<br><br><strong>From:</strong> EOD_FM${String(payload.storeNumber || '').padStart(3, '0')}_...<br><strong>To:</strong> ${payload.recipients.join(', ') || '(none)'}`);
+                } else {
+                    showAlert('Send Failed', 'Error: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error sending email:', error);
+                loading.classList.remove('show');
+                showAlert('Error', 'Failed to send: ' + error.message);
+            }
+        }
+
+        // PDF generation function - returns base64 string
+        async function generatePDFBase64(data) {
             console.log('Starting PDF generation...');
 
             // Check if PDFLib is loaded
@@ -4180,19 +4223,8 @@ ${data.Notes || ''}
             });
             console.log(`PDF size: ${Math.round(finalPdfBytes.byteLength / 1024)}KB`);
 
-            console.log('Creating download...');
-            // Download
-            const blob = new Blob([finalPdfBytes], { type: 'application/pdf' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            console.log('PDF generated successfully!');
+            console.log('Returning PDF as base64...');
+            return btoa(String.fromCharCode(...new Uint8Array(finalPdfBytes)));
         }
 
         // Reset form
@@ -4259,150 +4291,7 @@ ${data.Notes || ''}
             document.getElementById('modal').classList.remove('show');
         });
 
-        // Email options modal functions
-        function showEmailOptions(pdfFilename) {
-            const modal = document.getElementById('emailOptionsModal');
-            const { to, cc, subject, body } = window.pendingEmailData;
-
-            document.getElementById('emailOptionsMessage').innerHTML =
-                `<strong>Filename:</strong> ${pdfFilename}<br>` +
-                `<strong>Location:</strong> Downloads folder<br><br>` +
-                `<strong>To:</strong> ${to || '(not set)'}<br>` +
-                `<strong>CC:</strong> ${cc}<br><br>` +
-                `<em>Remember to attach the PDF from your Downloads folder!</em>`;
-
-            // Show share button if Web Share API is available
-            if (navigator.share) {
-                document.getElementById('emailShare').style.display = 'block';
-            }
-
-            modal.classList.add('show');
-        }
-
-        // Open email app (mailto)
-        document.getElementById('emailOpenApp').addEventListener('click', () => {
-            const { to, cc, subject, body } = window.pendingEmailData;
-            const mailtoUrl = `mailto:${encodeURIComponent(to)}?cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-
-            // Try different methods to open email
-            try {
-                // First try window.open for better compatibility on some devices
-                const emailWindow = window.open(mailtoUrl, '_blank');
-                if (!emailWindow || emailWindow.closed) {
-                    // Fallback to location.href
-                    window.location.href = mailtoUrl;
-                }
-            } catch (e) {
-                // Final fallback
-                window.location.href = mailtoUrl;
-            }
-        });
-
-        // Open in Outlook.com (web)
-        document.getElementById('emailOpenOutlook').addEventListener('click', () => {
-            const { to, cc, subject, body } = window.pendingEmailData;
-            // Outlook.com compose URL format
-            const outlookUrl = `https://outlook.live.com/mail/0/deeplink/compose?to=${encodeURIComponent(to)}&cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-            window.open(outlookUrl, '_blank');
-        });
-
-        // Download email as .eml file
-        document.getElementById('emailDownloadEml').addEventListener('click', () => {
-            const { to, cc, subject, body, pdfFilename } = window.pendingEmailData;
-
-            // Create .eml file content (RFC 2822 format)
-            const emlContent = [
-                `To: ${to}`,
-                `Cc: ${cc}`,
-                `Subject: ${subject}`,
-                `X-Unsent: 1`,
-                `MIME-Version: 1.0`,
-                `Content-Type: text/plain; charset=utf-8`,
-                ``,
-                body,
-                ``,
-                `---`,
-                `Note: Please attach "${pdfFilename}" from your Downloads folder before sending.`
-            ].join('\r\n');
-
-            // Create and download the .eml file
-            const blob = new Blob([emlContent], { type: 'message/rfc822' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `KOMPASS EOD ${window.pendingEmailData.subject.replace(/[^a-zA-Z0-9 ]/g, '')}.eml`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            const msg = document.getElementById('copySuccessMsg');
-            msg.textContent = 'Email file downloaded!';
-            msg.style.display = 'block';
-            setTimeout(() => {
-                msg.textContent = 'Copied to clipboard!';
-                msg.style.display = 'none';
-            }, 2000);
-        });
-
-        // Copy email details to clipboard
-        document.getElementById('emailCopyAll').addEventListener('click', async () => {
-            const { to, cc, subject, body, pdfFilename } = window.pendingEmailData;
-            const emailText = `TO: ${to}
-CC: ${cc}
-SUBJECT: ${subject}
-
-${body}
-
----
-ATTACHMENT: ${pdfFilename} (in Downloads folder)`;
-
-            try {
-                await navigator.clipboard.writeText(emailText);
-                const msg = document.getElementById('copySuccessMsg');
-                msg.style.display = 'block';
-                setTimeout(() => { msg.style.display = 'none'; }, 2000);
-            } catch (e) {
-                // Fallback for older browsers
-                const textarea = document.createElement('textarea');
-                textarea.value = emailText;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                const msg = document.getElementById('copySuccessMsg');
-                msg.style.display = 'block';
-                setTimeout(() => { msg.style.display = 'none'; }, 2000);
-            }
-        });
-
-        // Share via device (Web Share API)
-        document.getElementById('emailShare').addEventListener('click', async () => {
-            const { to, cc, subject, body, pdfFilename } = window.pendingEmailData;
-            const shareText = `TO: ${to}
-CC: ${cc}
-
-${body}
-
----
-Attach PDF: ${pdfFilename}`;
-
-            try {
-                await navigator.share({
-                    title: subject,
-                    text: shareText
-                });
-            } catch (e) {
-                if (e.name !== 'AbortError') {
-                    showAlert('Share Error', 'Unable to share. Try copying the email details instead.');
-                }
-            }
-        });
-
-        // Close email options modal
-        document.getElementById('emailOptionsClose').addEventListener('click', () => {
-            document.getElementById('emailOptionsModal').classList.remove('show');
-        });
+        // (Legacy email options removed - now using direct send via fetch)
 
         // Quick view (Easter egg) - shows current form data
         async function openQuickView() {
@@ -4505,6 +4394,7 @@ Attach PDF: ${pdfFilename}`;
 
         // Initialize on load
         window.addEventListener('load', () => {
+            loadProfile();
             loadSaved();
             updateSignaturePreview();
 
