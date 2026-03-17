@@ -28,7 +28,11 @@ app.post('/send-eod', async (req, res) => {
         }
 
         const paddedStore = String(storeNumber || '').padStart(3, '0');
-        const fromAddress = `EOD_FM${paddedStore}_@kompass.retailodyssey.com`;
+        const now = new Date();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const yyyy = now.getFullYear();
+        const fromAddress = `EOD_FM${paddedStore}_${mm}_${dd}_${yyyy}@retail-odyssey.com`;
 
         // Build HTML email body
         let html = '';
