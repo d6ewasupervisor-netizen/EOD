@@ -3928,18 +3928,28 @@ ${data.Notes || ''}`;
             document.getElementById('modalTitle').textContent = 'Confirm Send';
             document.getElementById('modalMessage').innerHTML = previewHtml;
             document.getElementById('modalCancel').style.display = 'inline-block';
-            document.getElementById('modalConfirm').textContent = 'Send';
+
+            // Clone both buttons to clear stale listeners
+            const oldConfirm = document.getElementById('modalConfirm');
+            const newConfirm = oldConfirm.cloneNode(true);
+            oldConfirm.parentNode.replaceChild(newConfirm, oldConfirm);
+            newConfirm.textContent = 'Send';
+
+            const oldCancel = document.getElementById('modalCancel');
+            const newCancel = oldCancel.cloneNode(true);
+            oldCancel.parentNode.replaceChild(newCancel, oldCancel);
+
             modal.classList.add('show');
 
-            document.getElementById('modalConfirm').onclick = async () => {
+            newConfirm.addEventListener('click', async () => {
                 modal.classList.remove('show');
-                document.getElementById('modalConfirm').textContent = 'OK';
+                newConfirm.textContent = 'OK';
                 await sendEmail(payload);
-            };
-            document.getElementById('modalCancel').onclick = () => {
+            });
+            newCancel.addEventListener('click', () => {
                 modal.classList.remove('show');
-                document.getElementById('modalConfirm').textContent = 'OK';
-            };
+                newConfirm.textContent = 'OK';
+            });
         }
 
         // Actually send the email via fetch
@@ -3955,7 +3965,8 @@ ${data.Notes || ''}`;
                 const result = await response.json();
                 loading.classList.remove('show');
                 if (result.success) {
-                    showAlert('Email Sent', `EOD report sent successfully.<br><br><strong>From:</strong> EOD_FM${String(payload.storeNumber || '').padStart(3, '0')}_...<br><strong>To:</strong> ${payload.recipients.join(', ') || '(none)'}`);
+                    const storeNumberPadded = String(payload.storeNumber || '').padStart(3, '0');
+                    showAlert('Email Sent', `EOD report sent successfully.<br><br><strong>From:</strong> EOD_FM${storeNumberPadded}@retail-odyssey.com<br><strong>To:</strong> ${payload.recipients.join(', ') || '(none)'}`);
                 } else {
                     showAlert('Send Failed', 'Error: ' + (result.error || 'Unknown error'));
                 }
@@ -4280,6 +4291,15 @@ ${data.Notes || ''}`;
             document.getElementById('modalTitle').textContent = title;
             document.getElementById('modalMessage').innerHTML = message;
             document.getElementById('modalCancel').style.display = 'none';
+
+            // Clone modalConfirm to clear any stale onclick/listeners from previous calls
+            const oldBtn = document.getElementById('modalConfirm');
+            const newBtn = oldBtn.cloneNode(true);
+            oldBtn.parentNode.replaceChild(newBtn, oldBtn);
+            newBtn.addEventListener('click', () => {
+                modal.classList.remove('show');
+            });
+
             modal.classList.add('show');
         }
 
@@ -4288,19 +4308,20 @@ ${data.Notes || ''}`;
             document.getElementById('modalTitle').textContent = title;
             document.getElementById('modalMessage').innerHTML = message;
             document.getElementById('modalCancel').style.display = 'inline-block';
-            modal.classList.add('show');
 
-            document.getElementById('modalConfirm').onclick = () => {
+            // Clone modalConfirm to clear any stale listeners from previous calls
+            const oldBtn = document.getElementById('modalConfirm');
+            const newBtn = oldBtn.cloneNode(true);
+            oldBtn.parentNode.replaceChild(newBtn, oldBtn);
+            newBtn.addEventListener('click', () => {
                 modal.classList.remove('show');
                 if (callback) callback();
-            };
+            });
+
+            modal.classList.add('show');
         }
 
         document.getElementById('modalCancel').addEventListener('click', () => {
-            document.getElementById('modal').classList.remove('show');
-        });
-
-        document.getElementById('modalConfirm').addEventListener('click', () => {
             document.getElementById('modal').classList.remove('show');
         });
 
