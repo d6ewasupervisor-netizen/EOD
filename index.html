@@ -4255,8 +4255,26 @@ ${data.Notes || ''}`;
         function resetForm() {
             showConfirm(
                 'Reset Form',
-                'Are you sure you want to reset all fields? This will clear all data, including photos?',
+                'Are you sure you want to reset all fields? This will clear all data, including photos?' +
+                '<div class="toggle-switch" style="margin-top: 16px; justify-content: flex-start; background: #374151;">' +
+                    '<label class="toggle-switch-wrapper">' +
+                        '<input type="checkbox" id="resetPersonalToggle">' +
+                        '<span class="toggle-slider"></span>' +
+                    '</label>' +
+                    '<label class="toggle-switch-label" for="resetPersonalToggle" style="font-size: 14px;">Remove personal details</label>' +
+                '</div>',
                 () => {
+                    const removePersonal = document.getElementById('resetPersonalToggle').checked;
+
+                    // Save personal details before reset if toggle is off
+                    let savedName, savedEmail, savedSignature, savedProfile;
+                    if (!removePersonal) {
+                        savedName = document.getElementById('profileName').value;
+                        savedEmail = document.getElementById('profileEmail').value;
+                        savedProfile = localStorage.getItem('kompassProfile');
+                        savedSignature = localStorage.getItem('kompassSignature');
+                    }
+
                     localStorage.removeItem('kompassEOD');
                     // Clear photos from IndexedDB
                     PhotoDB.clearPhotos().catch(e => console.warn('Could not clear photos from IndexedDB:', e));
@@ -4269,6 +4287,19 @@ ${data.Notes || ''}`;
                         else if (el.type === 'date') el.valueAsDate = new Date();
                         else el.value = '';
                     });
+
+                    if (removePersonal) {
+                        // Clear personal details storage
+                        localStorage.removeItem('kompassProfile');
+                        localStorage.removeItem('kompassSignature');
+                    } else {
+                        // Restore personal details
+                        document.getElementById('profileName').value = savedName;
+                        document.getElementById('profileEmail').value = savedEmail;
+                        if (savedProfile) localStorage.setItem('kompassProfile', savedProfile);
+                        if (savedSignature) localStorage.setItem('kompassSignature', savedSignature);
+                    }
+
                     renderPhotos('before');
                     renderPhotos('signoff');
                     renderPhotos('after');
