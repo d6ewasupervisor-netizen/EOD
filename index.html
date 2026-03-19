@@ -1352,6 +1352,63 @@
             font-weight: bold;
             margin-bottom: 8px;
         }
+        /* SAS Sync Button */
+        .sync-btn {
+            padding: 6px 16px;
+            background: #065f46;
+            color: #a7f3d0;
+            border: 1px solid #10b981;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            min-height: 36px;
+            touch-action: manipulation;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .sync-btn:hover {
+            background: #047857;
+        }
+        .sync-btn:active {
+            transform: scale(0.96);
+        }
+        .sync-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .sync-btn.syncing {
+            background: #1e40af;
+            border-color: #3b82f6;
+            color: #bfdbfe;
+        }
+        .sync-btn.synced {
+            background: #065f46;
+            border-color: #10b981;
+            color: #a7f3d0;
+        }
+        .sync-btn.sync-error {
+            background: #7f1d1d;
+            border-color: #ef4444;
+            color: #fecaca;
+        }
+        .sync-status {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-left: 8px;
+        }
+        /* Create Coversheet button */
+        .btn-coversheet {
+            background: linear-gradient(135deg, #0d4f8b 0%, #1e66ab 100%);
+            color: white;
+        }
+        .btn-coversheet:hover {
+            box-shadow: 0 5px 15px rgba(13, 79, 139, 0.4);
+        }
     </style>
 </head>
 <body>
@@ -1545,6 +1602,10 @@
                         <input type="checkbox" id="beforeComplete">
                         <label for="beforeComplete">Kompass cart before picture taken.</label>
                     </div>
+                    <button class="sync-btn" id="syncBefore" onclick="syncToSAS('before')" title="Upload before photo to SAS KOMPASS MAINTENANCE">
+                        <span id="syncBeforeIcon">&#8593;</span> Sync
+                    </button>
+                    <span class="sync-status" id="syncBeforeStatus"></span>
                 </div>
                 <div class="photo-button-group">
                     <button class="photo-button" onclick="openPhotoCamera('before')">
@@ -1565,6 +1626,10 @@
                         <input type="checkbox" id="afterComplete">
                         <label for="afterComplete">Kompass cart after picture taken.</label>
                     </div>
+                    <button class="sync-btn" id="syncAfter" onclick="syncToSAS('after')" title="Upload after photo to SAS KOMPASS MAINTENANCE">
+                        <span id="syncAfterIcon">&#8593;</span> Sync
+                    </button>
+                    <span class="sync-status" id="syncAfterStatus"></span>
                 </div>
                 <div class="photo-button-group">
                     <button class="photo-button" onclick="openPhotoCamera('after')">
@@ -1585,6 +1650,10 @@
                         <input type="checkbox" id="signoffComplete">
                         <label for="signoffComplete">All sign-off sheets have been photographed.</label>
                     </div>
+                    <button class="sync-btn" id="syncSignoff" onclick="syncToSAS('signoff')" title="Upload sign-off sheets to SAS KOMPASS MAINTENANCE (after)">
+                        <span id="syncSignoffIcon">&#8593;</span> Sync
+                    </button>
+                    <span class="sync-status" id="syncSignoffStatus"></span>
                 </div>
                 <div class="photo-button-group">
                     <button class="photo-button" onclick="openSignoffCamera()">
@@ -1738,6 +1807,7 @@
                 <label class="toggle-switch-label" for="notesOnlyToggle">Notes Only</label>
             </div>
             <button class="btn btn-success" onclick="generateEmail()">Send Email</button>
+            <button class="btn btn-coversheet" onclick="createAndSyncCoversheet()">Create Coversheet</button>
             <button class="btn btn-secondary" onclick="testSetup()">Test Setup</button>
             <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
         </div>
@@ -4477,6 +4547,244 @@ ${data.Notes || ''}`;
             console.log('PDFLib available:', typeof PDFLib !== 'undefined');
             console.log('Current URL:', window.location.href);
         });
+
+        // ─── SAS SYNC FUNCTIONS ─────────────────────────────────────────────────────
+        const SAS_UPLOAD_URL = 'https://eod-api-production.up.railway.app/sas-upload';
+
+        // Map EOD photo types to SAS slots
+        const SYNC_SLOT_MAP = {
+            before: 'before',     // before cart photo → MAINTENANCE before
+            after: 'after',       // after cart photo → MAINTENANCE after
+            signoff: 'after',     // sign-off sheets → MAINTENANCE after (stacks)
+        };
+
+        function setSyncState(type, state, message) {
+            const btn = document.getElementById(`sync${type.charAt(0).toUpperCase() + type.slice(1)}`);
+            const icon = document.getElementById(`sync${type.charAt(0).toUpperCase() + type.slice(1)}Icon`);
+            const status = document.getElementById(`sync${type.charAt(0).toUpperCase() + type.slice(1)}Status`);
+            if (!btn) return;
+
+            btn.classList.remove('syncing', 'synced', 'sync-error');
+            btn.disabled = false;
+
+            switch (state) {
+                case 'syncing':
+                    btn.classList.add('syncing');
+                    btn.disabled = true;
+                    icon.textContent = '⟳';
+                    status.textContent = message || 'Uploading...';
+                    break;
+                case 'synced':
+                    btn.classList.add('synced');
+                    icon.textContent = '✓';
+                    status.textContent = message || 'Synced';
+                    break;
+                case 'error':
+                    btn.classList.add('sync-error');
+                    icon.textContent = '✕';
+                    status.textContent = message || 'Failed';
+                    break;
+                default:
+                    icon.innerHTML = '&#8593;';
+                    status.textContent = '';
+            }
+        }
+
+        async function syncToSAS(type) {
+            const storeNumber = document.getElementById('storeNumber').value;
+            const date = document.getElementById('workDate').value;
+            const leadName = document.getElementById('leadName').value;
+
+            // Validation
+            if (!storeNumber || !date || !leadName) {
+                showAlert('Missing Info', 'Please fill in Store #, Date, and Lead Name before syncing.');
+                return;
+            }
+
+            const photoArray = photos[type];
+            if (!photoArray || photoArray.length === 0) {
+                showAlert('No Photos', `No ${type} photos to sync. Take or upload a photo first.`);
+                return;
+            }
+
+            const slot = SYNC_SLOT_MAP[type];
+            const storeNumPadded = String(storeNumber).padStart(3, '0');
+            const dateCompact = date.replace(/-/g, '');
+
+            setSyncState(type, 'syncing', `Uploading ${photoArray.length} photo(s)...`);
+
+            let successCount = 0;
+            let lastError = null;
+
+            for (let i = 0; i < photoArray.length; i++) {
+                const photoData = photoArray[i];
+
+                // Build a descriptive filename
+                let filename;
+                if (type === 'signoff') {
+                    filename = `fm${storeNumPadded}_signoff_sheet_${i + 1}_${dateCompact}.jpg`;
+                } else {
+                    filename = `fm${storeNumPadded}_kompass_cart_${type}_photo_${dateCompact}.jpg`;
+                }
+
+                setSyncState(type, 'syncing', `Uploading ${i + 1} of ${photoArray.length}...`);
+
+                try {
+                    const resp = await fetch(SAS_UPLOAD_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            storeNumber,
+                            date,
+                            leadName,
+                            photoBase64: photoData,
+                            slot,
+                            targetReset: 'MAINTENANCE',
+                            filename,
+                        }),
+                    });
+
+                    const result = await resp.json();
+                    if (result.success) {
+                        successCount++;
+                        console.log(`[sync] ${type} photo ${i + 1} queued: job #${result.jobId}`);
+                    } else {
+                        lastError = result.error || 'Unknown error';
+                        console.error(`[sync] ${type} photo ${i + 1} failed:`, lastError);
+                    }
+                } catch (err) {
+                    lastError = err.message;
+                    console.error(`[sync] ${type} photo ${i + 1} error:`, err);
+                }
+            }
+
+            if (successCount === photoArray.length) {
+                setSyncState(type, 'synced', `${successCount} photo(s) synced`);
+            } else if (successCount > 0) {
+                setSyncState(type, 'error', `${successCount}/${photoArray.length} synced`);
+            } else {
+                setSyncState(type, 'error', lastError || 'Upload failed');
+            }
+        }
+
+        // ─── CREATE COVERSHEET (PDF → image → SAS after) ───────────────────────────
+        async function createAndSyncCoversheet() {
+            const storeNumber = document.getElementById('storeNumber').value;
+            const date = document.getElementById('workDate').value;
+            const leadName = document.getElementById('leadName').value;
+
+            if (!storeNumber || !date || !leadName) {
+                showAlert('Missing Info', 'Please fill in Store #, Date, and Lead Name before creating the coversheet.');
+                return;
+            }
+
+            const loading = document.getElementById('loadingOverlay');
+            loading.querySelector('span').textContent = 'Generating coversheet...';
+            loading.classList.add('show');
+
+            try {
+                // Step 1: Collect data and generate PDF
+                const data = await collectData();
+                const pdfBase64 = await generatePDFBase64(data);
+
+                if (!pdfBase64) {
+                    throw new Error('PDF generation failed');
+                }
+
+                // Step 2: Convert PDF first page to image using canvas
+                loading.querySelector('span').textContent = 'Converting to image...';
+                const coversheetImage = await pdfToImage(pdfBase64);
+
+                // Step 3: Upload to SAS as MAINTENANCE after photo
+                loading.querySelector('span').textContent = 'Uploading coversheet to SAS...';
+                const storeNumPadded = String(storeNumber).padStart(3, '0');
+                const dateCompact = date.replace(/-/g, '');
+                const filename = `fm${storeNumPadded}_eod_coversheet_${dateCompact}.jpg`;
+
+                const resp = await fetch(SAS_UPLOAD_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        storeNumber,
+                        date,
+                        leadName,
+                        photoBase64: coversheetImage,
+                        slot: 'after',
+                        targetReset: 'MAINTENANCE',
+                        filename,
+                    }),
+                });
+
+                const result = await resp.json();
+
+                loading.classList.remove('show');
+                loading.querySelector('span').textContent = 'Processing...';
+
+                if (result.success) {
+                    showAlert('Coversheet Created', `EOD coversheet generated and queued for upload to SAS.<br><br>Job #${result.jobId}`);
+                } else {
+                    showAlert('Upload Issue', `Coversheet was generated but upload had an issue: ${result.error || 'Unknown error'}.<br><br>The job may still be queued for retry.`);
+                }
+            } catch (err) {
+                loading.classList.remove('show');
+                loading.querySelector('span').textContent = 'Processing...';
+                console.error('[coversheet] Error:', err);
+                showAlert('Error', 'Failed to create coversheet: ' + err.message);
+            }
+        }
+
+        // Convert a base64 PDF to a JPEG image (renders first page)
+        async function pdfToImage(pdfBase64) {
+            // Decode base64 to ArrayBuffer
+            const binaryString = atob(pdfBase64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+
+            // Load PDF with pdf-lib to get page dimensions
+            const pdfDoc = await PDFLib.PDFDocument.load(bytes.buffer);
+            const pages = pdfDoc.getPages();
+            const firstPage = pages[0];
+            const { width: pdfWidth, height: pdfHeight } = firstPage.getSize();
+
+            // Dynamically load pdf.js if not already available
+            if (!window.pdfjsLib) {
+                await new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+                    script.onload = () => {
+                        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+                            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                        resolve();
+                    };
+                    script.onerror = reject;
+                    document.head.appendChild(script);
+                });
+            }
+
+            // Render PDF to canvas
+            const loadingTask = window.pdfjsLib.getDocument({ data: bytes });
+            const pdf = await loadingTask.promise;
+            const page = await pdf.getPage(1);
+
+            // Render at 2x for quality
+            const scale = 2;
+            const viewport = page.getViewport({ scale });
+
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            const ctx = canvas.getContext('2d');
+
+            await page.render({ canvasContext: ctx, viewport }).promise;
+
+            // Convert to JPEG
+            const imageDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            console.log(`[coversheet] PDF rendered to image: ${Math.round(imageDataUrl.length / 1024)}KB`);
+
+            return imageDataUrl;
+        }
     </script>
 </body>
 </html>
