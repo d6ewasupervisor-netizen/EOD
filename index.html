@@ -1409,6 +1409,83 @@
         .btn-coversheet:hover {
             box-shadow: 0 5px 15px rgba(13, 79, 139, 0.4);
         }
+        /* Shift Search & Selection */
+        .shift-search-btn {
+            width: 100%;
+            margin-top: var(--spacing-md);
+        }
+        #shiftResults {
+            margin-top: var(--spacing-md);
+            display: none;
+        }
+        .shift-card {
+            background: #374151;
+            border: 2px solid #0d4f8b;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md) var(--spacing-lg);
+            margin-bottom: var(--spacing-sm);
+            cursor: pointer;
+            min-height: var(--min-touch-target);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--spacing-sm);
+            color: #f9fafb;
+            transition: border-color 0.2s ease, background 0.2s ease;
+            touch-action: manipulation;
+        }
+        .shift-card:active {
+            background: #4b5563;
+            transform: scale(0.98);
+        }
+        .shift-card.selected {
+            border-color: #10b981;
+            background: #1a3a2a;
+        }
+        .shift-card-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .shift-card-project {
+            font-weight: 600;
+            color: #88c4ed;
+            font-size: var(--font-size-base);
+        }
+        .shift-card-detail {
+            font-size: var(--font-size-sm);
+            color: #d1d5db;
+            margin-top: 2px;
+        }
+        .shift-card-check {
+            font-size: 20px;
+            color: #10b981;
+            display: none;
+            flex-shrink: 0;
+        }
+        .shift-card.selected .shift-card-check {
+            display: block;
+        }
+        .shift-results-list {
+            max-height: 300px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .shift-message {
+            color: #d1d5db;
+            font-size: var(--font-size-sm);
+            padding: var(--spacing-md);
+            text-align: center;
+        }
+        .shift-message.error {
+            color: #fca5a5;
+        }
+        #shiftSelectionStatus {
+            margin-top: var(--spacing-sm);
+            font-size: var(--font-size-sm);
+            color: #10b981;
+            font-weight: 600;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -1581,6 +1658,11 @@
                     <input type="text" id="leadName" placeholder="Your name">
                 </div>
             </div>
+            <button class="btn btn-primary shift-search-btn" id="searchShiftsBtn" onclick="searchShifts()">Search Shifts</button>
+            <div id="shiftResults">
+                <div class="shift-results-list" id="shiftResultsList"></div>
+            </div>
+            <div id="shiftSelectionStatus"></div>
         </div>
 
         <!-- Photos Section -->
@@ -2064,6 +2146,7 @@
 
         // Email recipients array
         let emailRecipients = [];
+        let selectedShift = null;
 
         // Add email recipient
         function addEmailRecipient() {
@@ -2177,7 +2260,8 @@
                 signoffComplete: document.getElementById('signoffComplete')?.checked || false,
                 afterComplete: document.getElementById('afterComplete')?.checked || false,
                 noKompassCart: document.getElementById('noKompassCart')?.checked || false,
-                addRetailOdysseyTeam: document.getElementById('addRetailOdysseyTeam')?.checked || false
+                addRetailOdysseyTeam: document.getElementById('addRetailOdysseyTeam')?.checked || false,
+                selectedShift: selectedShift
                 // Note: photos are now stored in IndexedDB, not localStorage
             };
             try {
@@ -2256,6 +2340,14 @@
                 }
                 if (typeof data.addRetailOdysseyTeam === 'boolean') {
                     document.getElementById('addRetailOdysseyTeam').checked = data.addRetailOdysseyTeam;
+                }
+
+                // Restore selected shift
+                if (data.selectedShift && data.selectedShift.visitId) {
+                    selectedShift = data.selectedShift;
+                    const statusEl = document.getElementById('shiftSelectionStatus');
+                    statusEl.textContent = `Selected: ${selectedShift.projectName || 'Shift'} — Visit #${selectedShift.visitId}`;
+                    statusEl.style.display = 'block';
                 }
 
                 // Migration: if photos exist in localStorage, migrate them to IndexedDB
@@ -4352,6 +4444,7 @@ ${data.Notes || ''}`;
                     photos.signoff = [];
                     photos.after = [];
                     emailRecipients = [];
+                    clearShiftSelection();
                     document.querySelectorAll('input, textarea').forEach(el => {
                         if (el.type === 'checkbox') el.checked = false;
                         else if (el.type === 'date') el.valueAsDate = new Date();
@@ -4548,6 +4641,115 @@ ${data.Notes || ''}`;
             console.log('Current URL:', window.location.href);
         });
 
+        // ─── SHIFT SEARCH & SELECTION ───────────────────────────────────────────────
+        const SAS_SHIFTS_URL = 'https://eod-api-production.up.railway.app/sas-shifts';
+
+        async function searchShifts() {
+            const storeNumber = document.getElementById('storeNumber').value.trim();
+            const date = document.getElementById('workDate').value;
+
+            if (!storeNumber || !date) {
+                showAlert('Missing Info', 'Please fill in Store # and Date before searching for shifts.');
+                return;
+            }
+
+            const btn = document.getElementById('searchShiftsBtn');
+            const resultsDiv = document.getElementById('shiftResults');
+            const listDiv = document.getElementById('shiftResultsList');
+
+            btn.disabled = true;
+            btn.textContent = 'Searching...';
+
+            try {
+                const resp = await fetch(`${SAS_SHIFTS_URL}?store=${encodeURIComponent(storeNumber)}&date=${encodeURIComponent(date)}`);
+                const data = await resp.json();
+
+                if (resp.status === 503) {
+                    listDiv.innerHTML = '<div class="shift-message error">SAS session not active — run morning auth first</div>';
+                    resultsDiv.style.display = 'block';
+                    return;
+                }
+
+                const shifts = data.shifts || data;
+
+                if (!Array.isArray(shifts) || shifts.length === 0) {
+                    listDiv.innerHTML = '<div class="shift-message">No shifts found for this store/date</div>';
+                    resultsDiv.style.display = 'block';
+                    return;
+                }
+
+                listDiv.innerHTML = shifts.map((shift, i) => {
+                    const isSelected = selectedShift && selectedShift.visitId === shift.visitId;
+                    return `<div class="shift-card${isSelected ? ' selected' : ''}" onclick="selectShift(${i})" data-index="${i}">
+                        <div class="shift-card-info">
+                            <div class="shift-card-project">${escapeHtml(shift.projectName || 'Unnamed Project')}</div>
+                            <div class="shift-card-detail">
+                                ${shift.leadName ? escapeHtml(shift.leadName) : ''}
+                                ${shift.status ? ' &middot; ' + escapeHtml(shift.status) : ''}
+                                ${shift.employeeCount ? ' &middot; ' + shift.employeeCount + ' employees' : ''}
+                            </div>
+                        </div>
+                        <span class="shift-card-check">&#10003;</span>
+                    </div>`;
+                }).join('');
+
+                // Store the shifts array for selectShift to reference
+                window._shiftSearchResults = shifts;
+                resultsDiv.style.display = 'block';
+            } catch (err) {
+                const listDiv = document.getElementById('shiftResultsList');
+                listDiv.innerHTML = `<div class="shift-message error">Error searching shifts: ${escapeHtml(err.message)}</div>`;
+                document.getElementById('shiftResults').style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Search Shifts';
+            }
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function selectShift(index) {
+            const shifts = window._shiftSearchResults;
+            if (!shifts || !shifts[index]) return;
+
+            selectedShift = shifts[index];
+
+            // Update visual state
+            document.querySelectorAll('.shift-card').forEach(card => card.classList.remove('selected'));
+            const selectedCard = document.querySelector(`.shift-card[data-index="${index}"]`);
+            if (selectedCard) selectedCard.classList.add('selected');
+
+            // Auto-fill lead name if available
+            if (selectedShift.leadName) {
+                document.getElementById('leadName').value = selectedShift.leadName;
+            }
+
+            // Show selection status
+            const statusEl = document.getElementById('shiftSelectionStatus');
+            statusEl.textContent = `Selected: ${selectedShift.projectName || 'Shift'} — Visit #${selectedShift.visitId}`;
+            statusEl.style.display = 'block';
+
+            autoSave();
+        }
+
+        function clearShiftSelection() {
+            selectedShift = null;
+            window._shiftSearchResults = null;
+            document.getElementById('shiftResults').style.display = 'none';
+            document.getElementById('shiftResultsList').innerHTML = '';
+            const statusEl = document.getElementById('shiftSelectionStatus');
+            statusEl.style.display = 'none';
+            statusEl.textContent = '';
+        }
+
+        // Auto-clear shift selection when store or date changes
+        document.getElementById('storeNumber').addEventListener('change', clearShiftSelection);
+        document.getElementById('workDate').addEventListener('change', clearShiftSelection);
+
         // ─── SAS SYNC FUNCTIONS ─────────────────────────────────────────────────────
         const SAS_UPLOAD_URL = 'https://eod-api-production.up.railway.app/sas-upload';
 
@@ -4637,6 +4839,7 @@ ${data.Notes || ''}`;
                             storeNumber,
                             date,
                             leadName,
+                            ...(selectedShift && selectedShift.visitId ? { visitId: selectedShift.visitId } : {}),
                             photoBase64: photoData,
                             slot,
                             targetReset: 'MAINTENANCE',
@@ -4708,6 +4911,7 @@ ${data.Notes || ''}`;
                         storeNumber,
                         date,
                         leadName,
+                        ...(selectedShift && selectedShift.visitId ? { visitId: selectedShift.visitId } : {}),
                         photoBase64: coversheetImage,
                         slot: 'after',
                         targetReset: 'MAINTENANCE',
