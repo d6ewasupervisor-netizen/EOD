@@ -1516,6 +1516,178 @@
             font-weight: 600;
             display: none;
         }
+
+        /* ─── Manage Team Section ─── */
+        #manageTeamSection {
+            display: none;
+            margin-top: var(--spacing-lg);
+            padding-top: var(--spacing-lg);
+            border-top: 2px solid #0d4f8b;
+        }
+        .manage-team-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-md);
+        }
+        .manage-team-title {
+            color: #88c4ed;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        .manage-team-refresh {
+            background: #374151;
+            color: #88c4ed;
+            border: 1px solid #4b5563;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-xs) var(--spacing-md);
+            min-height: var(--min-touch-target);
+            min-width: var(--min-touch-target);
+            cursor: pointer;
+            font-size: var(--font-size-sm);
+            touch-action: manipulation;
+        }
+        .manage-team-refresh:active {
+            background: #4b5563;
+        }
+        .roster-row {
+            background: #374151;
+            border: 1px solid #4b5563;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md) var(--spacing-lg);
+            margin-bottom: var(--spacing-sm);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--spacing-sm);
+            min-height: var(--min-touch-target);
+        }
+        .roster-row-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .roster-row-name {
+            font-weight: 600;
+            color: #f9fafb;
+            font-size: var(--font-size-base);
+        }
+        .roster-lead-star {
+            color: #fbbf24;
+            margin-right: 4px;
+        }
+        .roster-row-title {
+            font-size: var(--font-size-sm);
+            color: #9ca3af;
+            margin-top: 2px;
+        }
+        .roster-remove-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 14px;
+            padding: 4px 12px;
+            min-height: var(--min-touch-target);
+            cursor: pointer;
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            touch-action: manipulation;
+            flex-shrink: 0;
+        }
+        .roster-remove-btn:active {
+            background: #dc2626;
+            transform: scale(0.95);
+        }
+        .roster-remove-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .roster-loading, .roster-empty {
+            color: #9ca3af;
+            font-size: var(--font-size-sm);
+            padding: var(--spacing-md);
+            text-align: center;
+        }
+        .roster-error {
+            color: #fca5a5;
+            font-size: var(--font-size-sm);
+            padding: var(--spacing-md);
+            text-align: center;
+        }
+        .manage-team-add {
+            margin-top: var(--spacing-md);
+        }
+        .manage-team-add-label {
+            color: #88c4ed;
+            font-weight: 600;
+            font-size: 0.9em;
+            margin-bottom: var(--spacing-xs);
+        }
+        .manage-team-add-row {
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: center;
+        }
+        .manage-team-add-row select {
+            flex: 1;
+            padding: var(--spacing-md);
+            border: 1px solid #4b5563;
+            border-radius: var(--border-radius);
+            background: #374151;
+            color: #f9fafb;
+            font-size: var(--font-size-base);
+            font-family: inherit;
+            min-height: var(--min-touch-target);
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+        }
+        .manage-team-add-row select:focus {
+            outline: none;
+            border-color: #0d4f8b;
+            box-shadow: 0 0 0 2px rgba(13, 79, 139, 0.3);
+        }
+        .manage-team-add-btn {
+            background: #0d4f8b;
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md) var(--spacing-lg);
+            min-height: var(--min-touch-target);
+            min-width: 70px;
+            cursor: pointer;
+            font-size: var(--font-size-base);
+            font-weight: 600;
+            touch-action: manipulation;
+            flex-shrink: 0;
+        }
+        .manage-team-add-btn:active {
+            background: #0a3d6b;
+            transform: scale(0.98);
+        }
+        .manage-team-add-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .manage-team-status {
+            font-size: var(--font-size-sm);
+            margin-top: var(--spacing-sm);
+            min-height: 20px;
+            transition: opacity 0.3s ease;
+        }
+        .manage-team-status.success { color: #10b981; }
+        .manage-team-status.error { color: #fca5a5; }
+        .roster-noshow-badge {
+            background: #f59e0b;
+            color: #000;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 8px;
+            margin-left: 6px;
+        }
     </style>
 </head>
 <body>
@@ -1693,6 +1865,28 @@
                 <div class="shift-results-list" id="shiftResultsList"></div>
             </div>
             <div id="shiftSelectionStatus"></div>
+
+            <!-- Manage Team Panel (visible when shift selected) -->
+            <div id="manageTeamSection">
+                <div class="manage-team-header">
+                    <span class="manage-team-title">Manage Team</span>
+                    <button class="manage-team-refresh" onclick="refreshRoster()" id="refreshRosterBtn">Refresh</button>
+                </div>
+                <div id="rosterContainer">
+                    <div class="roster-loading">Select a shift to view the roster.</div>
+                </div>
+                <div class="manage-team-add" id="addEmployeeSection" style="display:none;">
+                    <div class="manage-team-add-label">Add to Shift:</div>
+                    <div class="manage-team-add-row">
+                        <select id="addEmployeeSelect">
+                            <option value="">Select employee...</option>
+                        </select>
+                        <button class="manage-team-add-btn" id="addEmployeeBtn" onclick="addEmployeeToShift()">Add</button>
+                    </div>
+                    <div id="poolLoadingMsg" style="display:none;" class="roster-loading">Loading available team...</div>
+                </div>
+                <div class="manage-team-status" id="manageTeamStatus"></div>
+            </div>
         </div>
 
         <!-- Photos Section -->
@@ -2177,6 +2371,9 @@
         // Email recipients array
         let emailRecipients = [];
         let selectedShift = null;
+        let shiftEmployees = [];
+        let kompassPool = null;
+        let _poolStoreDate = null; // cache key: "store|date"
 
         // Add email recipient
         function addEmailRecipient() {
@@ -2378,6 +2575,8 @@
                     const statusEl = document.getElementById('shiftSelectionStatus');
                     statusEl.textContent = `Selected: ${selectedShift.projectName || 'Shift'} — ${selectedShift.status || 'unknown'}`;
                     statusEl.style.display = 'block';
+                    showManageTeam();
+                    loadRoster(selectedShift.visitId);
                 }
 
                 // Migration: if photos exist in localStorage, migrate them to IndexedDB
@@ -4768,6 +4967,10 @@ ${data.Notes || ''}`;
             statusEl.textContent = `Selected: ${selectedShift.projectName || 'Shift'} — ${selectedShift.status || 'unknown'}`;
             statusEl.style.display = 'block';
 
+            // Show Manage Team and load roster
+            showManageTeam();
+            loadRoster(selectedShift.visitId);
+
             autoSave();
         }
 
@@ -4779,11 +4982,259 @@ ${data.Notes || ''}`;
             const statusEl = document.getElementById('shiftSelectionStatus');
             statusEl.style.display = 'none';
             statusEl.textContent = '';
+            hideManageTeam();
         }
 
         // Auto-clear shift selection when store or date changes
         document.getElementById('storeNumber').addEventListener('change', clearShiftSelection);
         document.getElementById('workDate').addEventListener('change', clearShiftSelection);
+
+        // ─── MANAGE TEAM FUNCTIONS ──────────────────────────────────────────────────
+        const SAS_SHIFT_EMPLOYEES_URL = 'https://eod-api-production.up.railway.app/sas-shift-employees';
+        const SAS_KOMPASS_POOL_URL = 'https://eod-api-production.up.railway.app/sas-kompass-pool';
+        const SAS_SHIFT_REMOVE_URL = 'https://eod-api-production.up.railway.app/sas-shift-remove';
+        const SAS_SHIFT_ADD_URL = 'https://eod-api-production.up.railway.app/sas-shift-add';
+
+        function showManageTeam() {
+            document.getElementById('manageTeamSection').style.display = 'block';
+        }
+
+        function hideManageTeam() {
+            document.getElementById('manageTeamSection').style.display = 'none';
+            shiftEmployees = [];
+            kompassPool = null;
+            _poolStoreDate = null;
+            document.getElementById('rosterContainer').innerHTML = '<div class="roster-loading">Select a shift to view the roster.</div>';
+            document.getElementById('addEmployeeSection').style.display = 'none';
+            clearManageTeamStatus();
+        }
+
+        function setManageTeamStatus(msg, type) {
+            const el = document.getElementById('manageTeamStatus');
+            el.textContent = msg;
+            el.className = 'manage-team-status ' + (type || '');
+            if (type === 'success' || type === 'error') {
+                setTimeout(() => {
+                    if (el.textContent === msg) {
+                        el.textContent = '';
+                        el.className = 'manage-team-status';
+                    }
+                }, 3000);
+            }
+        }
+
+        function clearManageTeamStatus() {
+            const el = document.getElementById('manageTeamStatus');
+            el.textContent = '';
+            el.className = 'manage-team-status';
+        }
+
+        async function loadRoster(visitId) {
+            const container = document.getElementById('rosterContainer');
+            container.innerHTML = '<div class="roster-loading">Loading roster...</div>';
+
+            try {
+                const resp = await fetch(`${SAS_SHIFT_EMPLOYEES_URL}?visitId=${encodeURIComponent(visitId)}`);
+                const data = await resp.json();
+
+                if (resp.status === 503) {
+                    container.innerHTML = '<div class="roster-error">SAS session not active — run morning auth first</div>';
+                    document.getElementById('addEmployeeSection').style.display = 'none';
+                    return;
+                }
+
+                if (!data.success) {
+                    container.innerHTML = `<div class="roster-error">${escapeHtml(data.error || 'Failed to load roster')}</div>`;
+                    return;
+                }
+
+                shiftEmployees = data.employees || [];
+
+                if (shiftEmployees.length === 0) {
+                    container.innerHTML = '<div class="roster-empty">No employees on this shift.</div>';
+                } else {
+                    renderRoster();
+                }
+
+                // Load pool for adding
+                loadPool();
+            } catch (err) {
+                container.innerHTML = `<div class="roster-error">Network error: ${escapeHtml(err.message)}</div>`;
+            }
+        }
+
+        function renderRoster() {
+            const container = document.getElementById('rosterContainer');
+            container.innerHTML = shiftEmployees.map(emp => {
+                const isLead = emp.isLead;
+                const noShow = emp.noShow;
+                return `<div class="roster-row">
+                    <div class="roster-row-info">
+                        <div class="roster-row-name">
+                            ${isLead ? '<span class="roster-lead-star">★</span>' : ''}${escapeHtml(emp.name || 'Unknown')}${isLead ? ' (Lead)' : ''}${noShow ? '<span class="roster-noshow-badge">NO SHOW</span>' : ''}
+                        </div>
+                        <div class="roster-row-title">${escapeHtml(emp.title || '')}</div>
+                    </div>
+                    ${!isLead ? `<button class="roster-remove-btn" onclick="removeEmployee(${emp.shiftId}, '${escapeHtml(emp.name || '')}')">Remove</button>` : ''}
+                </div>`;
+            }).join('');
+        }
+
+        async function loadPool() {
+            const storeNumber = document.getElementById('storeNumber').value.trim();
+            const date = document.getElementById('workDate').value;
+            if (!storeNumber || !date) return;
+
+            const cacheKey = `${storeNumber}|${date}`;
+            const addSection = document.getElementById('addEmployeeSection');
+            const poolMsg = document.getElementById('poolLoadingMsg');
+
+            // Use cached pool if same store/date
+            if (kompassPool && _poolStoreDate === cacheKey) {
+                renderPoolDropdown();
+                addSection.style.display = 'block';
+                return;
+            }
+
+            addSection.style.display = 'block';
+            poolMsg.style.display = 'block';
+            document.getElementById('addEmployeeSelect').innerHTML = '<option value="">Loading...</option>';
+            document.getElementById('addEmployeeBtn').disabled = true;
+
+            try {
+                const resp = await fetch(`${SAS_KOMPASS_POOL_URL}?store=${encodeURIComponent(storeNumber)}&date=${encodeURIComponent(date)}`);
+                const data = await resp.json();
+
+                poolMsg.style.display = 'none';
+
+                if (resp.status === 503) {
+                    addSection.style.display = 'none';
+                    return;
+                }
+
+                if (!data.success) {
+                    document.getElementById('addEmployeeSelect').innerHTML = '<option value="">Error loading pool</option>';
+                    return;
+                }
+
+                if (data.message && (!data.employees || data.employees.length === 0)) {
+                    // No Kompass ISE visit found
+                    document.getElementById('addEmployeeSelect').innerHTML = `<option value="">No Kompass ISE pool available</option>`;
+                    document.getElementById('addEmployeeBtn').disabled = true;
+                    kompassPool = { visitId: null, employees: [] };
+                    _poolStoreDate = cacheKey;
+                    return;
+                }
+
+                kompassPool = data;
+                _poolStoreDate = cacheKey;
+                renderPoolDropdown();
+            } catch (err) {
+                poolMsg.style.display = 'none';
+                document.getElementById('addEmployeeSelect').innerHTML = `<option value="">Network error</option>`;
+            }
+        }
+
+        function renderPoolDropdown() {
+            const select = document.getElementById('addEmployeeSelect');
+            const addBtn = document.getElementById('addEmployeeBtn');
+
+            if (!kompassPool || !kompassPool.employees) {
+                select.innerHTML = '<option value="">No pool available</option>';
+                addBtn.disabled = true;
+                return;
+            }
+
+            // Filter out employees already on the roster
+            const rosterIds = new Set(shiftEmployees.map(e => e.employeeId));
+            const available = kompassPool.employees.filter(e => !rosterIds.has(e.employeeId));
+
+            if (available.length === 0) {
+                select.innerHTML = '<option value="">All pool members already on shift</option>';
+                addBtn.disabled = true;
+                return;
+            }
+
+            select.innerHTML = '<option value="">Select employee...</option>' +
+                available.map(e => `<option value="${e.employeeId}">${escapeHtml(e.name || 'Unknown')}${e.title ? ' — ' + escapeHtml(e.title) : ''}</option>`).join('');
+            addBtn.disabled = false;
+        }
+
+        async function removeEmployee(shiftId, name) {
+            showConfirm('Remove Employee', `Remove ${name} from this shift?`, async () => {
+                // Disable all remove buttons during API call
+                document.querySelectorAll('.roster-remove-btn').forEach(b => b.disabled = true);
+                setManageTeamStatus('Removing...', '');
+
+                try {
+                    const resp = await fetch(SAS_SHIFT_REMOVE_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ shiftId }),
+                    });
+                    const data = await resp.json();
+
+                    if (data.success) {
+                        setManageTeamStatus(`${name} removed`, 'success');
+                        // Re-fetch roster
+                        if (selectedShift) {
+                            await loadRoster(selectedShift.visitId);
+                        }
+                    } else {
+                        setManageTeamStatus(data.error || 'Remove failed', 'error');
+                        document.querySelectorAll('.roster-remove-btn').forEach(b => b.disabled = false);
+                    }
+                } catch (err) {
+                    setManageTeamStatus('Network error: ' + err.message, 'error');
+                    document.querySelectorAll('.roster-remove-btn').forEach(b => b.disabled = false);
+                }
+            });
+        }
+
+        async function addEmployeeToShift() {
+            const select = document.getElementById('addEmployeeSelect');
+            const employeeId = parseInt(select.value, 10);
+            if (!employeeId || !selectedShift) return;
+
+            const employeeName = select.options[select.selectedIndex].text.split(' — ')[0];
+            const addBtn = document.getElementById('addEmployeeBtn');
+            addBtn.disabled = true;
+            select.disabled = true;
+            setManageTeamStatus('Adding...', '');
+
+            try {
+                const resp = await fetch(SAS_SHIFT_ADD_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        visitId: String(selectedShift.visitId),
+                        employeeId: employeeId,
+                    }),
+                });
+                const data = await resp.json();
+
+                if (data.success) {
+                    setManageTeamStatus(`${data.employeeName || employeeName} added`, 'success');
+                    // Re-fetch roster and update dropdown
+                    await loadRoster(selectedShift.visitId);
+                } else {
+                    setManageTeamStatus(data.error || 'Add failed', 'error');
+                }
+            } catch (err) {
+                setManageTeamStatus('Network error: ' + err.message, 'error');
+            } finally {
+                addBtn.disabled = false;
+                select.disabled = false;
+            }
+        }
+
+        function refreshRoster() {
+            if (!selectedShift) return;
+            // Invalidate pool cache so it re-fetches
+            kompassPool = null;
+            _poolStoreDate = null;
+            loadRoster(selectedShift.visitId);
+        }
 
         // ─── SAS SYNC FUNCTIONS ─────────────────────────────────────────────────────
         const SAS_UPLOAD_URL = 'https://eod-api-production.up.railway.app/sas-upload';
