@@ -1479,6 +1479,36 @@
         .shift-message.error {
             color: #fca5a5;
         }
+        .shift-status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1.4;
+        }
+        .shift-status-badge.completed {
+            background: #10b981;
+            color: #fff;
+        }
+        .shift-status-badge.in-progress {
+            background: #0d4f8b;
+            color: #fff;
+        }
+        .shift-status-badge.other {
+            background: #6b7280;
+            color: #fff;
+        }
+        .shift-card-meta {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 4px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
         #shiftSelectionStatus {
             margin-top: var(--spacing-sm);
             font-size: var(--font-size-sm);
@@ -2346,7 +2376,7 @@
                 if (data.selectedShift && data.selectedShift.visitId) {
                     selectedShift = data.selectedShift;
                     const statusEl = document.getElementById('shiftSelectionStatus');
-                    statusEl.textContent = `Selected: ${selectedShift.projectName || 'Shift'} — Visit #${selectedShift.visitId}`;
+                    statusEl.textContent = `Selected: ${selectedShift.projectName || 'Shift'} — ${selectedShift.status || 'unknown'}`;
                     statusEl.style.display = 'block';
                 }
 
@@ -4680,13 +4710,18 @@ ${data.Notes || ''}`;
 
                 listDiv.innerHTML = shifts.map((shift, i) => {
                     const isSelected = selectedShift && selectedShift.visitId === shift.visitId;
+                    const statusClass = shift.status === 'completed' ? 'completed' : (shift.status === 'in-progress' || shift.status === 'in_progress') ? 'in-progress' : 'other';
                     return `<div class="shift-card${isSelected ? ' selected' : ''}" onclick="selectShift(${i})" data-index="${i}">
                         <div class="shift-card-info">
                             <div class="shift-card-project">${escapeHtml(shift.projectName || 'Unnamed Project')}</div>
                             <div class="shift-card-detail">
-                                ${shift.leadName ? escapeHtml(shift.leadName) : ''}
-                                ${shift.status ? ' &middot; ' + escapeHtml(shift.status) : ''}
-                                ${shift.employeeCount ? ' &middot; ' + shift.employeeCount + ' employees' : ''}
+                                ${shift.leadName ? escapeHtml(shift.leadName) + ' ' : ''}
+                                <span class="shift-status-badge ${statusClass}">${escapeHtml(shift.status || 'unknown')}</span>
+                            </div>
+                            <div class="shift-card-meta">
+                                ${shift.employeeCount ? '<span>' + shift.employeeCount + ' employees</span>' : ''}
+                                ${shift.totalHours ? '<span>' + shift.totalHours + ' hrs</span>' : ''}
+                                ${shift.scheduledDate ? '<span>' + escapeHtml(shift.scheduledDate) + '</span>' : ''}
                             </div>
                         </div>
                         <span class="shift-card-check">&#10003;</span>
@@ -4730,7 +4765,7 @@ ${data.Notes || ''}`;
 
             // Show selection status
             const statusEl = document.getElementById('shiftSelectionStatus');
-            statusEl.textContent = `Selected: ${selectedShift.projectName || 'Shift'} — Visit #${selectedShift.visitId}`;
+            statusEl.textContent = `Selected: ${selectedShift.projectName || 'Shift'} — ${selectedShift.status || 'unknown'}`;
             statusEl.style.display = 'block';
 
             autoSave();
@@ -4796,10 +4831,11 @@ ${data.Notes || ''}`;
             const storeNumber = document.getElementById('storeNumber').value;
             const date = document.getElementById('workDate').value;
             const leadName = document.getElementById('leadName').value;
+            const hasVisitId = selectedShift && selectedShift.visitId;
 
-            // Validation
-            if (!storeNumber || !date || !leadName) {
-                showAlert('Missing Info', 'Please fill in Store #, Date, and Lead Name before syncing.');
+            // Validation — leadName not required when visitId is provided
+            if (!storeNumber || !date || (!leadName && !hasVisitId)) {
+                showAlert('Missing Info', hasVisitId ? 'Please fill in Store # and Date before syncing.' : 'Please fill in Store #, Date, and Lead Name before syncing.');
                 return;
             }
 
@@ -4875,9 +4911,10 @@ ${data.Notes || ''}`;
             const storeNumber = document.getElementById('storeNumber').value;
             const date = document.getElementById('workDate').value;
             const leadName = document.getElementById('leadName').value;
+            const hasVisitId = selectedShift && selectedShift.visitId;
 
-            if (!storeNumber || !date || !leadName) {
-                showAlert('Missing Info', 'Please fill in Store #, Date, and Lead Name before creating the coversheet.');
+            if (!storeNumber || !date || (!leadName && !hasVisitId)) {
+                showAlert('Missing Info', hasVisitId ? 'Please fill in Store # and Date before creating the coversheet.' : 'Please fill in Store #, Date, and Lead Name before creating the coversheet.');
                 return;
             }
 
