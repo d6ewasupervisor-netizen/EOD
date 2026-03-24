@@ -1409,16 +1409,27 @@
         .btn-coversheet:hover {
             box-shadow: 0 5px 15px rgba(13, 79, 139, 0.4);
         }
-        /* Shift Search & Selection */
-        .shift-search-btn {
+        /* ─── Shift Management Section ─── */
+        #smSection .field-group {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+        #smSection .field-group .field {
+            flex: 1;
+        }
+        .sm-find-btn {
             width: 100%;
             margin-top: var(--spacing-md);
         }
-        #shiftResults {
+        #smShiftResults {
             margin-top: var(--spacing-md);
-            display: none;
         }
-        .shift-card {
+        .sm-shift-list {
+            max-height: 300px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .sm-shift-card {
             background: #374151;
             border: 2px solid #0d4f8b;
             border-radius: var(--border-radius);
@@ -1434,52 +1445,51 @@
             transition: border-color 0.2s ease, background 0.2s ease;
             touch-action: manipulation;
         }
-        .shift-card:active {
+        .sm-shift-card:active {
             background: #4b5563;
             transform: scale(0.98);
         }
-        .shift-card.selected {
+        .sm-shift-card.selected {
             border-color: #10b981;
             background: #1a3a2a;
         }
-        .shift-card-info {
+        .sm-shift-card.completed {
+            opacity: 0.45;
+            pointer-events: none;
+            cursor: default;
+        }
+        .sm-shift-card-info {
             flex: 1;
             min-width: 0;
         }
-        .shift-card-project {
+        .sm-shift-card-project {
             font-weight: 600;
             color: #88c4ed;
             font-size: var(--font-size-base);
         }
-        .shift-card-detail {
+        .sm-shift-card-detail {
             font-size: var(--font-size-sm);
             color: #d1d5db;
             margin-top: 2px;
         }
-        .shift-card-check {
+        .sm-shift-card-meta {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 4px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .sm-shift-card-check {
             font-size: 20px;
             color: #10b981;
             display: none;
             flex-shrink: 0;
         }
-        .shift-card.selected .shift-card-check {
+        .sm-shift-card.selected .sm-shift-card-check {
             display: block;
         }
-        .shift-results-list {
-            max-height: 300px;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        .shift-message {
-            color: #d1d5db;
-            font-size: var(--font-size-sm);
-            padding: var(--spacing-md);
-            text-align: center;
-        }
-        .shift-message.error {
-            color: #fca5a5;
-        }
-        .shift-status-badge {
+        .sm-status-badge {
             display: inline-block;
             padding: 2px 8px;
             border-radius: 10px;
@@ -1489,53 +1499,35 @@
             letter-spacing: 0.5px;
             line-height: 1.4;
         }
-        .shift-status-badge.completed {
-            background: #10b981;
-            color: #fff;
-        }
-        .shift-status-badge.in-progress {
-            background: #0d4f8b;
-            color: #fff;
-        }
-        .shift-status-badge.other {
-            background: #6b7280;
-            color: #fff;
-        }
-        .shift-card-meta {
-            font-size: 12px;
-            color: #9ca3af;
-            margin-top: 4px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        #shiftSelectionStatus {
-            margin-top: var(--spacing-sm);
+        .sm-status-badge.completed { background: #10b981; color: #fff; }
+        .sm-status-badge.in-progress { background: #0d4f8b; color: #fff; }
+        .sm-status-badge.other { background: #6b7280; color: #fff; }
+        .sm-message {
+            color: #d1d5db;
             font-size: var(--font-size-sm);
-            color: #10b981;
-            font-weight: 600;
-            display: none;
+            padding: var(--spacing-md);
+            text-align: center;
         }
+        .sm-message.error { color: #fca5a5; }
 
-        /* ─── Manage Team Section ─── */
-        #manageTeamSection {
-            display: none;
+        /* Members Section */
+        #smMembersSection {
             margin-top: var(--spacing-lg);
             padding-top: var(--spacing-lg);
             border-top: 2px solid #0d4f8b;
         }
-        .manage-team-header {
+        .sm-members-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             margin-bottom: var(--spacing-md);
         }
-        .manage-team-title {
+        .sm-members-title {
             color: #88c4ed;
             font-size: 1.1em;
             font-weight: bold;
         }
-        .manage-team-refresh {
+        .sm-refresh-btn {
             background: #374151;
             color: #88c4ed;
             border: 1px solid #4b5563;
@@ -1547,10 +1539,8 @@
             font-size: var(--font-size-sm);
             touch-action: manipulation;
         }
-        .manage-team-refresh:active {
-            background: #4b5563;
-        }
-        .roster-row {
+        .sm-refresh-btn:active { background: #4b5563; }
+        .sm-member-row {
             background: #374151;
             border: 1px solid #4b5563;
             border-radius: var(--border-radius);
@@ -1558,128 +1548,50 @@
             margin-bottom: var(--spacing-sm);
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            gap: var(--spacing-sm);
+            gap: var(--spacing-md);
             min-height: var(--min-touch-target);
         }
-        .roster-row-info {
+        .sm-member-row input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            flex-shrink: 0;
+            accent-color: #0d4f8b;
+            cursor: pointer;
+        }
+        .sm-member-info {
             flex: 1;
             min-width: 0;
         }
-        .roster-row-name {
+        .sm-member-name {
             font-weight: 600;
             color: #f9fafb;
             font-size: var(--font-size-base);
         }
-        .roster-lead-star {
-            color: #fbbf24;
-            margin-right: 4px;
-        }
-        .roster-row-title {
+        .sm-member-title {
             font-size: var(--font-size-sm);
             color: #9ca3af;
             margin-top: 2px;
         }
-        .roster-remove-btn {
-            background: #ef4444;
-            color: white;
-            border: none;
-            border-radius: 14px;
-            padding: 4px 12px;
-            min-height: var(--min-touch-target);
-            cursor: pointer;
+        .sm-member-time {
             font-size: var(--font-size-sm);
-            font-weight: 600;
-            touch-action: manipulation;
-            flex-shrink: 0;
-        }
-        .roster-remove-btn:active {
-            background: #dc2626;
-            transform: scale(0.95);
-        }
-        .roster-remove-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .roster-loading, .roster-empty {
-            color: #9ca3af;
-            font-size: var(--font-size-sm);
-            padding: var(--spacing-md);
-            text-align: center;
-        }
-        .roster-error {
-            color: #fca5a5;
-            font-size: var(--font-size-sm);
-            padding: var(--spacing-md);
-            text-align: center;
-        }
-        .manage-team-add {
-            margin-top: var(--spacing-md);
-        }
-        .manage-team-add-label {
             color: #88c4ed;
-            font-weight: 600;
-            font-size: 0.9em;
-            margin-bottom: var(--spacing-xs);
-        }
-        .manage-team-add-row {
-            display: flex;
-            gap: var(--spacing-sm);
-            align-items: center;
-        }
-        .manage-team-add-row select {
-            flex: 1;
-            padding: var(--spacing-md);
-            border: 1px solid #4b5563;
-            border-radius: var(--border-radius);
-            background: #374151;
-            color: #f9fafb;
-            font-size: var(--font-size-base);
-            font-family: inherit;
-            min-height: var(--min-touch-target);
-            -webkit-appearance: none;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='2' fill='none'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            padding-right: 32px;
-        }
-        .manage-team-add-row select:focus {
-            outline: none;
-            border-color: #0d4f8b;
-            box-shadow: 0 0 0 2px rgba(13, 79, 139, 0.3);
-        }
-        .manage-team-add-btn {
-            background: #0d4f8b;
-            color: white;
-            border: none;
-            border-radius: var(--border-radius);
-            padding: var(--spacing-md) var(--spacing-lg);
-            min-height: var(--min-touch-target);
-            min-width: 70px;
-            cursor: pointer;
-            font-size: var(--font-size-base);
-            font-weight: 600;
-            touch-action: manipulation;
             flex-shrink: 0;
         }
-        .manage-team-add-btn:active {
-            background: #0a3d6b;
-            transform: scale(0.98);
+        .sm-pending-badge {
+            background: #92400e;
+            color: #fbbf24;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 8px;
+            margin-left: 6px;
+            white-space: nowrap;
         }
-        .manage-team-add-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        .sm-lead-star {
+            color: #fbbf24;
+            margin-right: 4px;
         }
-        .manage-team-status {
-            font-size: var(--font-size-sm);
-            margin-top: var(--spacing-sm);
-            min-height: 20px;
-            transition: opacity 0.3s ease;
-        }
-        .manage-team-status.success { color: #10b981; }
-        .manage-team-status.error { color: #fca5a5; }
-        .roster-noshow-badge {
+        .sm-noshow-badge {
             background: #f59e0b;
             color: #000;
             font-size: 10px;
@@ -1688,6 +1600,95 @@
             border-radius: 8px;
             margin-left: 6px;
         }
+        .sm-remove-btn {
+            width: 100%;
+            padding: var(--spacing-md);
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: var(--font-size-base);
+            font-weight: 600;
+            cursor: pointer;
+            min-height: var(--min-touch-target);
+            margin-top: var(--spacing-sm);
+            touch-action: manipulation;
+        }
+        .sm-remove-btn:active { background: #dc2626; transform: scale(0.98); }
+        .sm-remove-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .sm-loading {
+            color: #9ca3af;
+            font-size: var(--font-size-sm);
+            padding: var(--spacing-md);
+            text-align: center;
+        }
+        .sm-error {
+            color: #fca5a5;
+            font-size: var(--font-size-sm);
+            padding: var(--spacing-md);
+            text-align: center;
+        }
+
+        /* Add Team Members */
+        #smAddSection {
+            margin-top: var(--spacing-lg);
+            padding-top: var(--spacing-lg);
+            border-top: 1px solid #4b5563;
+        }
+        .sm-add-label {
+            color: #88c4ed;
+            font-weight: 600;
+            font-size: 0.95em;
+            margin-bottom: var(--spacing-sm);
+        }
+        #smEmployeeSelect {
+            width: 100%;
+            padding: var(--spacing-sm);
+            border: 1px solid #4b5563;
+            border-radius: var(--border-radius);
+            background: #374151;
+            color: #f9fafb;
+            font-size: var(--font-size-base);
+            font-family: inherit;
+            min-height: 120px;
+        }
+        #smEmployeeSelect:focus {
+            outline: none;
+            border-color: #0d4f8b;
+            box-shadow: 0 0 0 2px rgba(13, 79, 139, 0.3);
+        }
+        #smEmployeeSelect option {
+            padding: var(--spacing-sm) var(--spacing-md);
+            min-height: var(--min-touch-target);
+        }
+        #smEmployeeSelect option:disabled {
+            color: #6b7280;
+        }
+        .sm-add-btn {
+            width: 100%;
+            padding: var(--spacing-md);
+            background: #0d4f8b;
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: var(--font-size-base);
+            font-weight: 600;
+            cursor: pointer;
+            min-height: var(--min-touch-target);
+            margin-top: var(--spacing-sm);
+            touch-action: manipulation;
+        }
+        .sm-add-btn:active { background: #0a3d6b; transform: scale(0.98); }
+        .sm-add-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .sm-status {
+            font-size: var(--font-size-sm);
+            margin-top: var(--spacing-sm);
+            min-height: 20px;
+            transition: opacity 0.3s ease;
+        }
+        .sm-status.success { color: #10b981; }
+        .sm-status.error { color: #fca5a5; }
+        .sm-status.pending { color: #fbbf24; }
     </style>
 </head>
 <body>
@@ -1860,33 +1861,6 @@
                     <input type="text" id="leadName" placeholder="Your name">
                 </div>
             </div>
-            <button class="btn btn-primary shift-search-btn" id="searchShiftsBtn" onclick="searchShifts()">Search Shifts</button>
-            <div id="shiftResults">
-                <div class="shift-results-list" id="shiftResultsList"></div>
-            </div>
-            <div id="shiftSelectionStatus"></div>
-
-            <!-- Manage Team Panel (visible when shift selected) -->
-            <div id="manageTeamSection">
-                <div class="manage-team-header">
-                    <span class="manage-team-title">Manage Team</span>
-                    <button class="manage-team-refresh" onclick="refreshRoster()" id="refreshRosterBtn">Refresh</button>
-                </div>
-                <div id="rosterContainer">
-                    <div class="roster-loading">Select a shift to view the roster.</div>
-                </div>
-                <div class="manage-team-add" id="addEmployeeSection" style="display:none;">
-                    <div class="manage-team-add-label">Add to Shift:</div>
-                    <div class="manage-team-add-row">
-                        <select id="addEmployeeSelect">
-                            <option value="">Select employee...</option>
-                        </select>
-                        <button class="manage-team-add-btn" id="addEmployeeBtn" onclick="addEmployeeToShift()">Add</button>
-                    </div>
-                    <div id="poolLoadingMsg" style="display:none;" class="roster-loading">Loading available team...</div>
-                </div>
-                <div class="manage-team-status" id="manageTeamStatus"></div>
-            </div>
         </div>
 
         <!-- Photos Section -->
@@ -1973,6 +1947,55 @@
                 <div id="previewSignoff" class="photo-preview"></div>
             </div>
 
+        </div>
+
+        <!-- Shift Management Section -->
+        <div class="section" id="smSection">
+            <div class="section-title">Shift Management</div>
+
+            <!-- Step 1: Store & Shift Selection -->
+            <div class="sm-controls">
+                <div class="field-group">
+                    <div class="field">
+                        <label>Store #:</label>
+                        <input type="text" id="smStoreNumber" list="storeList" placeholder="Store #">
+                    </div>
+                    <div class="field">
+                        <label>Date:</label>
+                        <input type="date" id="smDate">
+                    </div>
+                </div>
+                <button class="btn btn-primary sm-find-btn" id="smFindShiftsBtn" onclick="smFindShifts()">Find Shifts</button>
+            </div>
+
+            <div id="smShiftResults" style="display:none;">
+                <div class="sm-shift-list" id="smShiftList"></div>
+            </div>
+
+            <!-- Step 2: Current Shift Members -->
+            <div id="smMembersSection" style="display:none;">
+                <div class="sm-members-header">
+                    <span class="sm-members-title">Current Members</span>
+                    <button class="sm-refresh-btn" onclick="smRefreshMembers()">Refresh</button>
+                </div>
+                <div id="smMembersList"></div>
+                <div id="smRemoveControls" style="display:none;">
+                    <button class="sm-remove-btn" id="smRemoveBtn" onclick="smRequestRemoval()">Request Removal</button>
+                </div>
+                <div class="sm-status" id="smRemoveStatus"></div>
+            </div>
+
+            <!-- Step 3: Add Team Members -->
+            <div id="smAddSection" style="display:none;">
+                <div class="sm-add-label">Add Team Members:</div>
+                <select id="smEmployeeSelect" multiple size="5">
+                    <option value="" disabled>Loading employees...</option>
+                </select>
+                <div id="smAddControls" style="display:none;">
+                    <button class="sm-add-btn" id="smAddBtn" onclick="smAddSelected()">Add Selected</button>
+                </div>
+                <div class="sm-status" id="smAddStatus"></div>
+            </div>
         </div>
 
         <!-- EOD Fields -->
@@ -2371,9 +2394,6 @@
         // Email recipients array
         let emailRecipients = [];
         let selectedShift = null;
-        let shiftEmployees = [];
-        let kompassPool = null;
-        let _poolStoreDate = null; // cache key: "store|date"
 
         // Add email recipient
         function addEmailRecipient() {
@@ -2572,11 +2592,6 @@
                 // Restore selected shift
                 if (data.selectedShift && data.selectedShift.visitId) {
                     selectedShift = data.selectedShift;
-                    const statusEl = document.getElementById('shiftSelectionStatus');
-                    statusEl.textContent = `Selected: ${selectedShift.projectName || 'Shift'} — ${selectedShift.status || 'unknown'}`;
-                    statusEl.style.display = 'block';
-                    showManageTeam();
-                    loadRoster(selectedShift.visitId);
                 }
 
                 // Migration: if photos exist in localStorage, migrate them to IndexedDB
@@ -4673,7 +4688,8 @@ ${data.Notes || ''}`;
                     photos.signoff = [];
                     photos.after = [];
                     emailRecipients = [];
-                    clearShiftSelection();
+                    selectedShift = null;
+                    smClearAll();
                     document.querySelectorAll('input, textarea').forEach(el => {
                         if (el.type === 'checkbox') el.checked = false;
                         else if (el.type === 'date') el.valueAsDate = new Date();
@@ -4870,75 +4886,13 @@ ${data.Notes || ''}`;
             console.log('Current URL:', window.location.href);
         });
 
-        // ─── SHIFT SEARCH & SELECTION ───────────────────────────────────────────────
-        const SAS_SHIFTS_URL = 'https://eod-api-production.up.railway.app/sas-shifts';
-
-        async function searchShifts() {
-            const storeNumber = document.getElementById('storeNumber').value.trim();
-            const date = document.getElementById('workDate').value;
-
-            if (!storeNumber || !date) {
-                showAlert('Missing Info', 'Please fill in Store # and Date before searching for shifts.');
-                return;
-            }
-
-            const btn = document.getElementById('searchShiftsBtn');
-            const resultsDiv = document.getElementById('shiftResults');
-            const listDiv = document.getElementById('shiftResultsList');
-
-            btn.disabled = true;
-            btn.textContent = 'Searching...';
-
-            try {
-                const resp = await fetch(`${SAS_SHIFTS_URL}?store=${encodeURIComponent(storeNumber)}&date=${encodeURIComponent(date)}`);
-                const data = await resp.json();
-
-                if (resp.status === 503) {
-                    listDiv.innerHTML = '<div class="shift-message error">SAS session not active — run morning auth first</div>';
-                    resultsDiv.style.display = 'block';
-                    return;
-                }
-
-                const shifts = data.shifts || data;
-
-                if (!Array.isArray(shifts) || shifts.length === 0) {
-                    listDiv.innerHTML = '<div class="shift-message">No shifts found for this store/date</div>';
-                    resultsDiv.style.display = 'block';
-                    return;
-                }
-
-                listDiv.innerHTML = shifts.map((shift, i) => {
-                    const isSelected = selectedShift && selectedShift.visitId === shift.visitId;
-                    const statusClass = shift.status === 'completed' ? 'completed' : (shift.status === 'in-progress' || shift.status === 'in_progress') ? 'in-progress' : 'other';
-                    return `<div class="shift-card${isSelected ? ' selected' : ''}" onclick="selectShift(${i})" data-index="${i}">
-                        <div class="shift-card-info">
-                            <div class="shift-card-project">${escapeHtml(shift.projectName || 'Unnamed Project')}</div>
-                            <div class="shift-card-detail">
-                                ${shift.leadName ? escapeHtml(shift.leadName) + ' ' : ''}
-                                <span class="shift-status-badge ${statusClass}">${escapeHtml(shift.status || 'unknown')}</span>
-                            </div>
-                            <div class="shift-card-meta">
-                                ${shift.employeeCount ? '<span>' + shift.employeeCount + ' employees</span>' : ''}
-                                ${shift.totalHours ? '<span>' + shift.totalHours + ' hrs</span>' : ''}
-                                ${shift.scheduledDate ? '<span>' + escapeHtml(shift.scheduledDate) + '</span>' : ''}
-                            </div>
-                        </div>
-                        <span class="shift-card-check">&#10003;</span>
-                    </div>`;
-                }).join('');
-
-                // Store the shifts array for selectShift to reference
-                window._shiftSearchResults = shifts;
-                resultsDiv.style.display = 'block';
-            } catch (err) {
-                const listDiv = document.getElementById('shiftResultsList');
-                listDiv.innerHTML = `<div class="shift-message error">Error searching shifts: ${escapeHtml(err.message)}</div>`;
-                document.getElementById('shiftResults').style.display = 'block';
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Search Shifts';
-            }
-        }
+        // ─── SHIFT MANAGEMENT ────────────────────────────────────────────────────────
+        const SM_API_BASE = 'https://eod-api-production.up.railway.app:8080';
+        let smShifts = [];
+        let smSelectedShift = null;
+        let smMembers = [];
+        let smEmployeesCache = null;
+        let smPendingRemovals = new Set();
 
         function escapeHtml(str) {
             const div = document.createElement('div');
@@ -4946,294 +4900,354 @@ ${data.Notes || ''}`;
             return div.innerHTML;
         }
 
-        function selectShift(index) {
-            const shifts = window._shiftSearchResults;
-            if (!shifts || !shifts[index]) return;
-
-            selectedShift = shifts[index];
-
-            // Update visual state
-            document.querySelectorAll('.shift-card').forEach(card => card.classList.remove('selected'));
-            const selectedCard = document.querySelector(`.shift-card[data-index="${index}"]`);
-            if (selectedCard) selectedCard.classList.add('selected');
-
-            // Auto-fill lead name if available
-            if (selectedShift.leadName) {
-                document.getElementById('leadName').value = selectedShift.leadName;
-            }
-
-            // Show selection status
-            const statusEl = document.getElementById('shiftSelectionStatus');
-            statusEl.textContent = `Selected: ${selectedShift.projectName || 'Shift'} — ${selectedShift.status || 'unknown'}`;
-            statusEl.style.display = 'block';
-
-            // Show Manage Team and load roster
-            showManageTeam();
-            loadRoster(selectedShift.visitId);
-
-            autoSave();
-        }
-
-        function clearShiftSelection() {
-            selectedShift = null;
-            window._shiftSearchResults = null;
-            document.getElementById('shiftResults').style.display = 'none';
-            document.getElementById('shiftResultsList').innerHTML = '';
-            const statusEl = document.getElementById('shiftSelectionStatus');
-            statusEl.style.display = 'none';
-            statusEl.textContent = '';
-            hideManageTeam();
-        }
-
-        // Auto-clear shift selection when store or date changes
-        document.getElementById('storeNumber').addEventListener('change', clearShiftSelection);
-        document.getElementById('workDate').addEventListener('change', clearShiftSelection);
-
-        // ─── MANAGE TEAM FUNCTIONS ──────────────────────────────────────────────────
-        const SAS_SHIFT_EMPLOYEES_URL = 'https://eod-api-production.up.railway.app/sas-shift-employees';
-        const SAS_KOMPASS_POOL_URL = 'https://eod-api-production.up.railway.app/sas-kompass-pool';
-        const SAS_SHIFT_REMOVE_URL = 'https://eod-api-production.up.railway.app/sas-shift-remove';
-        const SAS_SHIFT_ADD_URL = 'https://eod-api-production.up.railway.app/sas-shift-add';
-
-        function showManageTeam() {
-            document.getElementById('manageTeamSection').style.display = 'block';
-        }
-
-        function hideManageTeam() {
-            document.getElementById('manageTeamSection').style.display = 'none';
-            shiftEmployees = [];
-            kompassPool = null;
-            _poolStoreDate = null;
-            document.getElementById('rosterContainer').innerHTML = '<div class="roster-loading">Select a shift to view the roster.</div>';
-            document.getElementById('addEmployeeSection').style.display = 'none';
-            clearManageTeamStatus();
-        }
-
-        function setManageTeamStatus(msg, type) {
-            const el = document.getElementById('manageTeamStatus');
+        function smSetStatus(elementId, msg, type) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
             el.textContent = msg;
-            el.className = 'manage-team-status ' + (type || '');
+            el.className = 'sm-status ' + (type || '');
             if (type === 'success' || type === 'error') {
                 setTimeout(() => {
                     if (el.textContent === msg) {
                         el.textContent = '';
-                        el.className = 'manage-team-status';
+                        el.className = 'sm-status';
                     }
-                }, 3000);
+                }, 4000);
             }
         }
 
-        function clearManageTeamStatus() {
-            const el = document.getElementById('manageTeamStatus');
-            el.textContent = '';
-            el.className = 'manage-team-status';
+        function smClearAll() {
+            smShifts = [];
+            smSelectedShift = null;
+            smMembers = [];
+            smPendingRemovals.clear();
+            document.getElementById('smShiftResults').style.display = 'none';
+            document.getElementById('smShiftList').innerHTML = '';
+            document.getElementById('smMembersSection').style.display = 'none';
+            document.getElementById('smAddSection').style.display = 'none';
+            document.getElementById('smRemoveControls').style.display = 'none';
         }
 
-        async function loadRoster(visitId) {
-            const container = document.getElementById('rosterContainer');
-            container.innerHTML = '<div class="roster-loading">Loading roster...</div>';
+        // Sync SM inputs from Store Information fields on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const storeEl = document.getElementById('storeNumber');
+            const dateEl = document.getElementById('workDate');
+            const smStoreEl = document.getElementById('smStoreNumber');
+            const smDateEl = document.getElementById('smDate');
+            if (storeEl.value) smStoreEl.value = storeEl.value;
+            if (dateEl.value) smDateEl.value = dateEl.value;
+        });
+
+        async function smFindShifts() {
+            const storeNumber = document.getElementById('smStoreNumber').value.trim();
+            const date = document.getElementById('smDate').value;
+
+            if (!storeNumber || !date) {
+                showAlert('Missing Info', 'Please enter a Store # and Date to find shifts.');
+                return;
+            }
+
+            const btn = document.getElementById('smFindShiftsBtn');
+            const listDiv = document.getElementById('smShiftList');
+            const resultsDiv = document.getElementById('smShiftResults');
+
+            btn.disabled = true;
+            btn.textContent = 'Searching...';
+            smClearAll();
 
             try {
-                const resp = await fetch(`${SAS_SHIFT_EMPLOYEES_URL}?visitId=${encodeURIComponent(visitId)}`);
+                const resp = await fetch(`${SM_API_BASE}/api/shifts?store=${encodeURIComponent(storeNumber)}&date=${encodeURIComponent(date)}`);
+                if (!resp.ok) {
+                    const errData = await resp.json().catch(() => ({}));
+                    throw new Error(errData.error || `Server error (${resp.status})`);
+                }
                 const data = await resp.json();
+                const shifts = Array.isArray(data) ? data : (data.shifts || []);
 
-                if (resp.status === 503) {
-                    container.innerHTML = '<div class="roster-error">SAS session not active — run morning auth first</div>';
-                    document.getElementById('addEmployeeSection').style.display = 'none';
+                if (shifts.length === 0) {
+                    listDiv.innerHTML = '<div class="sm-message">No shifts found for this store/date.</div>';
+                    resultsDiv.style.display = 'block';
                     return;
                 }
 
-                if (!data.success) {
-                    container.innerHTML = `<div class="roster-error">${escapeHtml(data.error || 'Failed to load roster')}</div>`;
-                    return;
-                }
-
-                shiftEmployees = data.employees || [];
-
-                if (shiftEmployees.length === 0) {
-                    container.innerHTML = '<div class="roster-empty">No employees on this shift.</div>';
-                } else {
-                    renderRoster();
-                }
-
-                // Load pool for adding
-                loadPool();
+                smShifts = shifts;
+                listDiv.innerHTML = shifts.map((shift, i) => {
+                    const isCompleted = shift.status === 'completed';
+                    const statusClass = isCompleted ? 'completed' : (shift.status === 'in-progress' || shift.status === 'in_progress') ? 'in-progress' : 'other';
+                    const cardClass = 'sm-shift-card' + (isCompleted ? ' completed' : '');
+                    return `<div class="${cardClass}" onclick="${isCompleted ? '' : 'smSelectShift(' + i + ')'}" data-index="${i}">
+                        <div class="sm-shift-card-info">
+                            <div class="sm-shift-card-project">${escapeHtml(shift.teamName || shift.projectName || 'Unnamed Shift')}</div>
+                            <div class="sm-shift-card-detail">
+                                ${shift.shiftTime || shift.startTime ? escapeHtml(shift.shiftTime || shift.startTime) + ' ' : ''}
+                                <span class="sm-status-badge ${statusClass}">${escapeHtml(shift.status || 'unknown')}</span>
+                            </div>
+                            <div class="sm-shift-card-meta">
+                                ${shift.employeeCount != null ? '<span>' + shift.employeeCount + ' people</span>' : ''}
+                                ${shift.scheduledDate ? '<span>' + escapeHtml(shift.scheduledDate) + '</span>' : ''}
+                            </div>
+                        </div>
+                        <span class="sm-shift-card-check">&#10003;</span>
+                    </div>`;
+                }).join('');
+                resultsDiv.style.display = 'block';
             } catch (err) {
-                container.innerHTML = `<div class="roster-error">Network error: ${escapeHtml(err.message)}</div>`;
+                listDiv.innerHTML = `<div class="sm-message error">${escapeHtml(err.message)}</div>`;
+                document.getElementById('smShiftResults').style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Find Shifts';
             }
         }
 
-        function renderRoster() {
-            const container = document.getElementById('rosterContainer');
-            container.innerHTML = shiftEmployees.map(emp => {
+        async function smSelectShift(index) {
+            const shift = smShifts[index];
+            if (!shift || shift.status === 'completed') return;
+
+            smSelectedShift = shift;
+            // Also set global selectedShift for photo sync compatibility
+            selectedShift = shift;
+
+            // Update visual state
+            document.querySelectorAll('.sm-shift-card').forEach(card => card.classList.remove('selected'));
+            const card = document.querySelector(`.sm-shift-card[data-index="${index}"]`);
+            if (card) card.classList.add('selected');
+
+            // Show members and add sections
+            document.getElementById('smMembersSection').style.display = 'block';
+            document.getElementById('smAddSection').style.display = 'block';
+
+            // Load members and employees in parallel
+            await Promise.all([
+                smLoadMembers(),
+                smLoadEmployees()
+            ]);
+
+            autoSave();
+        }
+
+        async function smLoadMembers() {
+            if (!smSelectedShift) return;
+            const container = document.getElementById('smMembersList');
+            container.innerHTML = '<div class="sm-loading">Loading members...</div>';
+            document.getElementById('smRemoveControls').style.display = 'none';
+
+            try {
+                const resp = await fetch(`${SM_API_BASE}/api/shifts/${encodeURIComponent(smSelectedShift.visitId)}/members`);
+                if (!resp.ok) {
+                    const errData = await resp.json().catch(() => ({}));
+                    throw new Error(errData.error || `Server error (${resp.status})`);
+                }
+                const data = await resp.json();
+                smMembers = Array.isArray(data) ? data : (data.members || data.employees || []);
+
+                if (smMembers.length === 0) {
+                    container.innerHTML = '<div class="sm-loading">No members on this shift.</div>';
+                } else {
+                    smRenderMembers();
+                }
+                // Refresh the employee dropdown to reflect current roster
+                smRenderEmployeeSelect();
+            } catch (err) {
+                container.innerHTML = `<div class="sm-error">${escapeHtml(err.message)}</div>`;
+            }
+        }
+
+        function smRenderMembers() {
+            const container = document.getElementById('smMembersList');
+            container.innerHTML = smMembers.map((emp, i) => {
+                const isPending = smPendingRemovals.has(emp.employeeId);
                 const isLead = emp.isLead;
-                const noShow = emp.noShow;
-                return `<div class="roster-row">
-                    <div class="roster-row-info">
-                        <div class="roster-row-name">
-                            ${isLead ? '<span class="roster-lead-star">★</span>' : ''}${escapeHtml(emp.name || 'Unknown')}${isLead ? ' (Lead)' : ''}${noShow ? '<span class="roster-noshow-badge">NO SHOW</span>' : ''}
+                return `<div class="sm-member-row">
+                    ${!isLead ? `<input type="checkbox" data-index="${i}" onchange="smOnCheckboxChange()" ${isPending ? 'disabled' : ''}>` : ''}
+                    <div class="sm-member-info">
+                        <div class="sm-member-name">
+                            ${isLead ? '<span class="sm-lead-star">&#9733;</span>' : ''}${escapeHtml(emp.name || 'Unknown')}${isLead ? ' (Lead)' : ''}${emp.noShow ? '<span class="sm-noshow-badge">NO SHOW</span>' : ''}${isPending ? '<span class="sm-pending-badge">pending removal</span>' : ''}
                         </div>
-                        <div class="roster-row-title">${escapeHtml(emp.title || '')}</div>
+                        <div class="sm-member-title">${escapeHtml(emp.title || '')}</div>
                     </div>
-                    ${!isLead ? `<button class="roster-remove-btn" onclick="removeEmployee(${emp.shiftId}, '${escapeHtml(emp.name || '')}')">Remove</button>` : ''}
+                    <div class="sm-member-time">${escapeHtml(emp.shiftTime || '')}</div>
                 </div>`;
             }).join('');
         }
 
-        async function loadPool() {
-            const storeNumber = document.getElementById('storeNumber').value.trim();
-            const date = document.getElementById('workDate').value;
-            if (!storeNumber || !date) return;
-
-            const cacheKey = `${storeNumber}|${date}`;
-            const addSection = document.getElementById('addEmployeeSection');
-            const poolMsg = document.getElementById('poolLoadingMsg');
-
-            // Use cached pool if same store/date
-            if (kompassPool && _poolStoreDate === cacheKey) {
-                renderPoolDropdown();
-                addSection.style.display = 'block';
-                return;
-            }
-
-            addSection.style.display = 'block';
-            poolMsg.style.display = 'block';
-            document.getElementById('addEmployeeSelect').innerHTML = '<option value="">Loading...</option>';
-            document.getElementById('addEmployeeBtn').disabled = true;
-
-            try {
-                const resp = await fetch(`${SAS_KOMPASS_POOL_URL}?store=${encodeURIComponent(storeNumber)}&date=${encodeURIComponent(date)}`);
-                const data = await resp.json();
-
-                poolMsg.style.display = 'none';
-
-                if (resp.status === 503) {
-                    addSection.style.display = 'none';
-                    return;
-                }
-
-                if (!data.success) {
-                    document.getElementById('addEmployeeSelect').innerHTML = '<option value="">Error loading pool</option>';
-                    return;
-                }
-
-                if (data.message && (!data.employees || data.employees.length === 0)) {
-                    // No Kompass ISE visit found
-                    document.getElementById('addEmployeeSelect').innerHTML = `<option value="">No Kompass ISE pool available</option>`;
-                    document.getElementById('addEmployeeBtn').disabled = true;
-                    kompassPool = { visitId: null, employees: [] };
-                    _poolStoreDate = cacheKey;
-                    return;
-                }
-
-                kompassPool = data;
-                _poolStoreDate = cacheKey;
-                renderPoolDropdown();
-            } catch (err) {
-                poolMsg.style.display = 'none';
-                document.getElementById('addEmployeeSelect').innerHTML = `<option value="">Network error</option>`;
-            }
+        function smOnCheckboxChange() {
+            const checked = document.querySelectorAll('#smMembersList input[type="checkbox"]:checked');
+            document.getElementById('smRemoveControls').style.display = checked.length > 0 ? 'block' : 'none';
         }
 
-        function renderPoolDropdown() {
-            const select = document.getElementById('addEmployeeSelect');
-            const addBtn = document.getElementById('addEmployeeBtn');
+        function smRequestRemoval() {
+            const checked = document.querySelectorAll('#smMembersList input[type="checkbox"]:checked');
+            if (checked.length === 0) return;
 
-            if (!kompassPool || !kompassPool.employees) {
-                select.innerHTML = '<option value="">No pool available</option>';
-                addBtn.disabled = true;
-                return;
-            }
+            const toRemove = [];
+            checked.forEach(cb => {
+                const idx = parseInt(cb.dataset.index, 10);
+                const emp = smMembers[idx];
+                if (emp) toRemove.push(emp);
+            });
 
-            // Filter out employees already on the roster
-            const rosterIds = new Set(shiftEmployees.map(e => e.employeeId));
-            const available = kompassPool.employees.filter(e => !rosterIds.has(e.employeeId));
-
-            if (available.length === 0) {
-                select.innerHTML = '<option value="">All pool members already on shift</option>';
-                addBtn.disabled = true;
-                return;
-            }
-
-            select.innerHTML = '<option value="">Select employee...</option>' +
-                available.map(e => `<option value="${e.employeeId}">${escapeHtml(e.name || 'Unknown')}${e.title ? ' — ' + escapeHtml(e.title) : ''}</option>`).join('');
-            addBtn.disabled = false;
-        }
-
-        async function removeEmployee(shiftId, name) {
-            showConfirm('Remove Employee', `Remove ${name} from this shift?`, async () => {
-                // Disable all remove buttons during API call
-                document.querySelectorAll('.roster-remove-btn').forEach(b => b.disabled = true);
-                setManageTeamStatus('Removing...', '');
+            const names = toRemove.map(e => e.name || 'Unknown').join(', ');
+            showConfirm('Request Removal', `Submit removal request for ${names}? This requires supervisor approval.`, async () => {
+                const removeBtn = document.getElementById('smRemoveBtn');
+                removeBtn.disabled = true;
+                smSetStatus('smRemoveStatus', 'Submitting removal request...', '');
 
                 try {
-                    const resp = await fetch(SAS_SHIFT_REMOVE_URL, {
+                    const storeNumber = document.getElementById('smStoreNumber').value.trim();
+                    const date = document.getElementById('smDate').value;
+                    const requestedBy = document.getElementById('leadName').value || document.getElementById('profileName').value || 'Unknown';
+
+                    const resp = await fetch(`${SM_API_BASE}/api/shift-request`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ shiftId }),
+                        body: JSON.stringify({
+                            visitId: smSelectedShift.visitId,
+                            cycleId: smSelectedShift.cycleId,
+                            storeNumber: parseInt(storeNumber, 10),
+                            teamName: smSelectedShift.teamName || smSelectedShift.projectName || '',
+                            date: date,
+                            remove: toRemove.map(e => ({
+                                shiftId: e.shiftId,
+                                employeeId: e.employeeId,
+                                name: e.name
+                            })),
+                            requestedBy: requestedBy
+                        })
                     });
+
                     const data = await resp.json();
 
-                    if (data.success) {
-                        setManageTeamStatus(`${name} removed`, 'success');
-                        // Re-fetch roster
-                        if (selectedShift) {
-                            await loadRoster(selectedShift.visitId);
-                        }
+                    if (resp.ok && (data.requestId || data.success)) {
+                        // Mark as pending
+                        toRemove.forEach(e => smPendingRemovals.add(e.employeeId));
+                        smSetStatus('smRemoveStatus', 'Removal request submitted \u2014 awaiting supervisor approval', 'pending');
+                        // Uncheck all and re-render
+                        document.getElementById('smRemoveControls').style.display = 'none';
+                        smRenderMembers();
                     } else {
-                        setManageTeamStatus(data.error || 'Remove failed', 'error');
-                        document.querySelectorAll('.roster-remove-btn').forEach(b => b.disabled = false);
+                        smSetStatus('smRemoveStatus', data.error || 'Failed to submit removal request', 'error');
                     }
                 } catch (err) {
-                    setManageTeamStatus('Network error: ' + err.message, 'error');
-                    document.querySelectorAll('.roster-remove-btn').forEach(b => b.disabled = false);
+                    smSetStatus('smRemoveStatus', 'Network error: ' + err.message, 'error');
+                } finally {
+                    removeBtn.disabled = false;
                 }
             });
         }
 
-        async function addEmployeeToShift() {
-            const select = document.getElementById('addEmployeeSelect');
-            const employeeId = parseInt(select.value, 10);
-            if (!employeeId || !selectedShift) return;
+        async function smLoadEmployees() {
+            if (smEmployeesCache) {
+                smRenderEmployeeSelect();
+                return;
+            }
 
-            const employeeName = select.options[select.selectedIndex].text.split(' — ')[0];
-            const addBtn = document.getElementById('addEmployeeBtn');
-            addBtn.disabled = true;
-            select.disabled = true;
-            setManageTeamStatus('Adding...', '');
+            const select = document.getElementById('smEmployeeSelect');
+            select.innerHTML = '<option value="" disabled>Loading employees...</option>';
 
             try {
-                const resp = await fetch(SAS_SHIFT_ADD_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        visitId: String(selectedShift.visitId),
-                        employeeId: employeeId,
-                    }),
-                });
-                const data = await resp.json();
-
-                if (data.success) {
-                    setManageTeamStatus(`${data.employeeName || employeeName} added`, 'success');
-                    // Re-fetch roster and update dropdown
-                    await loadRoster(selectedShift.visitId);
-                } else {
-                    setManageTeamStatus(data.error || 'Add failed', 'error');
+                const resp = await fetch(`${SM_API_BASE}/api/employees`);
+                if (!resp.ok) {
+                    const errData = await resp.json().catch(() => ({}));
+                    throw new Error(errData.error || `Server error (${resp.status})`);
                 }
+                const data = await resp.json();
+                smEmployeesCache = Array.isArray(data) ? data : (data.employees || []);
+                smRenderEmployeeSelect();
             } catch (err) {
-                setManageTeamStatus('Network error: ' + err.message, 'error');
-            } finally {
-                addBtn.disabled = false;
-                select.disabled = false;
+                select.innerHTML = `<option value="" disabled>Error: ${escapeHtml(err.message)}</option>`;
             }
         }
 
-        function refreshRoster() {
-            if (!selectedShift) return;
-            // Invalidate pool cache so it re-fetches
-            kompassPool = null;
-            _poolStoreDate = null;
-            loadRoster(selectedShift.visitId);
+        function smRenderEmployeeSelect() {
+            const select = document.getElementById('smEmployeeSelect');
+            const addControls = document.getElementById('smAddControls');
+
+            if (!smEmployeesCache || smEmployeesCache.length === 0) {
+                select.innerHTML = '<option value="" disabled>No employees available</option>';
+                addControls.style.display = 'none';
+                return;
+            }
+
+            const memberIds = new Set(smMembers.map(e => e.employeeId));
+
+            select.innerHTML = smEmployeesCache.map(emp => {
+                const onShift = memberIds.has(emp.employeeId || emp.id);
+                const empId = emp.employeeId || emp.id;
+                const label = escapeHtml(emp.name || 'Unknown') + (emp.title ? ' \u2014 ' + escapeHtml(emp.title) : '') + (onShift ? ' (already assigned)' : '');
+                return `<option value="${empId}" ${onShift ? 'disabled' : ''}>${label}</option>`;
+            }).join('');
+
+            // Reset add controls visibility
+            addControls.style.display = 'none';
+        }
+
+        // Show/hide Add button based on multi-select
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('smEmployeeSelect').addEventListener('change', () => {
+                const select = document.getElementById('smEmployeeSelect');
+                const selected = Array.from(select.selectedOptions).filter(o => !o.disabled && o.value);
+                document.getElementById('smAddControls').style.display = selected.length > 0 ? 'block' : 'none';
+            });
+        });
+
+        function smAddSelected() {
+            const select = document.getElementById('smEmployeeSelect');
+            const selected = Array.from(select.selectedOptions).filter(o => !o.disabled && o.value);
+            if (selected.length === 0 || !smSelectedShift) return;
+
+            const employees = selected.map(opt => {
+                const emp = smEmployeesCache.find(e => String(e.employeeId || e.id) === opt.value);
+                return emp ? {
+                    employeeId: emp.employeeId || emp.id,
+                    name: emp.name,
+                    isLead: false
+                } : null;
+            }).filter(Boolean);
+
+            const names = employees.map(e => e.name).join(', ');
+            showConfirm('Add to Shift', `Add ${names} to this shift?`, async () => {
+                const addBtn = document.getElementById('smAddBtn');
+                addBtn.disabled = true;
+                select.disabled = true;
+                smSetStatus('smAddStatus', 'Adding...', '');
+
+                try {
+                    const requestedBy = document.getElementById('leadName').value || document.getElementById('profileName').value || 'Unknown';
+
+                    const resp = await fetch(`${SM_API_BASE}/api/shifts/${encodeURIComponent(smSelectedShift.visitId)}/add`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            cycleId: smSelectedShift.cycleId,
+                            shiftStartTime: smSelectedShift.shiftStartTime || smSelectedShift.startTime || '',
+                            shiftEndTime: smSelectedShift.shiftEndTime || smSelectedShift.endTime || '',
+                            employees: employees,
+                            requestedBy: requestedBy
+                        })
+                    });
+
+                    const data = await resp.json();
+
+                    if (resp.ok && (data.success || data.added)) {
+                        const addedNames = (data.added || employees).map(e => e.name).join(', ');
+                        smSetStatus('smAddStatus', `Added ${addedNames} to shift`, 'success');
+                        // Refresh members list and dropdown
+                        await smLoadMembers();
+                    } else {
+                        smSetStatus('smAddStatus', data.error || 'Failed to add employees', 'error');
+                    }
+                } catch (err) {
+                    smSetStatus('smAddStatus', 'Network error: ' + err.message, 'error');
+                } finally {
+                    addBtn.disabled = false;
+                    select.disabled = false;
+                }
+            });
+        }
+
+        function smRefreshMembers() {
+            if (!smSelectedShift) return;
+            smLoadMembers();
         }
 
         // ─── SAS SYNC FUNCTIONS ─────────────────────────────────────────────────────
