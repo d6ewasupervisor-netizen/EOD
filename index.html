@@ -1401,6 +1401,196 @@
             color: #9ca3af;
             margin-left: 8px;
         }
+
+        /* ─── Two-Way Sync: PROD badges, selection controls, lightbox ─── */
+        .photo-item.prod-photo {
+            border-color: #f59e0b;
+        }
+        .photo-item.prod-photo.selected-for-eod {
+            border-color: #10b981;
+            box-shadow: 0 0 0 2px #10b981;
+        }
+        .prod-badge {
+            position: absolute;
+            top: var(--spacing-sm);
+            left: var(--spacing-sm);
+            background: #f59e0b;
+            color: #000;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
+            z-index: 3;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .sync-badge {
+            position: absolute;
+            top: var(--spacing-sm);
+            left: var(--spacing-sm);
+            background: #8b5cf6;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
+            z-index: 3;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .photo-actions {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            gap: 2px;
+            background: rgba(0,0,0,0.7);
+            padding: 4px;
+            z-index: 3;
+        }
+        .photo-actions button {
+            flex: 1;
+            padding: 4px 2px;
+            border: none;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            min-height: 28px;
+            touch-action: manipulation;
+        }
+        .photo-actions .btn-use {
+            background: #065f46;
+            color: #a7f3d0;
+        }
+        .photo-actions .btn-use.active {
+            background: #10b981;
+            color: #fff;
+        }
+        .photo-actions .btn-skip {
+            background: #7f1d1d;
+            color: #fecaca;
+        }
+        .photo-actions .btn-skip.active {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        /* Sync progress overlay */
+        .sync-progress {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+            margin-top: var(--spacing-sm);
+            display: none;
+        }
+        .sync-progress.show {
+            display: block;
+        }
+        .sync-progress .sync-phase {
+            font-size: 13px;
+            color: #93c5fd;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .sync-progress .sync-detail {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+        .sync-progress .sync-complete {
+            color: #10b981;
+            font-weight: 700;
+        }
+
+        /* Lightbox overlay */
+        .lightbox-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.92);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: var(--spacing-lg);
+        }
+        .lightbox-overlay.show {
+            display: flex;
+        }
+        .lightbox-overlay img {
+            max-width: 95vw;
+            max-height: 85vh;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+        .lightbox-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: #dc2626;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10001;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+        .lightbox-info {
+            color: #d1d5db;
+            font-size: 13px;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        /* Prod photos section label */
+        .prod-photos-label {
+            font-size: 12px;
+            color: #f59e0b;
+            font-weight: 600;
+            margin-top: 8px;
+            margin-bottom: 4px;
+        }
+
+        /* Two-way sync master button */
+        .sync-two-way-btn {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #065f46 0%, #0d4f8b 100%);
+            color: #a7f3d0;
+            border: 1px solid #10b981;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            min-height: 40px;
+            touch-action: manipulation;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            margin-top: 8px;
+        }
+        .sync-two-way-btn:hover {
+            background: linear-gradient(135deg, #047857 0%, #1e66ab 100%);
+        }
+        .sync-two-way-btn:active {
+            transform: scale(0.96);
+        }
+        .sync-two-way-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         /* Create Coversheet button */
         .btn-coversheet {
             background: linear-gradient(135deg, #0d4f8b 0%, #1e66ab 100%);
@@ -1959,6 +2149,15 @@
         <div class="section">
             <div class="section-title">Photos</div>
 
+            <!-- Two-Way Sync Button -->
+            <button class="sync-two-way-btn" id="twoWaySyncBtn" onclick="twoWaySync()" title="Pull photos from PROD and push local photos">
+                <span id="twoWaySyncIcon">⇅</span> Sync (Pull &amp; Push)
+            </button>
+            <div id="syncProgress" class="sync-progress">
+                <div class="sync-phase" id="syncPhaseText"></div>
+                <div class="sync-detail" id="syncDetailText"></div>
+            </div>
+
             <!-- No Kompass Cart Present option -->
             <div class="checkbox-group" style="margin-top: 4px; margin-bottom: 8px;">
                 <div class="checkbox-option">
@@ -1968,7 +2167,7 @@
             </div>
 
             <div class="photo-section" id="beforePhotoSection">
-                <label class="field label">Kompass Cart - Before:</label>
+                <label class="field label">Kompass Cart — Before:</label>
                 <div class="checkbox-group" style="margin-top: 4px;">
                     <div class="checkbox-option">
                         <input type="checkbox" id="beforeComplete">
@@ -1979,6 +2178,7 @@
                     </button>
                     <span class="sync-status" id="syncBeforeStatus"></span>
                 </div>
+                <div id="prodPreviewBefore" class="photo-preview"></div>
                 <div class="photo-button-group">
                     <button class="photo-button" onclick="openPhotoCamera('before')">
                         Take Photo
@@ -1992,7 +2192,7 @@
             </div>
 
             <div class="photo-section" id="afterPhotoSection">
-                <label class="field label">Kompass Cart - After:</label>
+                <label class="field label">Kompass Cart — After:</label>
                 <div class="checkbox-group" style="margin-top: 4px;">
                     <div class="checkbox-option">
                         <input type="checkbox" id="afterComplete">
@@ -2003,6 +2203,7 @@
                     </button>
                     <span class="sync-status" id="syncAfterStatus"></span>
                 </div>
+                <div id="prodPreviewAfter" class="photo-preview"></div>
                 <div class="photo-button-group">
                     <button class="photo-button" onclick="openPhotoCamera('after')">
                         Take Photo
@@ -2027,6 +2228,7 @@
                     </button>
                     <span class="sync-status" id="syncSignoffStatus"></span>
                 </div>
+                <div id="prodPreviewSignoff" class="photo-preview"></div>
                 <div class="photo-button-group">
                     <button class="photo-button" onclick="openSignoffCamera()">
                         Take Photos
@@ -2190,6 +2392,13 @@
         <span>Processing...</span>
     </div>
 
+    <!-- Lightbox Overlay for full-size photo viewing -->
+    <div id="lightboxOverlay" class="lightbox-overlay" onclick="closeLightbox(event)">
+        <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+        <img id="lightboxImage" src="" alt="Full size photo">
+        <div id="lightboxInfo" class="lightbox-info"></div>
+    </div>
+
     <!-- Modal -->
     <div id="modal" class="modal-overlay">
         <div class="modal-dialog">
@@ -2313,6 +2522,23 @@
             signoff: [],
             after: []
         };
+
+        // PROD-sourced photos pulled from server (two-way sync)
+        const prodPhotos = {
+            before: [],   // Array of { id, url, source: 'prod', selectedForEod: true/false }
+            after: [],
+            signoff: []
+        };
+
+        // Track EOD selections: which photos (local + prod) are selected for the final PDF
+        const eodSelections = {
+            before: [],   // Array of { dataUrl, source: 'local'|'prod', timestamp }
+            after: [],
+            signoff: []
+        };
+
+        // Category reset ID from PROD (for reference)
+        let prodCategoryResetId = null;
 
         // IndexedDB for photo storage (handles large files beyond localStorage 5MB limit)
         const PhotoDB = {
@@ -3038,7 +3264,7 @@
                     : '';
                 const imgClick = isSignoff
                     ? `onclick="openImageEditor(${index})" style="cursor: pointer;" title="Tap to edit"`
-                    : '';
+                    : `onclick="openLightbox(this.src, 'Local ${type} photo')" style="cursor:pointer;"`;
                 item.innerHTML = `
                     <img src="${photo}" alt="${type} photo" ${imgClick}>
                     ${editBtn}
@@ -3046,6 +3272,9 @@
                 `;
                 container.appendChild(item);
             });
+
+            // Also rebuild EOD selections whenever local photos change
+            rebuildEodSelections(type);
         }
 
         function removePhoto(type, index) {
@@ -4291,9 +4520,9 @@
                 }
 
                 const notesOnly = document.getElementById('notesOnlyToggle').checked;
-                const beforeDone  = data.photos.before.length  > 0 || data.BeforeComplete;
-                const signoffDone = data.photos.signoff.length > 0 || data.SignoffComplete;
-                const afterDone   = data.photos.after.length   > 0 || data.AfterComplete;
+                const beforeDone  = data.photos.before.length  > 0 || eodSelections.before.length > 0 || data.BeforeComplete;
+                const signoffDone = data.photos.signoff.length > 0 || eodSelections.signoff.length > 0 || data.SignoffComplete;
+                const afterDone   = data.photos.after.length   > 0 || eodSelections.after.length > 0 || data.AfterComplete;
 
                 const body = notesOnly
                     ? `Notes:\n${data.Notes || ''}`
@@ -4491,9 +4720,9 @@ ${data.Notes || ''}`;
             // Radio buttons with error handling
             try {
                 const noKompass = data.NoKompassCart;
-                const beforeDone = data.photos.before.length > 0 || data.BeforeComplete;
-                const signoffDone = data.photos.signoff.length > 0 || data.SignoffComplete;
-                const afterDone = data.photos.after.length > 0 || data.AfterComplete;
+                const beforeDone = data.photos.before.length > 0 || eodSelections.before.length > 0 || data.BeforeComplete;
+                const signoffDone = data.photos.signoff.length > 0 || eodSelections.signoff.length > 0 || data.SignoffComplete;
+                const afterDone = data.photos.after.length > 0 || eodSelections.after.length > 0 || data.AfterComplete;
 
                 // If no Kompass cart present, select NA for before/after pic fields
                 const beforeValue = noKompass ? 'NA' : pickYN(beforeDone);
@@ -4553,101 +4782,134 @@ ${data.Notes || ''}`;
             }
 
             console.log('Adding photo pages...');
-            // Add photos to additional pages
-            if (data.photos.before.length > 0 || data.photos.signoff.length > 0 || data.photos.after.length > 0) {
+
+            // Helper: load image data for PDF embedding (handles both data URLs and remote URLs)
+            const loadImageForPDF = async (photoEntry, maxW, maxH, quality) => {
+                let photoData = photoEntry.dataUrl || photoEntry;
+                // If it's a remote URL (PROD), fetch and convert to data URL
+                if (typeof photoData === 'string' && photoData.startsWith('http')) {
+                    const resp = await fetch(photoData);
+                    const blob = await resp.blob();
+                    photoData = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.readAsDataURL(blob);
+                    });
+                }
+                return await compressImageForPDF(photoData, maxW, maxH, quality);
+            };
+
+            // Use eodSelections if available, fall back to data.photos
+            const beforePhotos = eodSelections.before.length > 0 ? eodSelections.before : data.photos.before.map(p => ({ dataUrl: p, source: 'local' }));
+            const afterPhotos = eodSelections.after.length > 0 ? eodSelections.after : data.photos.after.map(p => ({ dataUrl: p, source: 'local' }));
+            const signoffPhotos = eodSelections.signoff.length > 0 ? eodSelections.signoff : data.photos.signoff.map(p => ({ dataUrl: p, source: 'local' }));
+
+            const hasPhotos = beforePhotos.length > 0 || afterPhotos.length > 0 || signoffPhotos.length > 0;
+
+            if (hasPhotos) {
                 try {
-                    let currentPage = pdfDoc.addPage([612, 792]); // Letter size
-                    let y = 750;
+                    // Add tiled cart photos (before/after) — multiple photos tile side by side
+                    const addTiledPhotos = async (photoArr, title) => {
+                        if (photoArr.length === 0) return;
 
-                    const addPhotoToPage = async (photoData, title) => {
-                        if (y < 100) {
-                            currentPage = pdfDoc.addPage([612, 792]);
-                            y = 750;
-                        }
+                        const page = pdfDoc.addPage([612, 792]);
+                        page.drawText(title, { x: 50, y: 750, size: 14 });
 
-                        currentPage.drawText(title, { x: 50, y, size: 14 });
-                        y -= 20;
+                        const count = photoArr.length;
+                        const margin = 50;
+                        const gutter = 10;
+                        const availW = 612 - (margin * 2);
+                        const availH = 700; // below title
 
-                        try {
-                            // Compress before/after cart photos for email-friendly size
-                            // Max 1200x900 at 80% JPEG quality - good balance for cart photos
-                            const compressed = await compressImageForPDF(photoData, 1200, 900, 0.80);
-                            const imgBytes = await fetch(compressed).then(r => r.arrayBuffer());
-                            const img = await pdfDoc.embedJpg(imgBytes);
+                        if (count === 1) {
+                            // Single photo — centered, large
+                            try {
+                                const compressed = await loadImageForPDF(photoArr[0], 1200, 900, 0.80);
+                                const imgBytes = await fetch(compressed).then(r => r.arrayBuffer());
+                                const img = await pdfDoc.embedJpg(imgBytes);
+                                const scale = Math.min(availW / img.width, availH / img.height);
+                                const w = img.width * scale;
+                                const h = img.height * scale;
+                                const x = margin + (availW - w) / 2;
+                                page.drawImage(img, { x, y: 730 - h, width: w, height: h });
+                            } catch (e) {
+                                console.error('Error adding photo:', title, e);
+                                page.drawText(`[Error loading photo]`, { x: 50, y: 700, size: 10 });
+                            }
+                        } else {
+                            // Multiple photos — tile side by side
+                            const tileW = (availW - (gutter * (count - 1))) / count;
+                            let xPos = margin;
+                            for (let i = 0; i < count; i++) {
+                                try {
+                                    const compressed = await loadImageForPDF(photoArr[i], 1200, 900, 0.80);
+                                    const imgBytes = await fetch(compressed).then(r => r.arrayBuffer());
+                                    const img = await pdfDoc.embedJpg(imgBytes);
+                                    const scale = Math.min(tileW / img.width, availH / img.height);
+                                    const w = img.width * scale;
+                                    const h = img.height * scale;
+                                    page.drawImage(img, { x: xPos, y: 730 - h, width: w, height: h });
 
-                            const scale = Math.min(400 / img.width, 300 / img.height);
-                            const width = img.width * scale;
-                            const height = img.height * scale;
-
-                            currentPage.drawImage(img, { x: 50, y: y - height, width, height });
-                            y -= height + 30;
-                        } catch (e) {
-                            console.error('Error adding photo:', title, e);
-                            currentPage.drawText(`[Error loading ${title}]`, { x: 50, y, size: 10 });
-                            y -= 30;
+                                    // Label source
+                                    const srcLabel = photoArr[i].source === 'prod' ? '(PROD)' : '(Local)';
+                                    page.drawText(srcLabel, { x: xPos, y: 730 - h - 12, size: 8, color: PDFLib.rgb(0.5, 0.5, 0.5) });
+                                } catch (e) {
+                                    console.error(`Error adding tiled photo ${i}:`, e);
+                                    page.drawText(`[Error]`, { x: xPos, y: 700, size: 10 });
+                                }
+                                xPos += tileW + gutter;
+                            }
                         }
                     };
 
                     // Function to add signoff sheet as full-page image with label at top
-                    // Always portrait orientation (8.5x11), narrow margins, optimized quality
-                    const addSignoffSheetPage = async (photoData, title) => {
+                    const addSignoffSheetPage = async (photoEntry, title) => {
                         try {
-                            // Ensure the sign-off sheet image is in portrait orientation
-                            const portraitData = await ensurePortraitOrientation(photoData);
+                            let photoData = photoEntry.dataUrl || photoEntry;
+                            // Handle remote URLs
+                            if (typeof photoData === 'string' && photoData.startsWith('http')) {
+                                const resp = await fetch(photoData);
+                                const blob = await resp.blob();
+                                photoData = await new Promise((resolve) => {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => resolve(reader.result);
+                                    reader.readAsDataURL(blob);
+                                });
+                            }
 
-                            // Compress sign-off sheets: higher resolution for readability
-                            // Max 2000x2600 at 85% JPEG quality - sharp enough to read signatures/text
+                            const portraitData = await ensurePortraitOrientation(photoData);
                             const compressed = await compressImageForPDF(portraitData, 2000, 2600, 0.85);
                             const imgBytes = await fetch(compressed).then(r => r.arrayBuffer());
                             const img = await pdfDoc.embedJpg(imgBytes);
 
-                            // Get image dimensions
                             const imgWidth = img.width;
                             const imgHeight = img.height;
-
-                            // Always use portrait orientation: 8.5 x 11 inches (612 x 792 points)
                             const pageWidth = 612;
                             const pageHeight = 792;
-
-                            // Narrow margins: 0.25 inch (18 points) on sides, 0.5 inch (36 points) top for label
                             const sideMargin = 18;
-                            const topMargin = 40;  // Room for title at top
+                            const topMargin = 40;
                             const bottomMargin = 18;
-
-                            // Calculate available space for image
                             const availableWidth = pageWidth - (sideMargin * 2);
                             const availableHeight = pageHeight - topMargin - bottomMargin;
 
-                            // Create portrait page
                             const signoffPage = pdfDoc.addPage([pageWidth, pageHeight]);
-
-                            // Draw title label at top of page
-                            signoffPage.drawText(title, {
+                            const srcLabel = (photoEntry.source === 'prod') ? ' (PROD)' : '';
+                            signoffPage.drawText(title + srcLabel, {
                                 x: sideMargin,
                                 y: pageHeight - topMargin + 5,
                                 size: 14,
                                 color: PDFLib.rgb(0, 0, 0)
                             });
 
-                            // Scale image to fit available space while maintaining aspect ratio
                             const scaleX = availableWidth / imgWidth;
                             const scaleY = availableHeight / imgHeight;
                             const scale = Math.min(scaleX, scaleY);
-
                             const finalWidth = imgWidth * scale;
                             const finalHeight = imgHeight * scale;
-
-                            // Center image horizontally, position below title
                             const x = sideMargin + (availableWidth - finalWidth) / 2;
                             const y = bottomMargin + (availableHeight - finalHeight) / 2;
 
-                            signoffPage.drawImage(img, {
-                                x: x,
-                                y: y,
-                                width: finalWidth,
-                                height: finalHeight
-                            });
-
+                            signoffPage.drawImage(img, { x, y, width: finalWidth, height: finalHeight });
                             console.log(`Added signoff sheet (portrait 8.5x11): ${title}, original: ${imgWidth}x${imgHeight}, final: ${Math.round(finalWidth)}x${Math.round(finalHeight)}`);
                         } catch (e) {
                             console.error('Error adding signoff sheet:', title, e);
@@ -4656,20 +4918,18 @@ ${data.Notes || ''}`;
                         }
                     };
 
-                    // Add all photos
-                    console.log('Adding before photos:', data.photos.before.length);
-                    for (let photo of data.photos.before) {
-                        await addPhotoToPage(photo, 'Kompass Cart - Before');
-                    }
+                    // Add before photos (tiled if multiple)
+                    console.log('Adding before photos:', beforePhotos.length);
+                    await addTiledPhotos(beforePhotos, 'Kompass Cart - Before');
 
-                    console.log('Adding after photos:', data.photos.after.length);
-                    for (let photo of data.photos.after) {
-                        await addPhotoToPage(photo, 'Kompass Cart - After');
-                    }
+                    // Add after photos (tiled if multiple)
+                    console.log('Adding after photos:', afterPhotos.length);
+                    await addTiledPhotos(afterPhotos, 'Kompass Cart - After');
 
-                    console.log('Adding signoff photos:', data.photos.signoff.length);
-                    for (let i = 0; i < data.photos.signoff.length; i++) {
-                        await addSignoffSheetPage(data.photos.signoff[i], `Sign-Off Sheet ${i + 1}`);
+                    // Add signoff photos (full page each)
+                    console.log('Adding signoff photos:', signoffPhotos.length);
+                    for (let i = 0; i < signoffPhotos.length; i++) {
+                        await addSignoffSheetPage(signoffPhotos[i], `Sign-Off Sheet ${i + 1}`);
                     }
 
                     console.log('Photos added successfully');
@@ -5353,6 +5613,388 @@ ${data.Notes || ''}`;
         function smRefreshMembers() {
             if (!smSelectedShift) return;
             smLoadMembers();
+        }
+
+        // ─── TWO-WAY SYNC FUNCTIONS ────────────────────────────────────────────────
+
+        // Lightbox functions
+        function openLightbox(src, info) {
+            const overlay = document.getElementById('lightboxOverlay');
+            document.getElementById('lightboxImage').src = src;
+            document.getElementById('lightboxInfo').textContent = info || '';
+            overlay.classList.add('show');
+        }
+
+        function closeLightbox(event) {
+            if (event && event.target !== document.getElementById('lightboxOverlay') && event.target !== document.querySelector('.lightbox-close')) return;
+            document.getElementById('lightboxOverlay').classList.remove('show');
+        }
+
+        // Sync progress UI helpers
+        function showSyncProgress(phase, detail) {
+            const el = document.getElementById('syncProgress');
+            el.classList.add('show');
+            document.getElementById('syncPhaseText').textContent = phase;
+            document.getElementById('syncDetailText').textContent = detail || '';
+            document.getElementById('syncDetailText').className = 'sync-detail';
+        }
+
+        function updateSyncDetail(detail, isComplete) {
+            const detailEl = document.getElementById('syncDetailText');
+            detailEl.textContent = detail;
+            if (isComplete) {
+                detailEl.className = 'sync-detail sync-complete';
+            }
+        }
+
+        function hideSyncProgress() {
+            setTimeout(() => {
+                document.getElementById('syncProgress').classList.remove('show');
+            }, 3000);
+        }
+
+        // Render PROD photos for a given type (before/after/signoff)
+        function renderProdPhotos(type) {
+            const containerId = `prodPreview${type.charAt(0).toUpperCase() + type.slice(1)}`;
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+
+            const prodArr = prodPhotos[type];
+            if (!prodArr || prodArr.length === 0) return;
+
+            // Add section label
+            const label = document.createElement('div');
+            label.className = 'prod-photos-label';
+            label.textContent = type === 'signoff' ? '↓ Synced from server:' : '↓ Pulled from PROD:';
+            container.appendChild(label);
+
+            // Create photo grid wrapper
+            const grid = document.createElement('div');
+            grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;';
+            container.appendChild(grid);
+
+            prodArr.forEach((photo, index) => {
+                const item = document.createElement('div');
+                item.className = 'photo-item prod-photo' + (photo.selectedForEod ? ' selected-for-eod' : '');
+                item.style.position = 'relative';
+
+                const badge = type === 'signoff' ? 'SYNC' : 'PROD';
+                const badgeClass = type === 'signoff' ? 'sync-badge' : 'prod-badge';
+
+                const isSelected = photo.selectedForEod;
+                item.innerHTML = `
+                    <img src="${photo.url}" alt="${type} PROD photo" onclick="openLightbox('${photo.url}', 'PROD ${type} photo #${index + 1}')" style="cursor:pointer;">
+                    <span class="${badgeClass}">${badge}</span>
+                    <div class="photo-actions">
+                        <button class="btn-use ${isSelected ? 'active' : ''}" onclick="toggleProdPhotoEod('${type}', ${index}, true)">✓ Use</button>
+                        <button class="btn-skip ${!isSelected ? 'active' : ''}" onclick="toggleProdPhotoEod('${type}', ${index}, false)">Skip</button>
+                    </div>
+                `;
+                grid.appendChild(item);
+            });
+        }
+
+        // Toggle a PROD photo's selection for EOD
+        function toggleProdPhotoEod(type, index, useForEod) {
+            if (prodPhotos[type][index]) {
+                prodPhotos[type][index].selectedForEod = useForEod;
+                renderProdPhotos(type);
+                rebuildEodSelections(type);
+            }
+        }
+
+        // Rebuild eodSelections for a type by combining selected PROD photos and local photos
+        function rebuildEodSelections(type) {
+            eodSelections[type] = [];
+
+            // Add selected PROD photos
+            prodPhotos[type].forEach(p => {
+                if (p.selectedForEod) {
+                    eodSelections[type].push({
+                        dataUrl: p.url,
+                        source: 'prod',
+                        timestamp: p.timestamp || Date.now(),
+                        isUrl: true
+                    });
+                }
+            });
+
+            // Add local photos (always included)
+            photos[type].forEach((dataUrl, i) => {
+                eodSelections[type].push({
+                    dataUrl: dataUrl,
+                    source: 'local',
+                    timestamp: Date.now() - (photos[type].length - i),
+                    isUrl: false
+                });
+            });
+
+            // Sort by timestamp
+            eodSelections[type].sort((a, b) => a.timestamp - b.timestamp);
+        }
+
+        // Pull photos from PROD (Phase 1 of two-way sync)
+        async function pullFromProd() {
+            if (!selectedShift || !selectedShift.visitId) {
+                throw new Error('No shift selected. Please select a shift first.');
+            }
+
+            const visitId = selectedShift.visitId;
+
+            showSyncProgress('Pulling photos from PROD...', 'Fetching maintenance photos...');
+
+            // Fetch maintenance photos (before/after)
+            const maintenanceResp = await fetch(`${SM_API_BASE}/api/visit-photos?visitId=${encodeURIComponent(visitId)}`);
+            if (!maintenanceResp.ok) {
+                const errData = await maintenanceResp.json().catch(() => ({}));
+                throw new Error(errData.error || `Failed to pull photos (${maintenanceResp.status})`);
+            }
+            const maintenanceData = await maintenanceResp.json();
+
+            // Process maintenance before photos
+            const newBefore = [];
+            if (maintenanceData.maintenance && maintenanceData.maintenance.before) {
+                maintenanceData.maintenance.before.forEach(img => {
+                    newBefore.push({
+                        id: img.id,
+                        url: img.url,
+                        source: 'prod',
+                        selectedForEod: true,
+                        timestamp: Date.now()
+                    });
+                });
+            }
+
+            // Process maintenance after photos
+            const newAfter = [];
+            if (maintenanceData.maintenance && maintenanceData.maintenance.after) {
+                maintenanceData.maintenance.after.forEach(img => {
+                    newAfter.push({
+                        id: img.id,
+                        url: img.url,
+                        source: 'prod',
+                        selectedForEod: true,
+                        timestamp: Date.now()
+                    });
+                });
+            }
+
+            // Save category reset ID
+            if (maintenanceData.maintenance && maintenanceData.maintenance.categoryResetId) {
+                prodCategoryResetId = maintenanceData.maintenance.categoryResetId;
+            }
+
+            // Fetch signoff photos
+            showSyncProgress('Pulling photos from PROD...', 'Fetching signoff photos...');
+            let newSignoff = [];
+            try {
+                const signoffResp = await fetch(`${SM_API_BASE}/api/signoff-photos?visitId=${encodeURIComponent(visitId)}`);
+                if (signoffResp.ok) {
+                    const signoffData = await signoffResp.json();
+                    if (signoffData.photos && signoffData.photos.length > 0) {
+                        signoffData.photos.forEach(p => {
+                            newSignoff.push({
+                                id: p.id,
+                                url: p.url,
+                                source: 'prod',
+                                selectedForEod: true,
+                                uploadedBy: p.uploadedBy,
+                                uploadedAt: p.uploadedAt,
+                                timestamp: new Date(p.uploadedAt || Date.now()).getTime()
+                            });
+                        });
+                    }
+                }
+            } catch (e) {
+                console.warn('[sync] Could not fetch signoff photos:', e);
+            }
+
+            const summary = `Found ${newBefore.length} before photo(s), ${newAfter.length} after photo(s), ${newSignoff.length} signoff photo(s)`;
+            updateSyncDetail(summary, false);
+
+            return { before: newBefore, after: newAfter, signoff: newSignoff };
+        }
+
+        // Handle conflict resolution between PROD and local photos
+        function resolveConflict(type, prodArr) {
+            return new Promise((resolve) => {
+                const localCount = photos[type].length;
+                const prodCount = prodArr.length;
+                const typeName = type === 'signoff' ? 'sign-off' : type;
+
+                if (localCount === 0 || prodCount === 0) {
+                    // No conflict — just merge
+                    resolve('keep_both');
+                    return;
+                }
+
+                showConfirm(
+                    'Photo Conflict',
+                    `PROD already has <strong>${prodCount}</strong> ${typeName} photo(s), and you have <strong>${localCount}</strong> local photo(s).<br><br>` +
+                    `<div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">` +
+                    `<button class="btn btn-primary" id="conflictUseProd" style="width:100%">Use PROD photos only</button>` +
+                    `<button class="btn btn-primary" id="conflictKeepLocal" style="background:#065f46; width:100%">Keep local photos only</button>` +
+                    `<button class="btn btn-primary" id="conflictKeepBoth" style="background:#7c3aed; width:100%">Keep both</button>` +
+                    `</div>`,
+                    () => resolve('keep_both') // Default on OK
+                );
+
+                // Attach handlers after modal renders
+                setTimeout(() => {
+                    const useProd = document.getElementById('conflictUseProd');
+                    const keepLocal = document.getElementById('conflictKeepLocal');
+                    const keepBoth = document.getElementById('conflictKeepBoth');
+
+                    if (useProd) useProd.onclick = () => {
+                        document.getElementById('modal').classList.remove('show');
+                        resolve('use_prod');
+                    };
+                    if (keepLocal) keepLocal.onclick = () => {
+                        document.getElementById('modal').classList.remove('show');
+                        resolve('keep_local');
+                    };
+                    if (keepBoth) keepBoth.onclick = () => {
+                        document.getElementById('modal').classList.remove('show');
+                        resolve('keep_both');
+                    };
+                }, 100);
+            });
+        }
+
+        // Push signoff photos to backend
+        async function pushSignoffPhotos() {
+            if (!selectedShift || !selectedShift.visitId) return;
+            if (photos.signoff.length === 0) return;
+
+            const storeNumber = document.getElementById('storeNumber').value;
+            const date = document.getElementById('workDate').value;
+
+            try {
+                const resp = await fetch(`${SM_API_BASE}/api/signoff-photos`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        visitId: String(selectedShift.visitId),
+                        storeNumber: parseInt(storeNumber) || 0,
+                        date: date,
+                        photos: photos.signoff.map((dataUrl, i) => ({
+                            filename: `signoff_${i + 1}.jpg`,
+                            dataUrl: dataUrl
+                        }))
+                    })
+                });
+                if (resp.ok) {
+                    const result = await resp.json();
+                    console.log('[sync] Signoff photos pushed:', result);
+                }
+            } catch (e) {
+                console.warn('[sync] Could not push signoff photos:', e);
+            }
+        }
+
+        // Master two-way sync function
+        async function twoWaySync() {
+            const storeNumber = document.getElementById('storeNumber').value;
+            const date = document.getElementById('workDate').value;
+            const hasVisitId = selectedShift && selectedShift.visitId;
+
+            if (!storeNumber || !date) {
+                showAlert('Missing Info', 'Please fill in Store # and Date before syncing.');
+                return;
+            }
+
+            if (!hasVisitId) {
+                showAlert('No Shift Selected', 'Please select a shift first so we can pull photos from PROD.');
+                return;
+            }
+
+            const btn = document.getElementById('twoWaySyncBtn');
+            btn.disabled = true;
+            document.getElementById('twoWaySyncIcon').textContent = '⟳';
+
+            try {
+                // ── PHASE 1: PULL ──
+                const pulled = await pullFromProd();
+
+                // Handle conflicts for each type
+                for (const type of ['before', 'after', 'signoff']) {
+                    const pulledArr = pulled[type];
+                    if (pulledArr.length === 0) continue;
+
+                    if (photos[type].length > 0) {
+                        // Conflict: both PROD and local have photos
+                        const resolution = await resolveConflict(type, pulledArr);
+
+                        if (resolution === 'use_prod') {
+                            // Clear local, use PROD only
+                            photos[type] = [];
+                            renderPhotos(type);
+                            prodPhotos[type] = pulledArr;
+                        } else if (resolution === 'keep_local') {
+                            // Keep local, mark PROD as skipped
+                            pulledArr.forEach(p => p.selectedForEod = false);
+                            prodPhotos[type] = pulledArr;
+                        } else {
+                            // Keep both — all selected
+                            prodPhotos[type] = pulledArr;
+                        }
+                    } else {
+                        // No local photos — auto-select PROD if exactly 1 before and 1 after
+                        prodPhotos[type] = pulledArr;
+                    }
+
+                    renderProdPhotos(type);
+                    rebuildEodSelections(type);
+                }
+
+                // Auto-select single before/after without user action
+                if (prodPhotos.before.length === 1 && photos.before.length === 0) {
+                    prodPhotos.before[0].selectedForEod = true;
+                    renderProdPhotos('before');
+                }
+                if (prodPhotos.after.length === 1 && photos.after.length === 0) {
+                    prodPhotos.after[0].selectedForEod = true;
+                    renderProdPhotos('after');
+                }
+
+                showSyncProgress('Pulling photos from PROD...', '');
+                const totalPulled = pulled.before.length + pulled.after.length + pulled.signoff.length;
+                updateSyncDetail(`Found ${pulled.before.length} before, ${pulled.after.length} after, ${pulled.signoff.length} signoff photo(s)`, false);
+
+                // ── PHASE 2: PUSH ──
+                showSyncProgress('Pushing local data to PROD...', 'Uploading local photos...');
+
+                // Push before/after via existing syncToSAS (only if not already synced from PROD)
+                let pushCount = 0;
+                for (const type of ['before', 'after']) {
+                    if (photos[type].length > 0) {
+                        await syncToSAS(type);
+                        pushCount += photos[type].length;
+                    }
+                }
+
+                // Push signoff photos to both SAS and the signoff backend
+                if (photos.signoff.length > 0) {
+                    await syncToSAS('signoff');
+                    await pushSignoffPhotos();
+                    pushCount += photos.signoff.length;
+                }
+
+                // ── COMPLETE ──
+                showSyncProgress('Sync complete ✓', `Pulled ${totalPulled} photo(s) from PROD, pushed ${pushCount} local photo(s)`);
+                updateSyncDetail(`Pulled ${totalPulled} from PROD, pushed ${pushCount} local`, true);
+                hideSyncProgress();
+
+            } catch (err) {
+                console.error('[two-way-sync] Error:', err);
+                showSyncProgress('Sync Error', err.message);
+                document.getElementById('syncDetailText').style.color = '#ef4444';
+                hideSyncProgress();
+            } finally {
+                btn.disabled = false;
+                document.getElementById('twoWaySyncIcon').textContent = '⇅';
+            }
         }
 
         // ─── SAS SYNC FUNCTIONS ─────────────────────────────────────────────────────
