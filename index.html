@@ -1915,6 +1915,97 @@
             font-weight: 600;
             margin-top: 4px;
         }
+        /* Auth status indicator */
+        .auth-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        .auth-red { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
+        .auth-yellow { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
+        .auth-green { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+        .auth-status-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        .auth-status-label {
+            font-size: var(--font-size-sm);
+            color: #94a3b8;
+        }
+        .auth-request-btn {
+            background: #0d4f8b;
+            color: #fff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: var(--border-radius);
+            font-size: var(--font-size-sm);
+            cursor: pointer;
+        }
+        .auth-request-btn:hover { background: #1e6bb8; }
+        .auth-request-btn:disabled {
+            background: #4b5563;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .auth-pending-msg {
+            font-size: 0.85em;
+            color: #f59e0b;
+            margin-top: 6px;
+        }
+        /* Profile auto-fill styles */
+        .profile-readonly-wrapper {
+            position: relative;
+        }
+        .profile-readonly-wrapper input[readonly] {
+            background: #1e293b;
+            color: #93c5fd;
+            border-color: #0d4f8b;
+        }
+        .profile-edit-link {
+            font-size: 0.8em;
+            color: #60a5fa;
+            cursor: pointer;
+            margin-left: 8px;
+            text-decoration: underline;
+        }
+        .profile-edit-link:hover { color: #93c5fd; }
+        /* Lead picker for multiple leads */
+        .lead-picker-section {
+            margin-top: var(--spacing-md);
+        }
+        .lead-picker-section select {
+            width: 100%;
+            padding: 8px;
+            background: #1e293b;
+            color: #f9fafb;
+            border: 1px solid #374151;
+            border-radius: var(--border-radius);
+        }
+        /* Toast notification */
+        .auth-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #22c55e;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 10000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            animation: toastFadeIn 0.3s ease;
+        }
+        @keyframes toastFadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
     </style>
 </head>
 <body>
@@ -1926,24 +2017,9 @@
             <p>GENERATOR</p>
         </div>
 
-        <!-- My Profile -->
-        <div class="section">
-            <div class="section-title">My Profile</div>
-            <div class="field-group">
-                <div class="field">
-                    <label>Your Name:</label>
-                    <input type="text" id="profileName" placeholder="Enter your name">
-                </div>
-                <div class="field">
-                    <label>Your Email:</label>
-                    <input type="email" id="profileEmail" placeholder="you@example.com">
-                </div>
-            </div>
-        </div>
-
-        <!-- Store & Date Selection + Find Shifts (unified) -->
+        <!-- Store & Date Selection + Find Shifts (unified) — MOVED ABOVE My Profile -->
         <div class="section" id="storeShiftSection">
-            <div class="section-title">Store & Shift Selection</div>
+            <div class="section-title">Store & Shift Selection <span id="authIndicator" class="auth-indicator auth-red" title="Auth status: not active"></span></div>
             <div class="sm-controls">
                 <div class="field-group">
                     <div class="field">
@@ -2085,6 +2161,12 @@
                     </div>
                 </div>
                 <button class="btn btn-primary sm-find-btn" id="smFindShiftsBtn" onclick="smFindShifts()">Find Shifts</button>
+                <!-- Auth status row -->
+                <div class="auth-status-row" id="authStatusRow">
+                    <span class="auth-status-label" id="authStatusLabel">SAS Auth: Not Active</span>
+                    <button class="auth-request-btn" id="authRequestBtn" onclick="requestAuth()">Request Auth</button>
+                </div>
+                <div id="authPendingMsg" class="auth-pending-msg" style="display:none;"></div>
             </div>
 
             <!-- Shift results -->
@@ -2092,25 +2174,36 @@
                 <div class="sm-shift-list" id="smShiftList"></div>
             </div>
 
-            <!-- Lead Info (auto-populated from shift selection) -->
-            <div id="leadInfoSection" style="display:none;">
-                <div id="leadInfoBar" class="lead-info-bar" style="display:none;">
-                    <span class="lead-label" id="leadInfoDisplay"></span>
-                </div>
-                <div id="leadInfoFallback" class="lead-info-fallback" style="display:none;">
-                    <div class="field-group">
-                        <div class="field">
-                            <label>Lead Name:</label>
-                            <input type="text" id="leadName" placeholder="Enter lead name">
-                        </div>
-                        <div class="field">
-                            <label>Lead Email:</label>
-                            <input type="email" id="leadEmail" placeholder="lead@example.com">
-                        </div>
-                    </div>
-                </div>
+            <!-- Lead Picker (shown when multiple distinct visitLeads across shifts) -->
+            <div id="leadPickerSection" class="lead-picker-section" style="display:none;">
+                <label style="color:#94a3b8; font-size:0.9em;">Multiple leads found — select your lead:</label>
+                <select id="leadPickerSelect" onchange="onLeadPicked()">
+                    <option value="">-- Select Lead --</option>
+                </select>
             </div>
         </div>
+
+        <!-- My Profile (auto-filled from lead selection) -->
+        <div class="section" id="profileSection">
+            <div class="section-title">My Profile</div>
+            <div class="field-group">
+                <div class="field profile-readonly-wrapper">
+                    <label>Your Name: <span id="profileEditNameLink" class="profile-edit-link" style="display:none;" onclick="unlockProfileField('profileName')">(Edit)</span></label>
+                    <input type="text" id="profileName" placeholder="Enter your name">
+                </div>
+                <div class="field profile-readonly-wrapper">
+                    <label>Your Email: <span id="profileEditEmailLink" class="profile-edit-link" style="display:none;" onclick="unlockProfileField('profileEmail')">(Edit)</span></label>
+                    <input type="email" id="profileEmail" placeholder="you@example.com">
+                </div>
+            </div>
+            <div id="profileAutoFillNote" style="display:none; font-size:0.8em; color:#94a3b8; margin-top:4px;">
+                Auto-filled from shift lead info. Click (Edit) to override.
+            </div>
+        </div>
+
+        <!-- Hidden fields for leadName used by collectData / autoSave (kept for compatibility) -->
+        <input type="hidden" id="leadName" value="">
+        <input type="hidden" id="leadEmail" value="">
 
         <!-- Employee Management Section (shift members + add) -->
         <div class="section" id="smSection" style="display:none;">
@@ -2141,9 +2234,6 @@
                 <div class="sm-status" id="smAddStatus"></div>
             </div>
         </div>
-
-        <!-- Hidden field for leadName used by collectData / autoSave -->
-        <input type="hidden" id="leadNameHidden" value="">
 
         <!-- Photos Section -->
         <div class="section">
@@ -5183,6 +5273,9 @@ ${data.Notes || ''}`;
             }
             updateSignaturePreview();
 
+            // Check auth status on page load
+            checkAuthStatus();
+
             // Log startup info
             console.log('Kompass EOD Advanced loaded');
             console.log('PDFLib available:', typeof PDFLib !== 'undefined');
@@ -5196,6 +5289,152 @@ ${data.Notes || ''}`;
         let smMembers = [];
         let smEmployeesCache = null;
         let smPendingRemovals = new Set();
+
+        // ─── AUTH STATUS MANAGEMENT ─────────────────────────────────────────────────
+        let authState = sessionStorage.getItem('kompassAuthState') || 'unknown';
+        let authPollInterval = null;
+
+        // Check auth status by probing the shifts endpoint with dummy params
+        async function checkAuthStatus() {
+            // Restore yellow state from sessionStorage
+            if (authState === 'yellow') {
+                setAuthStatus('yellow');
+                startAuthPolling();
+                return;
+            }
+            try {
+                const resp = await fetch(`${SM_API_BASE}/api/shifts?store=0&date=2000-01-01`);
+                if (resp.status === 401) {
+                    const data = await resp.json().catch(() => ({}));
+                    if (data.error && data.error.toLowerCase().includes('sas session not active')) {
+                        setAuthStatus('red');
+                    } else {
+                        setAuthStatus('red');
+                    }
+                } else if (resp.ok) {
+                    setAuthStatus('green');
+                } else {
+                    // Other error — treat as unknown, show red
+                    setAuthStatus('red');
+                }
+            } catch (err) {
+                console.warn('Auth probe failed:', err);
+                setAuthStatus('red');
+            }
+        }
+
+        function setAuthStatus(status) {
+            authState = status;
+            sessionStorage.setItem('kompassAuthState', status);
+
+            const indicator = document.getElementById('authIndicator');
+            const label = document.getElementById('authStatusLabel');
+            const btn = document.getElementById('authRequestBtn');
+            const pendingMsg = document.getElementById('authPendingMsg');
+
+            // Reset classes
+            indicator.className = 'auth-indicator';
+
+            if (status === 'red') {
+                indicator.classList.add('auth-red');
+                indicator.title = 'Auth status: not active';
+                label.textContent = 'SAS Auth: Not Active';
+                btn.style.display = 'inline-block';
+                btn.disabled = false;
+                btn.textContent = 'Request Auth';
+                pendingMsg.style.display = 'none';
+                stopAuthPolling();
+            } else if (status === 'yellow') {
+                indicator.classList.add('auth-yellow');
+                indicator.title = 'Auth status: requested, pending';
+                label.textContent = 'SAS Auth: Pending';
+                btn.style.display = 'inline-block';
+                btn.disabled = true;
+                btn.textContent = 'Auth Requested — Please Be Patient';
+                pendingMsg.style.display = 'block';
+                pendingMsg.textContent = 'Auth requested. You can continue recording everything in the app — store selection syncs with PROD but does not require authorization right away. You will be notified when auth is provided.';
+            } else if (status === 'green') {
+                indicator.classList.add('auth-green');
+                indicator.title = 'Auth status: active';
+                label.textContent = 'SAS Auth: Active';
+                btn.style.display = 'none';
+                pendingMsg.style.display = 'none';
+                stopAuthPolling();
+                // Show toast if transitioning from yellow
+                if (sessionStorage.getItem('kompassAuthWasYellow') === 'true') {
+                    sessionStorage.removeItem('kompassAuthWasYellow');
+                    showAuthToast('SAS session is now active.');
+                }
+            }
+        }
+
+        async function requestAuth() {
+            const btn = document.getElementById('authRequestBtn');
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+
+            try {
+                const resp = await fetch(`${SM_API_BASE}/send-eod`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        storeNumber: '000',
+                        subject: 'KOMPASS AUTH',
+                        body: 'Auth requested from EOD app. Please run morning auth.',
+                        recipients: ['d6ewa.supervisor@gmail.com']
+                    })
+                });
+                const result = await resp.json();
+                if (result.success) {
+                    sessionStorage.setItem('kompassAuthWasYellow', 'true');
+                    setAuthStatus('yellow');
+                    startAuthPolling();
+                    showAlert('Auth Requested', 'Auth requested. You can continue recording everything in the app &mdash; store selection syncs with PROD but does not require authorization right away. You will be notified when auth is provided.');
+                } else {
+                    showAlert('Auth Request Failed', 'Failed to send auth request: ' + (result.error || 'Unknown error'));
+                    btn.disabled = false;
+                    btn.textContent = 'Request Auth';
+                }
+            } catch (err) {
+                showAlert('Error', 'Failed to send auth request: ' + err.message);
+                btn.disabled = false;
+                btn.textContent = 'Request Auth';
+            }
+        }
+
+        function startAuthPolling() {
+            stopAuthPolling();
+            sessionStorage.setItem('kompassAuthWasYellow', 'true');
+            authPollInterval = setInterval(async () => {
+                try {
+                    const resp = await fetch(`${SM_API_BASE}/api/shifts?store=0&date=2000-01-01`);
+                    if (resp.ok) {
+                        setAuthStatus('green');
+                    }
+                } catch (err) {
+                    // Ignore polling errors
+                }
+            }, 60000); // Poll every 60 seconds
+        }
+
+        function stopAuthPolling() {
+            if (authPollInterval) {
+                clearInterval(authPollInterval);
+                authPollInterval = null;
+            }
+        }
+
+        function showAuthToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'auth-toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.transition = 'opacity 0.5s';
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 500);
+            }, 4000);
+        }
 
         function escapeHtml(str) {
             const div = document.createElement('div');
@@ -5228,7 +5467,7 @@ ${data.Notes || ''}`;
             document.getElementById('smMembersSection').style.display = 'none';
             document.getElementById('smAddSection').style.display = 'none';
             document.getElementById('smRemoveControls').style.display = 'none';
-            document.getElementById('leadInfoSection').style.display = 'none';
+            document.getElementById('leadPickerSection').style.display = 'none';
             document.getElementById('smSection').style.display = 'none';
         }
 
@@ -5299,8 +5538,24 @@ ${data.Notes || ''}`;
                     </div>`;
                 }).join('');
                 resultsDiv.style.display = 'block';
+
+                // Check for multiple distinct visitLeads across shifts
+                checkMultipleLeads();
+
+                // Update auth indicator to green since API responded successfully
+                setAuthStatus('green');
             } catch (err) {
-                listDiv.innerHTML = `<div class="sm-message error">${escapeHtml(err.message)}</div>`;
+                const errMsg = err.message || '';
+                // Check if this is a 401 / SAS session error
+                if (errMsg.includes('401') || errMsg.toLowerCase().includes('sas session') || errMsg.toLowerCase().includes('not active')) {
+                    setAuthStatus('red');
+                    const authBtnHtml = authState !== 'yellow' ?
+                        `<button class="auth-request-btn" onclick="requestAuth()" style="margin-top:6px;">Request Auth</button>` :
+                        `<span style="color:#f59e0b; font-size:0.9em;">Auth Requested — Please Be Patient</span>`;
+                    listDiv.innerHTML = `<div class="sm-message error">${escapeHtml(errMsg)}<br>${authBtnHtml}<br><span style="font-size:0.85em; color:#94a3b8;">You can continue using photos, notes, and other features without auth.</span></div>`;
+                } else {
+                    listDiv.innerHTML = `<div class="sm-message error">${escapeHtml(errMsg)}</div>`;
+                }
                 document.getElementById('smShiftResults').style.display = 'block';
             } finally {
                 btn.disabled = false;
@@ -5321,8 +5576,7 @@ ${data.Notes || ''}`;
             const card = document.querySelector(`.sm-shift-card[data-index="${index}"]`);
             if (card) card.classList.add('selected');
 
-            // Show lead info section and employee management section
-            document.getElementById('leadInfoSection').style.display = 'block';
+            // Show employee management section
             document.getElementById('smSection').style.display = 'block';
             document.getElementById('smMembersSection').style.display = 'block';
             document.getElementById('smAddSection').style.display = 'block';
@@ -5339,24 +5593,66 @@ ${data.Notes || ''}`;
             autoSave();
         }
 
-        // Auto-populate lead info from the shift's visitLead field
+        // After shifts load, check for multiple distinct visitLeads and show picker if needed
+        function checkMultipleLeads() {
+            const leads = [...new Set(smShifts.map(s => s.visitLead).filter(Boolean))];
+            const pickerSection = document.getElementById('leadPickerSection');
+            if (leads.length > 1) {
+                const select = document.getElementById('leadPickerSelect');
+                select.innerHTML = '<option value="">-- Select Lead --</option>' +
+                    leads.map(l => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('');
+                pickerSection.style.display = 'block';
+            } else if (leads.length === 1) {
+                // Single lead across all shifts — auto-resolve
+                pickerSection.style.display = 'none';
+                resolveLeadInfo(leads[0]);
+            } else {
+                pickerSection.style.display = 'none';
+            }
+        }
+
+        // When user picks a lead from the dropdown
+        async function onLeadPicked() {
+            const select = document.getElementById('leadPickerSelect');
+            const leadName = select.value;
+            if (leadName) {
+                await resolveLeadInfo(leadName);
+            }
+        }
+
+        // Resolve lead info and auto-fill profile
+        async function resolveLeadInfo(visitLead) {
+            try {
+                const resp = await fetch(`${SM_API_BASE}/api/lead-info?name=${encodeURIComponent(visitLead)}`);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    const preferredName = data.preferredName || visitLead;
+                    const email = data.email || '';
+                    document.getElementById('leadName').value = preferredName;
+                    document.getElementById('leadEmail').value = email;
+                    autoFillProfile(preferredName, email);
+                    return;
+                }
+            } catch (err) {
+                console.warn('Lead info lookup failed:', err);
+            }
+            // Fallback
+            document.getElementById('leadName').value = visitLead;
+        }
+
+        // Auto-populate My Profile from the shift's visitLead field via lead-info API
         async function smPopulateLeadInfo(shift) {
-            const leadInfoBar = document.getElementById('leadInfoBar');
-            const leadInfoFallback = document.getElementById('leadInfoFallback');
-            const leadInfoDisplay = document.getElementById('leadInfoDisplay');
             const leadNameField = document.getElementById('leadName');
-            const leadNameHidden = document.getElementById('leadNameHidden');
+            const leadEmailField = document.getElementById('leadEmail');
 
             const visitLead = shift.visitLead || '';
 
             if (!visitLead) {
-                // No visitLead — show fallback editable fields
-                leadInfoBar.style.display = 'none';
-                leadInfoFallback.style.display = 'block';
+                // No visitLead — leave profile editable as-is
                 return;
             }
 
-            // Try to look up lead info
+            // Try to look up lead info and auto-fill My Profile
             try {
                 const resp = await fetch(`${SM_API_BASE}/api/lead-info?name=${encodeURIComponent(visitLead)}`);
                 if (resp.ok) {
@@ -5364,30 +5660,58 @@ ${data.Notes || ''}`;
                     const preferredName = data.preferredName || visitLead;
                     const email = data.email || '';
 
-                    // Set the hidden leadName field for downstream use
+                    // Set hidden lead fields for downstream use
                     leadNameField.value = preferredName;
-                    leadNameHidden.value = preferredName;
+                    leadEmailField.value = email;
 
-                    // Display read-only info bar
-                    leadInfoDisplay.innerHTML = `Lead: <span style="color:#93c5fd;">${escapeHtml(preferredName)}</span>${email ? ' &mdash; <span class="lead-email">' + escapeHtml(email) + '</span>' : ''}`;
-                    leadInfoBar.style.display = 'flex';
-                    leadInfoFallback.style.display = 'none';
-
-                    // Also add lead email to recipients if not already there
-                    if (email && !emailRecipients.includes(email.toLowerCase())) {
-                        // Store for reference but don't auto-add to recipients
-                    }
+                    // Auto-fill My Profile
+                    autoFillProfile(preferredName, email);
                     return;
                 }
             } catch (err) {
                 console.warn('Lead info lookup failed:', err);
             }
 
-            // Fallback: use visitLead as-is, show editable fields
+            // Fallback: use visitLead as-is for lead name, leave profile editable
             leadNameField.value = visitLead;
-            leadNameHidden.value = visitLead;
-            leadInfoBar.style.display = 'none';
-            leadInfoFallback.style.display = 'block';
+        }
+
+        // Auto-fill profile fields and make them read-only
+        function autoFillProfile(name, email) {
+            const profileName = document.getElementById('profileName');
+            const profileEmail = document.getElementById('profileEmail');
+
+            if (name) {
+                profileName.value = name;
+                profileName.readOnly = true;
+                document.getElementById('profileEditNameLink').style.display = 'inline';
+            }
+            if (email) {
+                profileEmail.value = email;
+                profileEmail.readOnly = true;
+                document.getElementById('profileEditEmailLink').style.display = 'inline';
+            }
+            if (name || email) {
+                document.getElementById('profileAutoFillNote').style.display = 'block';
+            }
+            saveProfile();
+        }
+
+        // Unlock a profile field for manual editing
+        function unlockProfileField(fieldId) {
+            const field = document.getElementById(fieldId);
+            field.readOnly = false;
+            field.focus();
+            // Hide the edit link
+            if (fieldId === 'profileName') {
+                document.getElementById('profileEditNameLink').style.display = 'none';
+            } else {
+                document.getElementById('profileEditEmailLink').style.display = 'none';
+            }
+            // If both unlocked, hide the auto-fill note
+            if (!document.getElementById('profileName').readOnly && !document.getElementById('profileEmail').readOnly) {
+                document.getElementById('profileAutoFillNote').style.display = 'none';
+            }
         }
 
         async function smLoadMembers() {
