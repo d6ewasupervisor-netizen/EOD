@@ -4961,7 +4961,17 @@ ${data.Notes || ''}`;
                     throw new Error(errData.error || `Server error (${resp.status})`);
                 }
                 const data = await resp.json();
-                const shifts = Array.isArray(data) ? data : (data.shifts || []);
+                let shifts = Array.isArray(data) ? data : (data.shifts || []);
+
+                // Log raw shift data for debugging available fields
+                if (shifts.length > 0) console.log('Raw shift data sample:', JSON.parse(JSON.stringify(shifts[0])));
+
+                // Exact store number match — filter out partial matches (e.g. "28" should not return "286")
+                shifts = shifts.filter(s => {
+                    const sStore = String(s.storeNumber || s.store_number || s.store || '').replace(/^0+/, '');
+                    const input = storeNumber.replace(/^0+/, '');
+                    return sStore === input;
+                });
 
                 if (shifts.length === 0) {
                     listDiv.innerHTML = '<div class="sm-message">No shifts found for this store/date.</div>';
@@ -4977,6 +4987,7 @@ ${data.Notes || ''}`;
                     return `<div class="${cardClass}" onclick="${isCompleted ? '' : 'smSelectShift(' + i + ')'}" data-index="${i}">
                         <div class="sm-shift-card-info">
                             <div class="sm-shift-card-project">${escapeHtml(shift.teamName || shift.projectName || 'Unnamed Shift')}</div>
+                            ${shift.programName || shift.program || shift.shiftType || shift.type || shift.description ? '<div class="sm-shift-card-detail" style="color:#8bb8e0;font-size:0.85em;margin-top:2px;">' + escapeHtml(shift.programName || shift.program || shift.shiftType || shift.type || shift.description || '') + '</div>' : ''}
                             <div class="sm-shift-card-detail">
                                 ${shift.shiftTime || shift.startTime ? escapeHtml(shift.shiftTime || shift.startTime) + ' ' : ''}
                                 <span class="sm-status-badge ${statusClass}">${escapeHtml(shift.status || 'unknown')}</span>
@@ -4984,6 +4995,7 @@ ${data.Notes || ''}`;
                             <div class="sm-shift-card-meta">
                                 ${shift.employeeCount != null ? '<span>' + shift.employeeCount + ' people</span>' : ''}
                                 ${shift.scheduledDate ? '<span>' + escapeHtml(shift.scheduledDate) + '</span>' : ''}
+                                ${shift.storeNumber || shift.store_number ? '<span>Store ' + escapeHtml(String(shift.storeNumber || shift.store_number)) + '</span>' : ''}
                             </div>
                         </div>
                         <span class="sm-shift-card-check">&#10003;</span>
