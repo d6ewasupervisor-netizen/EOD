@@ -1409,11 +1409,13 @@
         .btn-coversheet:hover {
             box-shadow: 0 5px 15px rgba(13, 79, 139, 0.4);
         }
-        /* ─── Shift Management Section ─── */
+        /* ─── Shift / Store Selection Section ─── */
+        #storeShiftSection .sm-controls .field-group,
         #smSection .field-group {
             display: flex;
             gap: var(--spacing-sm);
         }
+        #storeShiftSection .sm-controls .field-group .field,
         #smSection .field-group .field {
             flex: 1;
         }
@@ -1689,6 +1691,40 @@
         .sm-status.success { color: #10b981; }
         .sm-status.error { color: #fca5a5; }
         .sm-status.pending { color: #fbbf24; }
+
+        /* ─── Lead Info Bar ─── */
+        .lead-info-bar {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            background: #1e293b;
+            border: 1px solid #0d4f8b;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md) var(--spacing-lg);
+            margin-top: var(--spacing-md);
+            color: #88c4ed;
+            font-size: var(--font-size-sm);
+        }
+        .lead-info-bar .lead-label {
+            font-weight: 700;
+            color: #f9fafb;
+        }
+        .lead-info-bar .lead-email {
+            color: #93c5fd;
+        }
+        .lead-info-fallback {
+            margin-top: var(--spacing-md);
+        }
+        .kompass-type-badge {
+            display: inline-block;
+            background: #0d4f8b;
+            color: #e0f2fe;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
@@ -1715,153 +1751,209 @@
             </div>
         </div>
 
-        <!-- Basic Info -->
-        <div class="section">
-            <div class="section-title">Store Information</div>
-            <div class="field-group">
-                <div class="field">
-                    <label>Store #:</label>
-                    <input type="text" id="storeNumber" list="storeList" placeholder="Select or enter store #">
-                    <datalist id="storeList">
-                        <option value="5">
-                        <option value="11">
-                        <option value="13">
-                        <option value="17">
-                        <option value="18">
-                        <option value="19">
-                        <option value="21">
-                        <option value="23">
-                        <option value="24">
-                        <option value="25">
-                        <option value="28">
-                        <option value="30">
-                        <option value="31">
-                        <option value="35">
-                        <option value="40">
-                        <option value="41">
-                        <option value="49">
-                        <option value="50">
-                        <option value="53">
-                        <option value="60">
-                        <option value="63">
-                        <option value="70">
-                        <option value="71">
-                        <option value="75">
-                        <option value="90">
-                        <option value="93">
-                        <option value="111">
-                        <option value="122">
-                        <option value="125">
-                        <option value="126">
-                        <option value="127">
-                        <option value="135">
-                        <option value="140">
-                        <option value="143">
-                        <option value="150">
-                        <option value="153">
-                        <option value="156">
-                        <option value="158">
-                        <option value="163">
-                        <option value="165">
-                        <option value="171">
-                        <option value="180">
-                        <option value="185">
-                        <option value="186">
-                        <option value="195">
-                        <option value="196">
-                        <option value="198">
-                        <option value="208">
-                        <option value="209">
-                        <option value="210">
-                        <option value="214">
-                        <option value="215">
-                        <option value="218">
-                        <option value="220">
-                        <option value="224">
-                        <option value="225">
-                        <option value="226">
-                        <option value="227">
-                        <option value="236">
-                        <option value="240">
-                        <option value="242">
-                        <option value="253">
-                        <option value="255">
-                        <option value="260">
-                        <option value="265">
-                        <option value="281">
-                        <option value="285">
-                        <option value="286">
-                        <option value="325">
-                        <option value="328">
-                        <option value="351">
-                        <option value="355">
-                        <option value="360">
-                        <option value="372">
-                        <option value="375">
-                        <option value="377">
-                        <option value="383">
-                        <option value="390">
-                        <option value="391">
-                        <option value="393">
-                        <option value="417">
-                        <option value="424">
-                        <option value="439">
-                        <option value="449">
-                        <option value="457">
-                        <option value="458">
-                        <option value="459">
-                        <option value="460">
-                        <option value="462">
-                        <option value="464">
-                        <option value="482">
-                        <option value="485">
-                        <option value="486">
-                        <option value="516">
-                        <option value="600">
-                        <option value="603">
-                        <option value="604">
-                        <option value="605">
-                        <option value="608">
-                        <option value="613">
-                        <option value="614">
-                        <option value="615">
-                        <option value="649">
-                        <option value="650">
-                        <option value="651">
-                        <option value="652">
-                        <option value="653">
-                        <option value="654">
-                        <option value="655">
-                        <option value="656">
-                        <option value="657">
-                        <option value="658">
-                        <option value="659">
-                        <option value="660">
-                        <option value="661">
-                        <option value="662">
-                        <option value="663">
-                        <option value="665">
-                        <option value="667">
-                        <option value="668">
-                        <option value="681">
-                        <option value="682">
-                        <option value="683">
-                        <option value="685">
-                        <option value="688">
-                        <option value="691">
-                        <option value="694">
-                    </datalist>
+        <!-- Store & Date Selection + Find Shifts (unified) -->
+        <div class="section" id="storeShiftSection">
+            <div class="section-title">Store & Shift Selection</div>
+            <div class="sm-controls">
+                <div class="field-group">
+                    <div class="field">
+                        <label>Store #:</label>
+                        <input type="text" id="storeNumber" list="storeList" placeholder="Select or enter store #">
+                        <datalist id="storeList">
+                            <option value="5">
+                            <option value="11">
+                            <option value="13">
+                            <option value="17">
+                            <option value="18">
+                            <option value="19">
+                            <option value="21">
+                            <option value="23">
+                            <option value="24">
+                            <option value="25">
+                            <option value="28">
+                            <option value="30">
+                            <option value="31">
+                            <option value="35">
+                            <option value="40">
+                            <option value="41">
+                            <option value="49">
+                            <option value="50">
+                            <option value="53">
+                            <option value="60">
+                            <option value="63">
+                            <option value="70">
+                            <option value="71">
+                            <option value="75">
+                            <option value="90">
+                            <option value="93">
+                            <option value="111">
+                            <option value="122">
+                            <option value="125">
+                            <option value="126">
+                            <option value="127">
+                            <option value="135">
+                            <option value="140">
+                            <option value="143">
+                            <option value="150">
+                            <option value="153">
+                            <option value="156">
+                            <option value="158">
+                            <option value="163">
+                            <option value="165">
+                            <option value="171">
+                            <option value="180">
+                            <option value="185">
+                            <option value="186">
+                            <option value="195">
+                            <option value="196">
+                            <option value="198">
+                            <option value="208">
+                            <option value="209">
+                            <option value="210">
+                            <option value="214">
+                            <option value="215">
+                            <option value="218">
+                            <option value="220">
+                            <option value="224">
+                            <option value="225">
+                            <option value="226">
+                            <option value="227">
+                            <option value="236">
+                            <option value="240">
+                            <option value="242">
+                            <option value="253">
+                            <option value="255">
+                            <option value="260">
+                            <option value="265">
+                            <option value="281">
+                            <option value="285">
+                            <option value="286">
+                            <option value="325">
+                            <option value="328">
+                            <option value="351">
+                            <option value="355">
+                            <option value="360">
+                            <option value="372">
+                            <option value="375">
+                            <option value="377">
+                            <option value="383">
+                            <option value="390">
+                            <option value="391">
+                            <option value="393">
+                            <option value="417">
+                            <option value="424">
+                            <option value="439">
+                            <option value="449">
+                            <option value="457">
+                            <option value="458">
+                            <option value="459">
+                            <option value="460">
+                            <option value="462">
+                            <option value="464">
+                            <option value="482">
+                            <option value="485">
+                            <option value="486">
+                            <option value="516">
+                            <option value="600">
+                            <option value="603">
+                            <option value="604">
+                            <option value="605">
+                            <option value="608">
+                            <option value="613">
+                            <option value="614">
+                            <option value="615">
+                            <option value="649">
+                            <option value="650">
+                            <option value="651">
+                            <option value="652">
+                            <option value="653">
+                            <option value="654">
+                            <option value="655">
+                            <option value="656">
+                            <option value="657">
+                            <option value="658">
+                            <option value="659">
+                            <option value="660">
+                            <option value="661">
+                            <option value="662">
+                            <option value="663">
+                            <option value="665">
+                            <option value="667">
+                            <option value="668">
+                            <option value="681">
+                            <option value="682">
+                            <option value="683">
+                            <option value="685">
+                            <option value="688">
+                            <option value="691">
+                            <option value="694">
+                        </datalist>
+                    </div>
+                    <div class="field">
+                        <label>Date:</label>
+                        <input type="date" id="workDate">
+                    </div>
                 </div>
-                <div class="field">
-                    <label>Date:</label>
-                    <input type="date" id="workDate">
+                <button class="btn btn-primary sm-find-btn" id="smFindShiftsBtn" onclick="smFindShifts()">Find Shifts</button>
+            </div>
+
+            <!-- Shift results -->
+            <div id="smShiftResults" style="display:none;">
+                <div class="sm-shift-list" id="smShiftList"></div>
+            </div>
+
+            <!-- Lead Info (auto-populated from shift selection) -->
+            <div id="leadInfoSection" style="display:none;">
+                <div id="leadInfoBar" class="lead-info-bar" style="display:none;">
+                    <span class="lead-label" id="leadInfoDisplay"></span>
                 </div>
-                <div class="field">
-                    <label>Lead Name:</label>
-                    <input type="text" id="leadName" placeholder="Your name">
+                <div id="leadInfoFallback" class="lead-info-fallback" style="display:none;">
+                    <div class="field-group">
+                        <div class="field">
+                            <label>Lead Name:</label>
+                            <input type="text" id="leadName" placeholder="Enter lead name">
+                        </div>
+                        <div class="field">
+                            <label>Lead Email:</label>
+                            <input type="email" id="leadEmail" placeholder="lead@example.com">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- Employee Management Section (shift members + add) -->
+        <div class="section" id="smSection" style="display:none;">
+            <div class="section-title">Employee Management</div>
+
+            <!-- Current Shift Members -->
+            <div id="smMembersSection" style="display:none;">
+                <div class="sm-members-header">
+                    <span class="sm-members-title">Current Members</span>
+                    <button class="sm-refresh-btn" onclick="smRefreshMembers()">Refresh</button>
+                </div>
+                <div id="smMembersList"></div>
+                <div id="smRemoveControls" style="display:none;">
+                    <button class="sm-remove-btn" id="smRemoveBtn" onclick="smRequestRemoval()">Request Removal</button>
+                </div>
+                <div class="sm-status" id="smRemoveStatus"></div>
+            </div>
+
+            <!-- Add Team Members -->
+            <div id="smAddSection" style="display:none;">
+                <div class="sm-add-label">Add Team Members:</div>
+                <select id="smEmployeeSelect" multiple size="5">
+                    <option value="" disabled>Loading employees...</option>
+                </select>
+                <div id="smAddControls" style="display:none;">
+                    <button class="sm-add-btn" id="smAddBtn" onclick="smAddSelected()">Add Selected</button>
+                </div>
+                <div class="sm-status" id="smAddStatus"></div>
+            </div>
+        </div>
+
+        <!-- Hidden field for leadName used by collectData / autoSave -->
+        <input type="hidden" id="leadNameHidden" value="">
 
         <!-- Photos Section -->
         <div class="section">
@@ -1947,55 +2039,6 @@
                 <div id="previewSignoff" class="photo-preview"></div>
             </div>
 
-        </div>
-
-        <!-- Shift Management Section -->
-        <div class="section" id="smSection">
-            <div class="section-title">Shift Management</div>
-
-            <!-- Step 1: Store & Shift Selection -->
-            <div class="sm-controls">
-                <div class="field-group">
-                    <div class="field">
-                        <label>Store #:</label>
-                        <input type="text" id="smStoreNumber" list="storeList" placeholder="Store #">
-                    </div>
-                    <div class="field">
-                        <label>Date:</label>
-                        <input type="date" id="smDate">
-                    </div>
-                </div>
-                <button class="btn btn-primary sm-find-btn" id="smFindShiftsBtn" onclick="smFindShifts()">Find Shifts</button>
-            </div>
-
-            <div id="smShiftResults" style="display:none;">
-                <div class="sm-shift-list" id="smShiftList"></div>
-            </div>
-
-            <!-- Step 2: Current Shift Members -->
-            <div id="smMembersSection" style="display:none;">
-                <div class="sm-members-header">
-                    <span class="sm-members-title">Current Members</span>
-                    <button class="sm-refresh-btn" onclick="smRefreshMembers()">Refresh</button>
-                </div>
-                <div id="smMembersList"></div>
-                <div id="smRemoveControls" style="display:none;">
-                    <button class="sm-remove-btn" id="smRemoveBtn" onclick="smRequestRemoval()">Request Removal</button>
-                </div>
-                <div class="sm-status" id="smRemoveStatus"></div>
-            </div>
-
-            <!-- Step 3: Add Team Members -->
-            <div id="smAddSection" style="display:none;">
-                <div class="sm-add-label">Add Team Members:</div>
-                <select id="smEmployeeSelect" multiple size="5">
-                    <option value="" disabled>Loading employees...</option>
-                </select>
-                <div id="smAddControls" style="display:none;">
-                    <button class="sm-add-btn" id="smAddBtn" onclick="smAddSelected()">Add Selected</button>
-                </div>
-                <div class="sm-status" id="smAddStatus"></div>
-            </div>
         </div>
 
         <!-- EOD Fields -->
@@ -4925,21 +4968,13 @@ ${data.Notes || ''}`;
             document.getElementById('smMembersSection').style.display = 'none';
             document.getElementById('smAddSection').style.display = 'none';
             document.getElementById('smRemoveControls').style.display = 'none';
+            document.getElementById('leadInfoSection').style.display = 'none';
+            document.getElementById('smSection').style.display = 'none';
         }
 
-        // Sync SM inputs from Store Information fields on load
-        document.addEventListener('DOMContentLoaded', () => {
-            const storeEl = document.getElementById('storeNumber');
-            const dateEl = document.getElementById('workDate');
-            const smStoreEl = document.getElementById('smStoreNumber');
-            const smDateEl = document.getElementById('smDate');
-            if (storeEl.value) smStoreEl.value = storeEl.value;
-            if (dateEl.value) smDateEl.value = dateEl.value;
-        });
-
         async function smFindShifts() {
-            const storeNumber = document.getElementById('smStoreNumber').value.trim();
-            const date = document.getElementById('smDate').value;
+            const storeNumber = document.getElementById('storeNumber').value.trim();
+            const date = document.getElementById('workDate').value;
 
             if (!storeNumber || !date) {
                 showAlert('Missing Info', 'Please enter a Store # and Date to find shifts.');
@@ -4981,21 +5016,23 @@ ${data.Notes || ''}`;
 
                 smShifts = shifts;
                 listDiv.innerHTML = shifts.map((shift, i) => {
-                    const isCompleted = shift.status === 'completed';
-                    const statusClass = isCompleted ? 'completed' : (shift.status === 'in-progress' || shift.status === 'in_progress') ? 'in-progress' : 'other';
+                    const isCompleted = shift.status === 'completed' || shift.currentStatus === 'completed';
+                    const displayStatus = shift.currentStatus || shift.status || 'unknown';
+                    const statusClass = isCompleted ? 'completed' : (displayStatus === 'in-progress' || displayStatus === 'in_progress') ? 'in-progress' : 'other';
                     const cardClass = 'sm-shift-card' + (isCompleted ? ' completed' : '');
+                    const kompassType = shift.kompassType || shift.programName || shift.program || shift.shiftType || shift.type || '';
                     return `<div class="${cardClass}" onclick="${isCompleted ? '' : 'smSelectShift(' + i + ')'}" data-index="${i}">
                         <div class="sm-shift-card-info">
-                            <div class="sm-shift-card-project">${escapeHtml(shift.teamName || shift.projectName || 'Unnamed Shift')}</div>
-                            ${shift.programName || shift.program || shift.shiftType || shift.type || shift.description ? '<div class="sm-shift-card-detail" style="color:#8bb8e0;font-size:0.85em;margin-top:2px;">' + escapeHtml(shift.programName || shift.program || shift.shiftType || shift.type || shift.description || '') + '</div>' : ''}
+                            <div class="sm-shift-card-project">${escapeHtml(shift.projectName || shift.teamName || 'Unnamed Shift')}</div>
+                            ${kompassType ? '<div><span class="kompass-type-badge">' + escapeHtml(kompassType) + '</span></div>' : ''}
                             <div class="sm-shift-card-detail">
-                                ${shift.shiftTime || shift.startTime ? escapeHtml(shift.shiftTime || shift.startTime) + ' ' : ''}
-                                <span class="sm-status-badge ${statusClass}">${escapeHtml(shift.status || 'unknown')}</span>
+                                ${shift.totalHours != null ? '<span>' + escapeHtml(String(shift.totalHours)) + ' hrs</span> ' : ''}
+                                ${shift.empCount != null ? '<span>' + shift.empCount + ' people</span> ' : (shift.employeeCount != null ? '<span>' + shift.employeeCount + ' people</span> ' : '')}
+                                <span class="sm-status-badge ${statusClass}">${escapeHtml(displayStatus)}</span>
                             </div>
                             <div class="sm-shift-card-meta">
-                                ${shift.employeeCount != null ? '<span>' + shift.employeeCount + ' people</span>' : ''}
+                                ${shift.shiftTime || shift.startTime ? '<span>' + escapeHtml(shift.shiftTime || shift.startTime) + '</span>' : ''}
                                 ${shift.scheduledDate ? '<span>' + escapeHtml(shift.scheduledDate) + '</span>' : ''}
-                                ${shift.storeNumber || shift.store_number ? '<span>Store ' + escapeHtml(String(shift.storeNumber || shift.store_number)) + '</span>' : ''}
                             </div>
                         </div>
                         <span class="sm-shift-card-check">&#10003;</span>
@@ -5013,7 +5050,7 @@ ${data.Notes || ''}`;
 
         async function smSelectShift(index) {
             const shift = smShifts[index];
-            if (!shift || shift.status === 'completed') return;
+            if (!shift || shift.status === 'completed' || shift.currentStatus === 'completed') return;
 
             smSelectedShift = shift;
             // Also set global selectedShift for photo sync compatibility
@@ -5024,9 +5061,14 @@ ${data.Notes || ''}`;
             const card = document.querySelector(`.sm-shift-card[data-index="${index}"]`);
             if (card) card.classList.add('selected');
 
-            // Show members and add sections
+            // Show lead info section and employee management section
+            document.getElementById('leadInfoSection').style.display = 'block';
+            document.getElementById('smSection').style.display = 'block';
             document.getElementById('smMembersSection').style.display = 'block';
             document.getElementById('smAddSection').style.display = 'block';
+
+            // Auto-populate lead info from shift's visitLead
+            await smPopulateLeadInfo(shift);
 
             // Load members and employees in parallel
             await Promise.all([
@@ -5035,6 +5077,57 @@ ${data.Notes || ''}`;
             ]);
 
             autoSave();
+        }
+
+        // Auto-populate lead info from the shift's visitLead field
+        async function smPopulateLeadInfo(shift) {
+            const leadInfoBar = document.getElementById('leadInfoBar');
+            const leadInfoFallback = document.getElementById('leadInfoFallback');
+            const leadInfoDisplay = document.getElementById('leadInfoDisplay');
+            const leadNameField = document.getElementById('leadName');
+            const leadNameHidden = document.getElementById('leadNameHidden');
+
+            const visitLead = shift.visitLead || '';
+
+            if (!visitLead) {
+                // No visitLead — show fallback editable fields
+                leadInfoBar.style.display = 'none';
+                leadInfoFallback.style.display = 'block';
+                return;
+            }
+
+            // Try to look up lead info
+            try {
+                const resp = await fetch(`${SM_API_BASE}/api/lead-info?name=${encodeURIComponent(visitLead)}`);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    const preferredName = data.preferredName || visitLead;
+                    const email = data.email || '';
+
+                    // Set the hidden leadName field for downstream use
+                    leadNameField.value = preferredName;
+                    leadNameHidden.value = preferredName;
+
+                    // Display read-only info bar
+                    leadInfoDisplay.innerHTML = `Lead: <span style="color:#93c5fd;">${escapeHtml(preferredName)}</span>${email ? ' &mdash; <span class="lead-email">' + escapeHtml(email) + '</span>' : ''}`;
+                    leadInfoBar.style.display = 'flex';
+                    leadInfoFallback.style.display = 'none';
+
+                    // Also add lead email to recipients if not already there
+                    if (email && !emailRecipients.includes(email.toLowerCase())) {
+                        // Store for reference but don't auto-add to recipients
+                    }
+                    return;
+                }
+            } catch (err) {
+                console.warn('Lead info lookup failed:', err);
+            }
+
+            // Fallback: use visitLead as-is, show editable fields
+            leadNameField.value = visitLead;
+            leadNameHidden.value = visitLead;
+            leadInfoBar.style.display = 'none';
+            leadInfoFallback.style.display = 'block';
         }
 
         async function smLoadMembers() {
@@ -5105,8 +5198,8 @@ ${data.Notes || ''}`;
                 smSetStatus('smRemoveStatus', 'Submitting removal request...', '');
 
                 try {
-                    const storeNumber = document.getElementById('smStoreNumber').value.trim();
-                    const date = document.getElementById('smDate').value;
+                    const storeNumber = document.getElementById('storeNumber').value.trim();
+                    const date = document.getElementById('workDate').value;
                     const requestedBy = document.getElementById('leadName').value || document.getElementById('profileName').value || 'Unknown';
 
                     const resp = await fetch(`${SM_API_BASE}/api/shift-request`, {
