@@ -1477,32 +1477,6 @@
             color: #fff;
         }
 
-        /* Sync progress overlay */
-        .sync-progress {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: var(--border-radius);
-            padding: var(--spacing-md);
-            margin-top: var(--spacing-sm);
-            display: none;
-        }
-        .sync-progress.show {
-            display: block;
-        }
-        .sync-progress .sync-phase {
-            font-size: 13px;
-            color: #93c5fd;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-        .sync-progress .sync-detail {
-            font-size: 12px;
-            color: #9ca3af;
-        }
-        .sync-progress .sync-complete {
-            color: #10b981;
-            font-weight: 700;
-        }
 
         /* Lightbox overlay */
         .lightbox-overlay {
@@ -1560,35 +1534,115 @@
             margin-bottom: 4px;
         }
 
-        /* Two-way sync master button */
-        .sync-two-way-btn {
-            padding: 8px 20px;
-            background: linear-gradient(135deg, #065f46 0%, #0d4f8b 100%);
-            color: #a7f3d0;
-            border: 1px solid #10b981;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            min-height: 40px;
-            touch-action: manipulation;
-            transition: all 0.2s;
-            display: inline-flex;
+        /* PROD photo assignment modal */
+        .assign-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
             align-items: center;
+            justify-content: center;
+            z-index: 10005;
+            padding: var(--spacing-md);
+        }
+        .assign-modal {
+            background: #1e293b;
+            border: 2px solid #0d4f8b;
+            border-radius: 12px;
+            padding: var(--spacing-lg);
+            max-width: min(95vw, 500px);
+            max-height: 80vh;
+            overflow-y: auto;
+            color: #f9fafb;
+            -webkit-overflow-scrolling: touch;
+        }
+        .assign-modal h3 {
+            color: #88c4ed;
+            margin-bottom: var(--spacing-md);
+            font-size: var(--font-size-lg);
+        }
+        .assign-modal p {
+            font-size: var(--font-size-sm);
+            color: #d1d5db;
+            margin-bottom: var(--spacing-md);
+        }
+        .assign-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            background: #374151;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-sm);
+            margin-bottom: var(--spacing-sm);
+        }
+        .assign-item img {
+            width: 80px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+        .assign-radios {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: var(--font-size-sm);
+        }
+        .assign-radios label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            color: #d1d5db;
+        }
+        .assign-radios input[type="radio"] {
+            accent-color: #0d4f8b;
+            width: 18px;
+            height: 18px;
+        }
+        .assign-apply-btn {
+            width: 100%;
+            padding: var(--spacing-md);
+            background: #0d4f8b;
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: var(--font-size-base);
+            font-weight: 600;
+            cursor: pointer;
+            min-height: var(--min-touch-target);
+            margin-top: var(--spacing-md);
+            touch-action: manipulation;
+        }
+        .assign-apply-btn:active { background: #0a3d6b; }
+
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 10010;
+            display: flex;
+            flex-direction: column;
             gap: 8px;
-            white-space: nowrap;
-            margin-top: 8px;
+            pointer-events: none;
         }
-        .sync-two-way-btn:hover {
-            background: linear-gradient(135deg, #047857 0%, #1e66ab 100%);
+        .toast {
+            padding: 12px 20px;
+            border-radius: var(--border-radius);
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            color: #fff;
+            pointer-events: auto;
+            animation: toastIn 0.3s ease;
+            max-width: 320px;
         }
-        .sync-two-way-btn:active {
-            transform: scale(0.96);
-        }
-        .sync-two-way-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
+        .toast.success { background: #059669; }
+        .toast.warning { background: #d97706; }
+        .toast.error { background: #dc2626; }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(40px); }
+            to { opacity: 1; transform: translateX(0); }
         }
 
         /* Create Coversheet button */
@@ -1743,13 +1797,6 @@
             gap: var(--spacing-md);
             min-height: var(--min-touch-target);
         }
-        .sm-member-row input[type="checkbox"] {
-            width: 22px;
-            height: 22px;
-            flex-shrink: 0;
-            accent-color: #0d4f8b;
-            cursor: pointer;
-        }
         .sm-member-info {
             flex: 1;
             min-width: 0;
@@ -1792,22 +1839,6 @@
             border-radius: 8px;
             margin-left: 6px;
         }
-        .sm-remove-btn {
-            width: 100%;
-            padding: var(--spacing-md);
-            background: #ef4444;
-            color: white;
-            border: none;
-            border-radius: var(--border-radius);
-            font-size: var(--font-size-base);
-            font-weight: 600;
-            cursor: pointer;
-            min-height: var(--min-touch-target);
-            margin-top: var(--spacing-sm);
-            touch-action: manipulation;
-        }
-        .sm-remove-btn:active { background: #dc2626; transform: scale(0.98); }
-        .sm-remove-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .sm-loading {
             color: #9ca3af;
             font-size: var(--font-size-sm);
@@ -1833,7 +1864,7 @@
             font-size: 0.95em;
             margin-bottom: var(--spacing-sm);
         }
-        #smEmployeeSelect {
+        #smAddSelect, #smRemoveSelect {
             width: 100%;
             padding: var(--spacing-sm);
             border: 1px solid #4b5563;
@@ -1842,36 +1873,16 @@
             color: #f9fafb;
             font-size: var(--font-size-base);
             font-family: inherit;
-            min-height: 120px;
+            min-height: var(--min-touch-target);
         }
-        #smEmployeeSelect:focus {
+        #smAddSelect:focus, #smRemoveSelect:focus {
             outline: none;
             border-color: #0d4f8b;
             box-shadow: 0 0 0 2px rgba(13, 79, 139, 0.3);
         }
-        #smEmployeeSelect option {
-            padding: var(--spacing-sm) var(--spacing-md);
-            min-height: var(--min-touch-target);
-        }
-        #smEmployeeSelect option:disabled {
+        #smAddSelect option:disabled, #smRemoveSelect option:disabled {
             color: #6b7280;
         }
-        .sm-add-btn {
-            width: 100%;
-            padding: var(--spacing-md);
-            background: #0d4f8b;
-            color: white;
-            border: none;
-            border-radius: var(--border-radius);
-            font-size: var(--font-size-base);
-            font-weight: 600;
-            cursor: pointer;
-            min-height: var(--min-touch-target);
-            margin-top: var(--spacing-sm);
-            touch-action: manipulation;
-        }
-        .sm-add-btn:active { background: #0a3d6b; transform: scale(0.98); }
-        .sm-add-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .sm-status {
             font-size: var(--font-size-sm);
             margin-top: var(--spacing-sm);
@@ -2205,7 +2216,7 @@
         <input type="hidden" id="leadName" value="">
         <input type="hidden" id="leadEmail" value="">
 
-        <!-- Employee Management Section (shift members + add) -->
+        <!-- Employee Management Section (shift members + add/remove) -->
         <div class="section" id="smSection" style="display:none;">
             <div class="section-title">Employee Management</div>
 
@@ -2216,20 +2227,27 @@
                     <button class="sm-refresh-btn" onclick="smRefreshMembers()">Refresh</button>
                 </div>
                 <div id="smMembersList"></div>
-                <div id="smRemoveControls" style="display:none;">
-                    <button class="sm-remove-btn" id="smRemoveBtn" onclick="smRequestRemoval()">Request Removal</button>
+
+                <!-- Compact Remove Dropdown -->
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px;">
+                    <select id="smRemoveSelect" style="flex:1; min-width:200px;">
+                        <option value="">-- Remove a member --</option>
+                    </select>
+                    <button class="btn btn-secondary" onclick="smRequestRemovalFromDropdown()"
+                        style="background:#ef4444; color:#fff; white-space:nowrap;">Remove</button>
                 </div>
                 <div class="sm-status" id="smRemoveStatus"></div>
             </div>
 
-            <!-- Add Team Members -->
+            <!-- Compact Add Dropdown -->
             <div id="smAddSection" style="display:none;">
                 <div class="sm-add-label">Add Team Members:</div>
-                <select id="smEmployeeSelect" multiple size="5">
-                    <option value="" disabled>Loading employees...</option>
-                </select>
-                <div id="smAddControls" style="display:none;">
-                    <button class="sm-add-btn" id="smAddBtn" onclick="smAddSelected()">Add Selected</button>
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <select id="smAddSelect" style="flex:1; min-width:200px;">
+                        <option value="">-- Add a member --</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="smAddFromDropdown()"
+                        style="white-space:nowrap;">Add</button>
                 </div>
                 <div class="sm-status" id="smAddStatus"></div>
             </div>
@@ -2239,14 +2257,6 @@
         <div class="section">
             <div class="section-title">Photos</div>
 
-            <!-- Two-Way Sync Button -->
-            <button class="sync-two-way-btn" id="twoWaySyncBtn" onclick="twoWaySync()" title="Pull photos from PROD and push local photos">
-                <span id="twoWaySyncIcon">⇅</span> Sync (Pull &amp; Push)
-            </button>
-            <div id="syncProgress" class="sync-progress">
-                <div class="sync-phase" id="syncPhaseText"></div>
-                <div class="sync-detail" id="syncDetailText"></div>
-            </div>
 
             <!-- No Kompass Cart Present option -->
             <div class="checkbox-group" style="margin-top: 4px; margin-bottom: 8px;">
@@ -2263,7 +2273,7 @@
                         <input type="checkbox" id="beforeComplete">
                         <label for="beforeComplete">Kompass cart before picture taken.</label>
                     </div>
-                    <button class="sync-btn" id="syncBefore" onclick="syncToSAS('before')" title="Upload before photo to SAS KOMPASS MAINTENANCE">
+                    <button class="sync-btn" id="syncBefore" onclick="syncPhotos('before')" title="Sync before photos (pull from PROD + push local)">
                         <span id="syncBeforeIcon">&#8593;</span> Sync
                     </button>
                     <span class="sync-status" id="syncBeforeStatus"></span>
@@ -2288,7 +2298,7 @@
                         <input type="checkbox" id="afterComplete">
                         <label for="afterComplete">Kompass cart after picture taken.</label>
                     </div>
-                    <button class="sync-btn" id="syncAfter" onclick="syncToSAS('after')" title="Upload after photo to SAS KOMPASS MAINTENANCE">
+                    <button class="sync-btn" id="syncAfter" onclick="syncPhotos('after')" title="Sync after photos (pull from PROD + push local)">
                         <span id="syncAfterIcon">&#8593;</span> Sync
                     </button>
                     <span class="sync-status" id="syncAfterStatus"></span>
@@ -2313,7 +2323,7 @@
                         <input type="checkbox" id="signoffComplete">
                         <label for="signoffComplete">All sign-off sheets have been photographed.</label>
                     </div>
-                    <button class="sync-btn" id="syncSignoff" onclick="syncToSAS('signoff')" title="Upload sign-off sheets to SAS KOMPASS MAINTENANCE (after)">
+                    <button class="sync-btn" id="syncSignoff" onclick="syncPhotos('signoff')" title="Sync sign-off photos (pull from PROD + push local)">
                         <span id="syncSignoffIcon">&#8593;</span> Sync
                     </button>
                     <span class="sync-status" id="syncSignoffStatus"></span>
@@ -2613,7 +2623,7 @@
             after: []
         };
 
-        // PROD-sourced photos pulled from server (two-way sync)
+        // PROD-sourced photos pulled per type
         const prodPhotos = {
             before: [],   // Array of { id, url, source: 'prod', selectedForEod: true/false }
             after: [],
@@ -2627,8 +2637,11 @@
             signoff: []
         };
 
-        // Category reset ID from PROD (for reference)
-        let prodCategoryResetId = null;
+        // Track which PROD after-images have been assigned (keyed by image ID)
+        const prodAfterAssignments = {};
+
+        // Pending removal polling state
+        const pendingRemovalPolls = {}; // { requestId: { intervalId, employeeId, startTime } }
 
         // IndexedDB for photo storage (handles large files beyond localStorage 5MB limit)
         const PhotoDB = {
@@ -5466,7 +5479,6 @@ ${data.Notes || ''}`;
             document.getElementById('smShiftList').innerHTML = '';
             document.getElementById('smMembersSection').style.display = 'none';
             document.getElementById('smAddSection').style.display = 'none';
-            document.getElementById('smRemoveControls').style.display = 'none';
             document.getElementById('leadPickerSection').style.display = 'none';
             document.getElementById('smSection').style.display = 'none';
         }
@@ -5718,7 +5730,6 @@ ${data.Notes || ''}`;
             if (!smSelectedShift) return;
             const container = document.getElementById('smMembersList');
             container.innerHTML = '<div class="sm-loading">Loading members...</div>';
-            document.getElementById('smRemoveControls').style.display = 'none';
 
             try {
                 const resp = await fetch(`${SM_API_BASE}/api/shifts/${encodeURIComponent(smSelectedShift.visitId)}/members`);
@@ -5743,85 +5754,21 @@ ${data.Notes || ''}`;
 
         function smRenderMembers() {
             const container = document.getElementById('smMembersList');
-            container.innerHTML = smMembers.map((emp, i) => {
+            container.innerHTML = smMembers.map((emp) => {
                 const isPending = smPendingRemovals.has(emp.employeeId);
                 const isLead = emp.isLead;
                 return `<div class="sm-member-row">
-                    ${!isLead ? `<input type="checkbox" data-index="${i}" onchange="smOnCheckboxChange()" ${isPending ? 'disabled' : ''}>` : ''}
                     <div class="sm-member-info">
                         <div class="sm-member-name">
                             ${isLead ? '<span class="sm-lead-star">&#9733;</span>' : ''}${escapeHtml(emp.name || 'Unknown')}${isLead ? ' (Lead)' : ''}${emp.noShow ? '<span class="sm-noshow-badge">NO SHOW</span>' : ''}${isPending ? '<span class="sm-pending-badge">pending removal</span>' : ''}
                         </div>
-                        <div class="sm-member-title">${escapeHtml(emp.title || '')}</div>
                     </div>
                     <div class="sm-member-time">${escapeHtml(emp.shiftTime || '')}</div>
                 </div>`;
             }).join('');
-        }
 
-        function smOnCheckboxChange() {
-            const checked = document.querySelectorAll('#smMembersList input[type="checkbox"]:checked');
-            document.getElementById('smRemoveControls').style.display = checked.length > 0 ? 'block' : 'none';
-        }
-
-        function smRequestRemoval() {
-            const checked = document.querySelectorAll('#smMembersList input[type="checkbox"]:checked');
-            if (checked.length === 0) return;
-
-            const toRemove = [];
-            checked.forEach(cb => {
-                const idx = parseInt(cb.dataset.index, 10);
-                const emp = smMembers[idx];
-                if (emp) toRemove.push(emp);
-            });
-
-            const names = toRemove.map(e => e.name || 'Unknown').join(', ');
-            showConfirm('Request Removal', `Submit removal request for ${names}? This requires supervisor approval.`, async () => {
-                const removeBtn = document.getElementById('smRemoveBtn');
-                removeBtn.disabled = true;
-                smSetStatus('smRemoveStatus', 'Submitting removal request...', '');
-
-                try {
-                    const storeNumber = document.getElementById('storeNumber').value.trim();
-                    const date = document.getElementById('workDate').value;
-                    const requestedBy = document.getElementById('leadName').value || document.getElementById('profileName').value || 'Unknown';
-
-                    const resp = await fetch(`${SM_API_BASE}/api/shift-request`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            visitId: smSelectedShift.visitId,
-                            cycleId: smSelectedShift.cycleId,
-                            storeNumber: parseInt(storeNumber, 10),
-                            teamName: smSelectedShift.teamName || smSelectedShift.projectName || '',
-                            date: date,
-                            remove: toRemove.map(e => ({
-                                shiftId: e.shiftId,
-                                employeeId: e.employeeId,
-                                name: e.name
-                            })),
-                            requestedBy: requestedBy
-                        })
-                    });
-
-                    const data = await resp.json();
-
-                    if (resp.ok && (data.requestId || data.success)) {
-                        // Mark as pending
-                        toRemove.forEach(e => smPendingRemovals.add(e.employeeId));
-                        smSetStatus('smRemoveStatus', 'Removal request submitted \u2014 awaiting supervisor approval', 'pending');
-                        // Uncheck all and re-render
-                        document.getElementById('smRemoveControls').style.display = 'none';
-                        smRenderMembers();
-                    } else {
-                        smSetStatus('smRemoveStatus', data.error || 'Failed to submit removal request', 'error');
-                    }
-                } catch (err) {
-                    smSetStatus('smRemoveStatus', 'Network error: ' + err.message, 'error');
-                } finally {
-                    removeBtn.disabled = false;
-                }
-            });
+            // Also update the remove dropdown
+            smRenderRemoveSelect();
         }
 
         async function smLoadEmployees() {
@@ -5830,8 +5777,8 @@ ${data.Notes || ''}`;
                 return;
             }
 
-            const select = document.getElementById('smEmployeeSelect');
-            select.innerHTML = '<option value="" disabled>Loading employees...</option>';
+            const select = document.getElementById('smAddSelect');
+            select.innerHTML = '<option value="">Loading employees...</option>';
 
             try {
                 const resp = await fetch(`${SM_API_BASE}/api/employees`);
@@ -5848,55 +5795,34 @@ ${data.Notes || ''}`;
         }
 
         function smRenderEmployeeSelect() {
-            const select = document.getElementById('smEmployeeSelect');
-            const addControls = document.getElementById('smAddControls');
+            const select = document.getElementById('smAddSelect');
+            if (!select) return;
 
             if (!smEmployeesCache || smEmployeesCache.length === 0) {
-                select.innerHTML = '<option value="" disabled>No employees available</option>';
-                addControls.style.display = 'none';
+                select.innerHTML = '<option value="">No employees available</option>';
                 return;
             }
 
             const memberIds = new Set(smMembers.map(e => e.employeeId));
 
-            select.innerHTML = smEmployeesCache.map(emp => {
-                const onShift = memberIds.has(emp.employeeId || emp.id);
-                const empId = emp.employeeId || emp.id;
-                const label = escapeHtml(emp.name || 'Unknown') + (emp.title ? ' \u2014 ' + escapeHtml(emp.title) : '') + (onShift ? ' (already assigned)' : '');
-                return `<option value="${empId}" ${onShift ? 'disabled' : ''}>${label}</option>`;
-            }).join('');
-
-            // Reset add controls visibility
-            addControls.style.display = 'none';
+            select.innerHTML = '<option value="">-- Add a member --</option>' +
+                smEmployeesCache.filter(emp => !memberIds.has(emp.employeeId || emp.id)).map(emp => {
+                    const empId = emp.employeeId || emp.id;
+                    const label = escapeHtml(emp.name || 'Unknown') + (emp.title ? ' — ' + escapeHtml(emp.title) : '');
+                    return `<option value="${empId}">${label}</option>`;
+                }).join('');
         }
 
-        // Show/hide Add button based on multi-select
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('smEmployeeSelect').addEventListener('change', () => {
-                const select = document.getElementById('smEmployeeSelect');
-                const selected = Array.from(select.selectedOptions).filter(o => !o.disabled && o.value);
-                document.getElementById('smAddControls').style.display = selected.length > 0 ? 'block' : 'none';
-            });
-        });
+        function smAddFromDropdown() {
+            const select = document.getElementById('smAddSelect');
+            const empId = select.value;
+            if (!empId || !smSelectedShift) return;
 
-        function smAddSelected() {
-            const select = document.getElementById('smEmployeeSelect');
-            const selected = Array.from(select.selectedOptions).filter(o => !o.disabled && o.value);
-            if (selected.length === 0 || !smSelectedShift) return;
+            const emp = smEmployeesCache.find(e => String(e.employeeId || e.id) === empId);
+            if (!emp) return;
 
-            const employees = selected.map(opt => {
-                const emp = smEmployeesCache.find(e => String(e.employeeId || e.id) === opt.value);
-                return emp ? {
-                    employeeId: emp.employeeId || emp.id,
-                    name: emp.name,
-                    isLead: false
-                } : null;
-            }).filter(Boolean);
-
-            const names = employees.map(e => e.name).join(', ');
-            showConfirm('Add to Shift', `Add ${names} to this shift?`, async () => {
-                const addBtn = document.getElementById('smAddBtn');
-                addBtn.disabled = true;
+            const employee = { employeeId: emp.employeeId || emp.id, name: emp.name, isLead: false };
+            showConfirm('Add to Shift', `Add ${emp.name} to this shift?`, async () => {
                 select.disabled = true;
                 smSetStatus('smAddStatus', 'Adding...', '');
 
@@ -5910,7 +5836,7 @@ ${data.Notes || ''}`;
                             cycleId: smSelectedShift.cycleId,
                             shiftStartTime: smSelectedShift.shiftStartTime || smSelectedShift.startTime || '',
                             shiftEndTime: smSelectedShift.shiftEndTime || smSelectedShift.endTime || '',
-                            employees: employees,
+                            employees: [employee],
                             requestedBy: requestedBy
                         })
                     });
@@ -5918,20 +5844,142 @@ ${data.Notes || ''}`;
                     const data = await resp.json();
 
                     if (resp.ok && (data.success || data.added)) {
-                        const addedNames = (data.added || employees).map(e => e.name).join(', ');
-                        smSetStatus('smAddStatus', `Added ${addedNames} to shift`, 'success');
-                        // Refresh members list and dropdown
+                        smSetStatus('smAddStatus', `Added ${emp.name} to shift`, 'success');
                         await smLoadMembers();
                     } else {
-                        smSetStatus('smAddStatus', data.error || 'Failed to add employees', 'error');
+                        smSetStatus('smAddStatus', data.error || 'Failed to add employee', 'error');
                     }
                 } catch (err) {
                     smSetStatus('smAddStatus', 'Network error: ' + err.message, 'error');
                 } finally {
-                    addBtn.disabled = false;
                     select.disabled = false;
+                    select.value = '';
                 }
             });
+        }
+
+        function smRequestRemovalFromDropdown() {
+            const select = document.getElementById('smRemoveSelect');
+            const empId = select.value;
+            if (!empId || !smSelectedShift) return;
+
+            const emp = smMembers.find(e => String(e.employeeId) === empId);
+            if (!emp) return;
+
+            showConfirm('Request Removal', `Request removal of ${emp.name}? This requires supervisor approval.`, async () => {
+                smSetStatus('smRemoveStatus', 'Submitting removal request...', '');
+
+                try {
+                    const storeNumber = document.getElementById('storeNumber').value.trim();
+                    const date = document.getElementById('workDate').value;
+                    const requestedBy = document.getElementById('leadName').value || document.getElementById('profileName').value || 'Unknown';
+
+                    const resp = await fetch(`${SM_API_BASE}/api/shift-request`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            visitId: smSelectedShift.visitId,
+                            cycleId: smSelectedShift.cycleId,
+                            storeNumber: parseInt(storeNumber, 10),
+                            teamName: smSelectedShift.teamName || smSelectedShift.projectName || '',
+                            date: date,
+                            remove: [{
+                                shiftId: emp.shiftId,
+                                employeeId: emp.employeeId,
+                                name: emp.name
+                            }],
+                            requestedBy: requestedBy
+                        })
+                    });
+
+                    const data = await resp.json();
+
+                    if (resp.ok && (data.requestId || data.success)) {
+                        smPendingRemovals.add(emp.employeeId);
+                        smSetStatus('smRemoveStatus', 'Removal request submitted — awaiting supervisor approval', 'pending');
+                        smRenderMembers();
+                        select.value = '';
+                        smRenderRemoveSelect();
+
+                        // Start polling for approval status
+                        if (data.requestId) {
+                            startRemovalPolling(data.requestId, emp.employeeId, emp.name);
+                        }
+                    } else {
+                        smSetStatus('smRemoveStatus', data.error || 'Failed to submit removal request', 'error');
+                    }
+                } catch (err) {
+                    smSetStatus('smRemoveStatus', 'Network error: ' + err.message, 'error');
+                }
+            });
+        }
+
+        function smRenderRemoveSelect() {
+            const select = document.getElementById('smRemoveSelect');
+            if (!select) return;
+            const nonLeadMembers = smMembers.filter(e => !e.isLead);
+            select.innerHTML = '<option value="">-- Remove a member --</option>' +
+                nonLeadMembers.map(emp => {
+                    const isPending = smPendingRemovals.has(emp.employeeId);
+                    return `<option value="${emp.employeeId}" ${isPending ? 'disabled' : ''}>${escapeHtml(emp.name || 'Unknown')}${isPending ? ' (pending)' : ''}</option>`;
+                }).join('');
+        }
+
+        // Toast notification helper
+        function showToast(message, type) {
+            let container = document.getElementById('toastContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toastContainer';
+                container.className = 'toast-container';
+                document.body.appendChild(container);
+            }
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + (type || 'success');
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 4000);
+        }
+
+        // Poll for shift-request status
+        function startRemovalPolling(requestId, employeeId, empName) {
+            const MAX_POLL_MS = 24 * 60 * 60 * 1000; // 24 hours
+            const startTime = Date.now();
+
+            const intervalId = setInterval(async () => {
+                if (Date.now() - startTime > MAX_POLL_MS) {
+                    clearInterval(intervalId);
+                    delete pendingRemovalPolls[requestId];
+                    return;
+                }
+                try {
+                    const resp = await fetch(`${SM_API_BASE}/api/shift-request/${encodeURIComponent(requestId)}/status`);
+                    if (!resp.ok) return;
+                    const data = await resp.json();
+
+                    if (data.status === 'approved') {
+                        clearInterval(intervalId);
+                        delete pendingRemovalPolls[requestId];
+                        smPendingRemovals.delete(employeeId);
+                        smMembers = smMembers.filter(e => e.employeeId !== employeeId);
+                        smRenderMembers();
+                        smRenderRemoveSelect();
+                        smRenderEmployeeSelect();
+                        showToast(`Removal approved for ${empName}`, 'success');
+                    } else if (data.status === 'denied') {
+                        clearInterval(intervalId);
+                        delete pendingRemovalPolls[requestId];
+                        smPendingRemovals.delete(employeeId);
+                        smRenderMembers();
+                        smRenderRemoveSelect();
+                        showToast(`Removal denied for ${empName}`, 'warning');
+                    }
+                } catch (e) {
+                    console.warn('[poll] Error checking removal status:', e);
+                }
+            }, 30000);
+
+            pendingRemovalPolls[requestId] = { intervalId, employeeId, startTime };
         }
 
         function smRefreshMembers() {
@@ -5939,7 +5987,7 @@ ${data.Notes || ''}`;
             smLoadMembers();
         }
 
-        // ─── TWO-WAY SYNC FUNCTIONS ────────────────────────────────────────────────
+        // ─── SYNC & LIGHTBOX FUNCTIONS ──────────────────────────────────────────────
 
         // Lightbox functions
         function openLightbox(src, info) {
@@ -5954,29 +6002,6 @@ ${data.Notes || ''}`;
             document.getElementById('lightboxOverlay').classList.remove('show');
         }
 
-        // Sync progress UI helpers
-        function showSyncProgress(phase, detail) {
-            const el = document.getElementById('syncProgress');
-            el.classList.add('show');
-            document.getElementById('syncPhaseText').textContent = phase;
-            document.getElementById('syncDetailText').textContent = detail || '';
-            document.getElementById('syncDetailText').className = 'sync-detail';
-        }
-
-        function updateSyncDetail(detail, isComplete) {
-            const detailEl = document.getElementById('syncDetailText');
-            detailEl.textContent = detail;
-            if (isComplete) {
-                detailEl.className = 'sync-detail sync-complete';
-            }
-        }
-
-        function hideSyncProgress() {
-            setTimeout(() => {
-                document.getElementById('syncProgress').classList.remove('show');
-            }, 3000);
-        }
-
         // Render PROD photos for a given type (before/after/signoff)
         function renderProdPhotos(type) {
             const containerId = `prodPreview${type.charAt(0).toUpperCase() + type.slice(1)}`;
@@ -5987,13 +6012,11 @@ ${data.Notes || ''}`;
             const prodArr = prodPhotos[type];
             if (!prodArr || prodArr.length === 0) return;
 
-            // Add section label
             const label = document.createElement('div');
             label.className = 'prod-photos-label';
             label.textContent = type === 'signoff' ? '↓ Synced from server:' : '↓ Pulled from PROD:';
             container.appendChild(label);
 
-            // Create photo grid wrapper
             const grid = document.createElement('div');
             grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;';
             container.appendChild(grid);
@@ -6005,7 +6028,6 @@ ${data.Notes || ''}`;
 
                 const badge = type === 'signoff' ? 'SYNC' : 'PROD';
                 const badgeClass = type === 'signoff' ? 'sync-badge' : 'prod-badge';
-
                 const isSelected = photo.selectedForEod;
                 item.innerHTML = `
                     <img src="${photo.url}" alt="${type} PROD photo" onclick="openLightbox('${photo.url}', 'PROD ${type} photo #${index + 1}')" style="cursor:pointer;">
@@ -6019,7 +6041,6 @@ ${data.Notes || ''}`;
             });
         }
 
-        // Toggle a PROD photo's selection for EOD
         function toggleProdPhotoEod(type, index, useForEod) {
             if (prodPhotos[type][index]) {
                 prodPhotos[type][index].selectedForEod = useForEod;
@@ -6028,11 +6049,9 @@ ${data.Notes || ''}`;
             }
         }
 
-        // Rebuild eodSelections for a type by combining selected PROD photos and local photos
         function rebuildEodSelections(type) {
             eodSelections[type] = [];
 
-            // Add selected PROD photos
             prodPhotos[type].forEach(p => {
                 if (p.selectedForEod) {
                     eodSelections[type].push({
@@ -6044,7 +6063,6 @@ ${data.Notes || ''}`;
                 }
             });
 
-            // Add local photos (always included)
             photos[type].forEach((dataUrl, i) => {
                 eodSelections[type].push({
                     dataUrl: dataUrl,
@@ -6054,93 +6072,10 @@ ${data.Notes || ''}`;
                 });
             });
 
-            // Sort by timestamp
             eodSelections[type].sort((a, b) => a.timestamp - b.timestamp);
         }
 
-        // Pull photos from PROD (Phase 1 of two-way sync)
-        async function pullFromProd() {
-            if (!selectedShift || !selectedShift.visitId) {
-                throw new Error('No shift selected. Please select a shift first.');
-            }
-
-            const visitId = selectedShift.visitId;
-
-            showSyncProgress('Pulling photos from PROD...', 'Fetching maintenance photos...');
-
-            // Fetch maintenance photos (before/after)
-            const maintenanceResp = await fetch(`${SM_API_BASE}/api/visit-photos?visitId=${encodeURIComponent(visitId)}`);
-            if (!maintenanceResp.ok) {
-                const errData = await maintenanceResp.json().catch(() => ({}));
-                throw new Error(errData.error || `Failed to pull photos (${maintenanceResp.status})`);
-            }
-            const maintenanceData = await maintenanceResp.json();
-
-            // Process maintenance before photos
-            const newBefore = [];
-            if (maintenanceData.maintenance && maintenanceData.maintenance.before) {
-                maintenanceData.maintenance.before.forEach(img => {
-                    newBefore.push({
-                        id: img.id,
-                        url: img.url,
-                        source: 'prod',
-                        selectedForEod: true,
-                        timestamp: Date.now()
-                    });
-                });
-            }
-
-            // Process maintenance after photos
-            const newAfter = [];
-            if (maintenanceData.maintenance && maintenanceData.maintenance.after) {
-                maintenanceData.maintenance.after.forEach(img => {
-                    newAfter.push({
-                        id: img.id,
-                        url: img.url,
-                        source: 'prod',
-                        selectedForEod: true,
-                        timestamp: Date.now()
-                    });
-                });
-            }
-
-            // Save category reset ID
-            if (maintenanceData.maintenance && maintenanceData.maintenance.categoryResetId) {
-                prodCategoryResetId = maintenanceData.maintenance.categoryResetId;
-            }
-
-            // Fetch signoff photos
-            showSyncProgress('Pulling photos from PROD...', 'Fetching signoff photos...');
-            let newSignoff = [];
-            try {
-                const signoffResp = await fetch(`${SM_API_BASE}/api/signoff-photos?visitId=${encodeURIComponent(visitId)}`);
-                if (signoffResp.ok) {
-                    const signoffData = await signoffResp.json();
-                    if (signoffData.photos && signoffData.photos.length > 0) {
-                        signoffData.photos.forEach(p => {
-                            newSignoff.push({
-                                id: p.id,
-                                url: p.url,
-                                source: 'prod',
-                                selectedForEod: true,
-                                uploadedBy: p.uploadedBy,
-                                uploadedAt: p.uploadedAt,
-                                timestamp: new Date(p.uploadedAt || Date.now()).getTime()
-                            });
-                        });
-                    }
-                }
-            } catch (e) {
-                console.warn('[sync] Could not fetch signoff photos:', e);
-            }
-
-            const summary = `Found ${newBefore.length} before photo(s), ${newAfter.length} after photo(s), ${newSignoff.length} signoff photo(s)`;
-            updateSyncDetail(summary, false);
-
-            return { before: newBefore, after: newAfter, signoff: newSignoff };
-        }
-
-        // Handle conflict resolution between PROD and local photos
+        // ── Photo conflict resolution ──
         function resolveConflict(type, prodArr) {
             return new Promise((resolve) => {
                 const localCount = photos[type].length;
@@ -6148,45 +6083,73 @@ ${data.Notes || ''}`;
                 const typeName = type === 'signoff' ? 'sign-off' : type;
 
                 if (localCount === 0 || prodCount === 0) {
-                    // No conflict — just merge
                     resolve('keep_both');
                     return;
                 }
 
                 showConfirm(
                     'Photo Conflict',
-                    `PROD already has <strong>${prodCount}</strong> ${typeName} photo(s), and you have <strong>${localCount}</strong> local photo(s).<br><br>` +
+                    `PROD has <strong>${prodCount}</strong> ${typeName} photo(s), you have <strong>${localCount}</strong> local.<br><br>` +
                     `<div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">` +
-                    `<button class="btn btn-primary" id="conflictUseProd" style="width:100%">Use PROD photos only</button>` +
-                    `<button class="btn btn-primary" id="conflictKeepLocal" style="background:#065f46; width:100%">Keep local photos only</button>` +
+                    `<button class="btn btn-primary" id="conflictUseProd" style="width:100%">Use PROD</button>` +
+                    `<button class="btn btn-primary" id="conflictKeepLocal" style="background:#065f46; width:100%">Keep local</button>` +
                     `<button class="btn btn-primary" id="conflictKeepBoth" style="background:#7c3aed; width:100%">Keep both</button>` +
                     `</div>`,
-                    () => resolve('keep_both') // Default on OK
+                    () => resolve('keep_both')
                 );
 
-                // Attach handlers after modal renders
                 setTimeout(() => {
                     const useProd = document.getElementById('conflictUseProd');
                     const keepLocal = document.getElementById('conflictKeepLocal');
                     const keepBoth = document.getElementById('conflictKeepBoth');
 
-                    if (useProd) useProd.onclick = () => {
-                        document.getElementById('modal').classList.remove('show');
-                        resolve('use_prod');
-                    };
-                    if (keepLocal) keepLocal.onclick = () => {
-                        document.getElementById('modal').classList.remove('show');
-                        resolve('keep_local');
-                    };
-                    if (keepBoth) keepBoth.onclick = () => {
-                        document.getElementById('modal').classList.remove('show');
-                        resolve('keep_both');
-                    };
+                    if (useProd) useProd.onclick = () => { document.getElementById('modal').classList.remove('show'); resolve('use_prod'); };
+                    if (keepLocal) keepLocal.onclick = () => { document.getElementById('modal').classList.remove('show'); resolve('keep_local'); };
+                    if (keepBoth) keepBoth.onclick = () => { document.getElementById('modal').classList.remove('show'); resolve('keep_both'); };
                 }, 100);
             });
         }
 
-        // Push signoff photos to backend
+        // ── PROD after-image assignment modal ──
+        function showAssignmentModal(images) {
+            return new Promise((resolve) => {
+                const overlay = document.createElement('div');
+                overlay.className = 'assign-modal-overlay';
+
+                let itemsHtml = images.map((img, i) => {
+                    const existing = prodAfterAssignments[img.id];
+                    return `<div class="assign-item">
+                        <img src="${img.url}" alt="PROD image ${i + 1}">
+                        <div class="assign-radios">
+                            <label><input type="radio" name="assign_${i}" value="after" ${existing === 'after' ? 'checked' : (!existing ? 'checked' : '')}> Cart After</label>
+                            <label><input type="radio" name="assign_${i}" value="signoff" ${existing === 'signoff' ? 'checked' : ''}> Sign-off</label>
+                            <label><input type="radio" name="assign_${i}" value="skip" ${existing === 'skip' ? 'checked' : ''}> Skip</label>
+                        </div>
+                    </div>`;
+                }).join('');
+
+                overlay.innerHTML = `<div class="assign-modal">
+                    <h3>Assign PROD Images</h3>
+                    <p>PROD has ${images.length} image(s) in the after slot. Assign each to the correct section:</p>
+                    ${itemsHtml}
+                    <button class="assign-apply-btn" id="assignApplyBtn">Apply</button>
+                </div>`;
+
+                document.body.appendChild(overlay);
+
+                document.getElementById('assignApplyBtn').onclick = () => {
+                    const assignments = {};
+                    images.forEach((img, i) => {
+                        const selected = overlay.querySelector(`input[name="assign_${i}"]:checked`);
+                        assignments[img.id] = selected ? selected.value : 'skip';
+                    });
+                    overlay.remove();
+                    resolve(assignments);
+                };
+            });
+        }
+
+        // ── Push signoff photos to backend ──
         async function pushSignoffPhotos() {
             if (!selectedShift || !selectedShift.visitId) return;
             if (photos.signoff.length === 0) return;
@@ -6217,8 +6180,8 @@ ${data.Notes || ''}`;
             }
         }
 
-        // Master two-way sync function
-        async function twoWaySync() {
+        // ─── UNIFIED SYNC FUNCTION (per-button push+pull) ──────────────────────────
+        async function syncPhotos(type) {
             const storeNumber = document.getElementById('storeNumber').value;
             const date = document.getElementById('workDate').value;
             const hasVisitId = selectedShift && selectedShift.visitId;
@@ -6227,97 +6190,215 @@ ${data.Notes || ''}`;
                 showAlert('Missing Info', 'Please fill in Store # and Date before syncing.');
                 return;
             }
-
             if (!hasVisitId) {
-                showAlert('No Shift Selected', 'Please select a shift first so we can pull photos from PROD.');
+                showAlert('No Shift Selected', 'Please select a shift first.');
                 return;
             }
 
-            const btn = document.getElementById('twoWaySyncBtn');
-            btn.disabled = true;
-            document.getElementById('twoWaySyncIcon').textContent = '⟳';
+            const visitId = selectedShift.visitId;
+            setSyncState(type, 'syncing', 'Pulling from PROD...');
 
             try {
                 // ── PHASE 1: PULL ──
-                const pulled = await pullFromProd();
+                if (type === 'before') {
+                    // Pull before images
+                    const resp = await fetch(`${SM_API_BASE}/api/visit-photos/${encodeURIComponent(visitId)}/before-images`);
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        const prodImages = (data.images || data.photos || []).map(img => ({
+                            id: img.id || img.url,
+                            url: img.url,
+                            source: 'prod',
+                            selectedForEod: true,
+                            timestamp: img.timestamp ? new Date(img.timestamp).getTime() : Date.now()
+                        }));
 
-                // Handle conflicts for each type
-                for (const type of ['before', 'after', 'signoff']) {
-                    const pulledArr = pulled[type];
-                    if (pulledArr.length === 0) continue;
-
-                    if (photos[type].length > 0) {
-                        // Conflict: both PROD and local have photos
-                        const resolution = await resolveConflict(type, pulledArr);
-
-                        if (resolution === 'use_prod') {
-                            // Clear local, use PROD only
-                            photos[type] = [];
-                            renderPhotos(type);
-                            prodPhotos[type] = pulledArr;
-                        } else if (resolution === 'keep_local') {
-                            // Keep local, mark PROD as skipped
-                            pulledArr.forEach(p => p.selectedForEod = false);
-                            prodPhotos[type] = pulledArr;
-                        } else {
-                            // Keep both — all selected
-                            prodPhotos[type] = pulledArr;
+                        if (prodImages.length > 0) {
+                            // Auto-select if 1 PROD and 0 local
+                            if (prodImages.length === 1 && photos.before.length === 0) {
+                                prodPhotos.before = prodImages;
+                            } else if (prodImages.length > 0 && photos.before.length > 0) {
+                                const resolution = await resolveConflict('before', prodImages);
+                                if (resolution === 'use_prod') {
+                                    photos.before = [];
+                                    renderPhotos('before');
+                                    prodPhotos.before = prodImages;
+                                } else if (resolution === 'keep_local') {
+                                    prodImages.forEach(p => p.selectedForEod = false);
+                                    prodPhotos.before = prodImages;
+                                } else {
+                                    prodPhotos.before = prodImages;
+                                }
+                            } else {
+                                prodPhotos.before = prodImages;
+                            }
+                            renderProdPhotos('before');
+                            rebuildEodSelections('before');
                         }
-                    } else {
-                        // No local photos — auto-select PROD if exactly 1 before and 1 after
-                        prodPhotos[type] = pulledArr;
                     }
 
-                    renderProdPhotos(type);
-                    rebuildEodSelections(type);
-                }
+                } else if (type === 'after') {
+                    // Pull ALL after-slot images (may contain cart-after AND signoff mixed)
+                    const resp = await fetch(`${SM_API_BASE}/api/visit-photos/${encodeURIComponent(visitId)}/after-images`);
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        const allAfterImages = (data.images || data.photos || []).map(img => ({
+                            id: img.id || img.url,
+                            url: img.url,
+                            source: 'prod',
+                            selectedForEod: true,
+                            timestamp: img.timestamp ? new Date(img.timestamp).getTime() : Date.now()
+                        }));
 
-                // Auto-select single before/after without user action
-                if (prodPhotos.before.length === 1 && photos.before.length === 0) {
-                    prodPhotos.before[0].selectedForEod = true;
-                    renderProdPhotos('before');
-                }
-                if (prodPhotos.after.length === 1 && photos.after.length === 0) {
-                    prodPhotos.after[0].selectedForEod = true;
-                    renderProdPhotos('after');
-                }
+                        // Filter out already-assigned images
+                        const unassigned = allAfterImages.filter(img => !prodAfterAssignments[img.id]);
 
-                showSyncProgress('Pulling photos from PROD...', '');
-                const totalPulled = pulled.before.length + pulled.after.length + pulled.signoff.length;
-                updateSyncDetail(`Found ${pulled.before.length} before, ${pulled.after.length} after, ${pulled.signoff.length} signoff photo(s)`, false);
+                        if (unassigned.length > 0) {
+                            setSyncState(type, 'syncing', 'Assign PROD images...');
+                            const assignments = await showAssignmentModal(unassigned);
+
+                            // Store assignments
+                            Object.assign(prodAfterAssignments, assignments);
+
+                            // Distribute images to correct sections
+                            const afterImages = [];
+                            const signoffImages = [];
+
+                            allAfterImages.forEach(img => {
+                                const assignment = prodAfterAssignments[img.id];
+                                if (assignment === 'after') afterImages.push(img);
+                                else if (assignment === 'signoff') signoffImages.push(img);
+                                // 'skip' images are ignored
+                            });
+
+                            // Handle after photos with conflict resolution
+                            if (afterImages.length > 0) {
+                                if (photos.after.length > 0) {
+                                    const resolution = await resolveConflict('after', afterImages);
+                                    if (resolution === 'use_prod') { photos.after = []; renderPhotos('after'); prodPhotos.after = afterImages; }
+                                    else if (resolution === 'keep_local') { afterImages.forEach(p => p.selectedForEod = false); prodPhotos.after = afterImages; }
+                                    else { prodPhotos.after = afterImages; }
+                                } else {
+                                    prodPhotos.after = afterImages;
+                                }
+                                renderProdPhotos('after');
+                                rebuildEodSelections('after');
+                            }
+
+                            // Handle signoff photos assigned from after-slot
+                            if (signoffImages.length > 0) {
+                                if (photos.signoff.length > 0) {
+                                    const resolution = await resolveConflict('signoff', signoffImages);
+                                    if (resolution === 'use_prod') { photos.signoff = []; renderPhotos('signoff'); prodPhotos.signoff = signoffImages; }
+                                    else if (resolution === 'keep_local') { signoffImages.forEach(p => p.selectedForEod = false); prodPhotos.signoff = signoffImages; }
+                                    else { prodPhotos.signoff = [...prodPhotos.signoff, ...signoffImages]; }
+                                } else {
+                                    prodPhotos.signoff = [...prodPhotos.signoff, ...signoffImages];
+                                }
+                                renderProdPhotos('signoff');
+                                rebuildEodSelections('signoff');
+                            }
+                        } else if (allAfterImages.length > 0) {
+                            // All already assigned — just redistribute from assignments
+                            const afterImages = allAfterImages.filter(img => prodAfterAssignments[img.id] === 'after');
+                            if (afterImages.length > 0) {
+                                prodPhotos.after = afterImages;
+                                renderProdPhotos('after');
+                                rebuildEodSelections('after');
+                            }
+                        }
+                    }
+
+                } else if (type === 'signoff') {
+                    // Pull from after-images endpoint (same as after, for unassigned)
+                    const resp = await fetch(`${SM_API_BASE}/api/visit-photos/${encodeURIComponent(visitId)}/after-images`);
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        const allAfterImages = (data.images || data.photos || []).map(img => ({
+                            id: img.id || img.url,
+                            url: img.url,
+                            source: 'prod',
+                            selectedForEod: true,
+                            timestamp: img.timestamp ? new Date(img.timestamp).getTime() : Date.now()
+                        }));
+
+                        const unassigned = allAfterImages.filter(img => !prodAfterAssignments[img.id]);
+
+                        if (unassigned.length > 0) {
+                            setSyncState(type, 'syncing', 'Assign PROD images...');
+                            const assignments = await showAssignmentModal(unassigned);
+                            Object.assign(prodAfterAssignments, assignments);
+
+                            // Distribute
+                            const afterImages = allAfterImages.filter(img => prodAfterAssignments[img.id] === 'after');
+                            const signoffFromAfter = allAfterImages.filter(img => prodAfterAssignments[img.id] === 'signoff');
+
+                            if (afterImages.length > 0 && prodPhotos.after.length === 0) {
+                                prodPhotos.after = afterImages;
+                                renderProdPhotos('after');
+                                rebuildEodSelections('after');
+                            }
+
+                            if (signoffFromAfter.length > 0) {
+                                const existing = prodPhotos.signoff.filter(p => !signoffFromAfter.find(s => s.id === p.id));
+                                prodPhotos.signoff = [...existing, ...signoffFromAfter];
+                            }
+                        }
+                    }
+
+                    // Also pull from dedicated signoff endpoint
+                    try {
+                        const signoffResp = await fetch(`${SM_API_BASE}/api/signoff-photos?visitId=${encodeURIComponent(visitId)}`);
+                        if (signoffResp.ok) {
+                            const signoffData = await signoffResp.json();
+                            if (signoffData.photos && signoffData.photos.length > 0) {
+                                const serverSignoffs = signoffData.photos.map(p => ({
+                                    id: p.id || p.url,
+                                    url: p.url,
+                                    source: 'prod',
+                                    selectedForEod: true,
+                                    uploadedBy: p.uploadedBy,
+                                    timestamp: new Date(p.uploadedAt || Date.now()).getTime()
+                                }));
+                                // Merge, avoiding duplicates
+                                const existingIds = new Set(prodPhotos.signoff.map(p => p.id));
+                                serverSignoffs.forEach(p => {
+                                    if (!existingIds.has(p.id)) prodPhotos.signoff.push(p);
+                                });
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('[sync] Could not fetch signoff photos:', e);
+                    }
+
+                    // Resolve conflict for signoff
+                    if (prodPhotos.signoff.length > 0 && photos.signoff.length > 0) {
+                        const resolution = await resolveConflict('signoff', prodPhotos.signoff);
+                        if (resolution === 'use_prod') { photos.signoff = []; renderPhotos('signoff'); }
+                        else if (resolution === 'keep_local') { prodPhotos.signoff.forEach(p => p.selectedForEod = false); }
+                    }
+
+                    renderProdPhotos('signoff');
+                    rebuildEodSelections('signoff');
+                }
 
                 // ── PHASE 2: PUSH ──
-                showSyncProgress('Pushing local data to PROD...', 'Uploading local photos...');
+                setSyncState(type, 'syncing', 'Pushing to PROD...');
 
-                // Push before/after via existing syncToSAS (only if not already synced from PROD)
-                let pushCount = 0;
-                for (const type of ['before', 'after']) {
-                    if (photos[type].length > 0) {
-                        await syncToSAS(type);
-                        pushCount += photos[type].length;
-                    }
+                if (photos[type] && photos[type].length > 0) {
+                    await syncToSAS(type);
                 }
 
-                // Push signoff photos to both SAS and the signoff backend
-                if (photos.signoff.length > 0) {
-                    await syncToSAS('signoff');
+                // For signoff, also push to the signoff backend
+                if (type === 'signoff' && photos.signoff.length > 0) {
                     await pushSignoffPhotos();
-                    pushCount += photos.signoff.length;
                 }
 
-                // ── COMPLETE ──
-                showSyncProgress('Sync complete ✓', `Pulled ${totalPulled} photo(s) from PROD, pushed ${pushCount} local photo(s)`);
-                updateSyncDetail(`Pulled ${totalPulled} from PROD, pushed ${pushCount} local`, true);
-                hideSyncProgress();
+                setSyncState(type, 'synced', 'Synced');
 
             } catch (err) {
-                console.error('[two-way-sync] Error:', err);
-                showSyncProgress('Sync Error', err.message);
-                document.getElementById('syncDetailText').style.color = '#ef4444';
-                hideSyncProgress();
-            } finally {
-                btn.disabled = false;
-                document.getElementById('twoWaySyncIcon').textContent = '⇅';
+                console.error(`[sync] ${type} error:`, err);
+                setSyncState(type, 'error', err.message);
             }
         }
 
