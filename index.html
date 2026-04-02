@@ -2054,6 +2054,221 @@
             from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
             to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
+
+        /* ─── SAS Shift Management Section ─── */
+        #sasSMSection {
+            margin-top: var(--spacing-lg);
+        }
+        #sasSMSection .sasm-controls .field-group {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+        #sasSMSection .sasm-controls .field-group .field {
+            flex: 1;
+        }
+        .sasm-find-btn {
+            width: 100%;
+            margin-top: var(--spacing-md);
+        }
+        .sasm-shift-list {
+            max-height: 350px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-top: var(--spacing-md);
+        }
+        .sasm-shift-card {
+            background: #374151;
+            border: 2px solid #0d4f8b;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md) var(--spacing-lg);
+            margin-bottom: var(--spacing-sm);
+            cursor: pointer;
+            min-height: var(--min-touch-target);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--spacing-sm);
+            color: #f9fafb;
+            transition: border-color 0.2s ease, background 0.2s ease;
+            touch-action: manipulation;
+        }
+        .sasm-shift-card:active:not(.completed) {
+            background: #4b5563;
+            transform: scale(0.98);
+        }
+        .sasm-shift-card.selected {
+            border-color: #10b981;
+            background: #1a3a2a;
+        }
+        .sasm-shift-card.completed {
+            opacity: 0.45;
+            pointer-events: none;
+            cursor: default;
+        }
+        .sasm-shift-card-info { flex: 1; min-width: 0; }
+        .sasm-shift-card-project { font-weight: 600; color: #88c4ed; font-size: var(--font-size-base); }
+        .sasm-shift-card-detail { font-size: var(--font-size-sm); color: #d1d5db; margin-top: 2px; }
+        .sasm-shift-card-meta { font-size: 12px; color: #9ca3af; margin-top: 4px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .sasm-shift-card-check { font-size: 20px; color: #10b981; display: none; flex-shrink: 0; }
+        .sasm-shift-card.selected .sasm-shift-card-check { display: block; }
+        .sasm-completed-badge {
+            display: inline-block;
+            background: #6b7280;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .sasm-status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .sasm-status-badge.completed { background: #10b981; color: #fff; }
+        .sasm-status-badge.active { background: #3b82f6; color: #fff; }
+        .sasm-status-badge.in-progress { background: #0d4f8b; color: #fff; }
+        .sasm-message { color: #d1d5db; font-size: var(--font-size-sm); padding: var(--spacing-md); text-align: center; }
+        .sasm-message.error { color: #fca5a5; }
+
+        /* SAS Shift Members */
+        #sasmMembersPanel {
+            margin-top: var(--spacing-lg);
+            padding-top: var(--spacing-lg);
+            border-top: 2px solid #0d4f8b;
+        }
+        .sasm-members-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-md);
+        }
+        .sasm-members-title { color: #88c4ed; font-weight: 600; font-size: 1em; }
+        .sasm-refresh-btn {
+            background: #1e293b;
+            border: 1px solid #4b5563;
+            color: #94a3b8;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .sasm-refresh-btn:hover { background: #374151; color: #f9fafb; }
+        .sasm-member-row {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-bottom: 1px solid #1e293b;
+        }
+        .sasm-member-row:last-child { border-bottom: none; }
+        .sasm-member-cb { width: 20px; height: 20px; accent-color: #ef4444; cursor: pointer; flex-shrink: 0; }
+        .sasm-member-info { flex: 1; min-width: 0; }
+        .sasm-member-name { color: #f9fafb; font-size: var(--font-size-sm); font-weight: 500; }
+        .sasm-member-title { color: #9ca3af; font-size: 12px; }
+        .sasm-member-time { color: #9ca3af; font-size: 12px; white-space: nowrap; }
+        .sasm-lead-star { color: #fbbf24; margin-right: 4px; }
+        .sasm-pending-badge {
+            display: inline-block;
+            background: #78350f;
+            color: #fbbf24;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+        .sasm-noshow-badge {
+            display: inline-block;
+            background: #7f1d1d;
+            color: #fca5a5;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+        .sasm-btn-remove {
+            background: #dc2626;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: var(--border-radius);
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: var(--spacing-sm);
+            min-height: var(--min-touch-target);
+            display: none;
+        }
+        .sasm-btn-remove:hover { background: #b91c1c; }
+        .sasm-btn-remove.visible { display: inline-block; }
+        .sasm-status-msg {
+            font-size: var(--font-size-sm);
+            margin-top: var(--spacing-sm);
+            min-height: 20px;
+        }
+        .sasm-status-msg.success { color: #10b981; }
+        .sasm-status-msg.error { color: #fca5a5; }
+        .sasm-status-msg.pending { color: #fbbf24; }
+
+        /* SAS Add Team Members */
+        #sasmAddPanel {
+            margin-top: var(--spacing-lg);
+            padding-top: var(--spacing-lg);
+            border-top: 2px solid #0d4f8b;
+        }
+        .sasm-add-title { color: #88c4ed; font-weight: 600; font-size: 1em; margin-bottom: var(--spacing-sm); }
+        .sasm-multi-select {
+            width: 100%;
+            min-height: 120px;
+            padding: var(--spacing-sm);
+            border: 1px solid #4b5563;
+            border-radius: var(--border-radius);
+            background: #374151;
+            color: #f9fafb;
+            font-size: var(--font-size-base);
+            font-family: inherit;
+        }
+        .sasm-multi-select:focus {
+            outline: none;
+            border-color: #0d4f8b;
+            box-shadow: 0 0 0 2px rgba(13, 79, 139, 0.3);
+        }
+        .sasm-multi-select option:disabled {
+            color: #6b7280;
+            font-style: italic;
+        }
+        .sasm-btn-add {
+            background: #0d4f8b;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: var(--border-radius);
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: var(--spacing-sm);
+            min-height: var(--min-touch-target);
+            display: none;
+        }
+        .sasm-btn-add:hover { background: #1e66ab; }
+        .sasm-btn-add.visible { display: inline-block; }
+        .sasm-sas-error-banner {
+            background: #7f1d1d;
+            border: 1px solid #ef4444;
+            color: #fca5a5;
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius);
+            margin-top: var(--spacing-md);
+            font-size: var(--font-size-sm);
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -2386,6 +2601,55 @@
                 <div id="previewSignoff" class="photo-preview"></div>
             </div>
 
+        </div>
+
+        <!-- SAS Shift Management Section -->
+        <div class="section" id="sasSMSection">
+            <div class="section-title">Shift Management</div>
+
+            <!-- Step 1: Store & Shift Selection -->
+            <div class="sasm-controls">
+                <div class="field-group">
+                    <div class="field">
+                        <label>Store #:</label>
+                        <input type="text" id="sasmStoreNum" placeholder="Store #">
+                    </div>
+                    <div class="field">
+                        <label>Date:</label>
+                        <input type="date" id="sasmDate">
+                    </div>
+                </div>
+                <button class="btn btn-primary sasm-find-btn" id="sasmFindBtn" onclick="sasmFindShifts()">Find Shifts</button>
+            </div>
+
+            <!-- SAS session error banner -->
+            <div id="sasmSasError" class="sasm-sas-error-banner" style="display:none;">
+                SAS session not active &mdash; run morning auth first
+            </div>
+
+            <!-- Shift results list -->
+            <div id="sasmShiftResults" style="display:none;">
+                <div class="sasm-shift-list" id="sasmShiftList"></div>
+            </div>
+
+            <!-- Step 2: Current Shift Members -->
+            <div id="sasmMembersPanel" style="display:none;">
+                <div class="sasm-members-header">
+                    <span class="sasm-members-title">Current Shift Members</span>
+                    <button class="sasm-refresh-btn" onclick="sasmRefreshMembers()">Refresh</button>
+                </div>
+                <div id="sasmMembersList"></div>
+                <button class="sasm-btn-remove" id="sasmRemoveBtn" onclick="sasmRequestRemoval()">Request Removal</button>
+                <div class="sasm-status-msg" id="sasmRemoveStatus"></div>
+            </div>
+
+            <!-- Step 3: Add Team Members -->
+            <div id="sasmAddPanel" style="display:none;">
+                <div class="sasm-add-title">Add Team Members</div>
+                <select id="sasmAddSelect" class="sasm-multi-select" multiple></select>
+                <button class="sasm-btn-add" id="sasmAddBtn" onclick="sasmAddSelected()">Add Selected</button>
+                <div class="sasm-status-msg" id="sasmAddStatus"></div>
+            </div>
         </div>
 
         <!-- EOD Fields -->
@@ -6707,6 +6971,366 @@ ${data.Notes || ''}`;
             console.log(`[coversheet] PDF rendered to image: ${Math.round(imageDataUrl.length / 1024)}KB`);
 
             return imageDataUrl;
+        }
+
+        // ─── SAS SHIFT MANAGEMENT ──────────────────────────────────────────────────
+        const SASM_API = 'https://eod-api-production.up.railway.app:8080';
+        let sasmShifts = [];
+        let sasmSelectedShift = null;
+        let sasmMembers = [];
+        let sasmEmployeesCache = null;
+        let sasmPendingRemovals = new Set();
+
+        // Initialize date field to today
+        (function initSasmDate() {
+            const dateInput = document.getElementById('sasmDate');
+            if (dateInput) {
+                const today = new Date();
+                dateInput.value = today.getFullYear() + '-' +
+                    String(today.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(today.getDate()).padStart(2, '0');
+            }
+            // Pre-fill store from existing input if available
+            const existingStore = document.getElementById('storeNumber');
+            const sasmStore = document.getElementById('sasmStoreNum');
+            if (existingStore && sasmStore && existingStore.value) {
+                sasmStore.value = existingStore.value;
+            }
+        })();
+
+        function sasmShowSasError() {
+            document.getElementById('sasmSasError').style.display = 'block';
+        }
+
+        function sasmHideSasError() {
+            document.getElementById('sasmSasError').style.display = 'none';
+        }
+
+        function sasmCheckSasError(resp, data) {
+            if (resp.status === 503 || (data && data.error && data.error.toLowerCase().includes('sas session not active'))) {
+                sasmShowSasError();
+                return true;
+            }
+            return false;
+        }
+
+        function sasmSetStatus(elementId, msg, type) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            el.textContent = msg;
+            el.className = 'sasm-status-msg ' + (type || '');
+            if (type === 'success' || type === 'error') {
+                setTimeout(() => {
+                    if (el.textContent === msg) {
+                        el.textContent = '';
+                        el.className = 'sasm-status-msg';
+                    }
+                }, 5000);
+            }
+        }
+
+        async function sasmFindShifts() {
+            const storeNum = document.getElementById('sasmStoreNum').value.trim();
+            const date = document.getElementById('sasmDate').value;
+            if (!storeNum || !date) {
+                showAlert('Missing Info', 'Please enter a Store # and Date.');
+                return;
+            }
+
+            const btn = document.getElementById('sasmFindBtn');
+            btn.disabled = true;
+            btn.textContent = 'Searching...';
+            sasmHideSasError();
+
+            // Reset state
+            sasmShifts = [];
+            sasmSelectedShift = null;
+            sasmMembers = [];
+            document.getElementById('sasmMembersPanel').style.display = 'none';
+            document.getElementById('sasmAddPanel').style.display = 'none';
+
+            try {
+                const resp = await fetch(`${SASM_API}/sas-shifts?store=${encodeURIComponent(storeNum)}&date=${encodeURIComponent(date)}`);
+                const data = await resp.json().catch(() => ({}));
+                if (sasmCheckSasError(resp, data)) return;
+                if (!resp.ok) throw new Error(data.error || `Server error (${resp.status})`);
+
+                const shifts = data.shifts || [];
+                if (shifts.length === 0) {
+                    document.getElementById('sasmShiftList').innerHTML = '<div class="sasm-message">No shifts found for this store/date.</div>';
+                    document.getElementById('sasmShiftResults').style.display = 'block';
+                    return;
+                }
+
+                sasmShifts = shifts;
+                const listDiv = document.getElementById('sasmShiftList');
+                listDiv.innerHTML = shifts.map((s, i) => {
+                    const isCompleted = (s.status === 'completed');
+                    const statusClass = isCompleted ? 'completed' : (s.status === 'in_progress' ? 'in-progress' : 'active');
+                    return `<div class="sasm-shift-card${isCompleted ? ' completed' : ''}" data-idx="${i}" onclick="${isCompleted ? '' : 'sasmSelectShift(' + i + ')'}">
+                        <div class="sasm-shift-card-info">
+                            <div class="sasm-shift-card-project">${escapeHtml(s.projectName || s.leadName || 'Unnamed Shift')}</div>
+                            <div class="sasm-shift-card-detail">
+                                ${s.leadName ? '<span>' + escapeHtml(s.leadName) + '</span> ' : ''}
+                                ${s.employeeCount != null ? '<span>' + s.employeeCount + ' people</span> ' : ''}
+                                ${s.totalHours != null ? '<span>' + s.totalHours + ' hrs</span> ' : ''}
+                                <span class="sasm-status-badge ${statusClass}">${isCompleted ? 'Completed' : escapeHtml(s.status || 'active')}</span>
+                            </div>
+                            <div class="sasm-shift-card-meta">
+                                ${s.scheduledDate ? '<span>' + escapeHtml(s.scheduledDate) + '</span>' : ''}
+                            </div>
+                        </div>
+                        <span class="sasm-shift-card-check">&#10003;</span>
+                    </div>`;
+                }).join('');
+                document.getElementById('sasmShiftResults').style.display = 'block';
+            } catch (err) {
+                document.getElementById('sasmShiftList').innerHTML = `<div class="sasm-message error">${escapeHtml(err.message)}</div>`;
+                document.getElementById('sasmShiftResults').style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Find Shifts';
+            }
+        }
+
+        async function sasmSelectShift(index) {
+            const shift = sasmShifts[index];
+            if (!shift || shift.status === 'completed') return;
+
+            sasmSelectedShift = shift;
+
+            // Visual selection
+            document.querySelectorAll('.sasm-shift-card').forEach(c => c.classList.remove('selected'));
+            const card = document.querySelector(`.sasm-shift-card[data-idx="${index}"]`);
+            if (card) card.classList.add('selected');
+
+            // Show panels
+            document.getElementById('sasmMembersPanel').style.display = 'block';
+            document.getElementById('sasmAddPanel').style.display = 'block';
+
+            // Load members and employees in parallel
+            await Promise.all([sasmLoadMembers(), sasmLoadEmployees()]);
+        }
+
+        async function sasmLoadMembers() {
+            if (!sasmSelectedShift) return;
+            const container = document.getElementById('sasmMembersList');
+            container.innerHTML = '<div class="sasm-message">Loading members...</div>';
+
+            try {
+                const resp = await fetch(`${SASM_API}/sas-shift-employees?visitId=${encodeURIComponent(sasmSelectedShift.visitId)}`);
+                const data = await resp.json().catch(() => ({}));
+                if (sasmCheckSasError(resp, data)) return;
+                if (!resp.ok) throw new Error(data.error || `Server error (${resp.status})`);
+
+                sasmMembers = data.employees || [];
+                if (sasmMembers.length === 0) {
+                    container.innerHTML = '<div class="sasm-message">No members on this shift.</div>';
+                } else {
+                    sasmRenderMembers();
+                }
+                sasmRenderAddSelect();
+            } catch (err) {
+                container.innerHTML = `<div class="sasm-message error">${escapeHtml(err.message)}</div>`;
+            }
+        }
+
+        function sasmRenderMembers() {
+            const container = document.getElementById('sasmMembersList');
+            container.innerHTML = sasmMembers.map(emp => {
+                const isPending = sasmPendingRemovals.has(emp.employeeId);
+                const isLead = emp.isLead;
+                return `<div class="sasm-member-row">
+                    <input type="checkbox" class="sasm-member-cb" value="${emp.employeeId}"
+                        data-shift-id="${emp.shiftId || ''}" data-name="${escapeHtml(emp.name || '')}"
+                        onchange="sasmUpdateRemoveBtn()"
+                        ${isLead || isPending ? 'disabled' : ''}>
+                    <div class="sasm-member-info">
+                        <div class="sasm-member-name">
+                            ${isLead ? '<span class="sasm-lead-star">&#9733;</span>' : ''}${escapeHtml(emp.name || 'Unknown')}${isLead ? ' (Lead)' : ''}${emp.noShow ? '<span class="sasm-noshow-badge">NO SHOW</span>' : ''}${isPending ? '<span class="sasm-pending-badge">pending removal</span>' : ''}
+                        </div>
+                        <div class="sasm-member-title">${escapeHtml(emp.title || '')}</div>
+                    </div>
+                    <div class="sasm-member-time">${escapeHtml(emp.shiftStartTime && emp.shiftEndTime ? emp.shiftStartTime + ' - ' + emp.shiftEndTime : (emp.shiftStartTime || ''))}</div>
+                </div>`;
+            }).join('');
+            sasmUpdateRemoveBtn();
+        }
+
+        function sasmGetCheckedMembers() {
+            const checkboxes = document.querySelectorAll('.sasm-member-cb:checked');
+            return Array.from(checkboxes).map(cb => ({
+                employeeId: parseInt(cb.value, 10),
+                shiftId: parseInt(cb.dataset.shiftId, 10) || 0,
+                name: cb.dataset.name
+            }));
+        }
+
+        function sasmUpdateRemoveBtn() {
+            const checked = sasmGetCheckedMembers();
+            const btn = document.getElementById('sasmRemoveBtn');
+            if (checked.length > 0) {
+                btn.classList.add('visible');
+                btn.textContent = `Request Removal (${checked.length})`;
+            } else {
+                btn.classList.remove('visible');
+            }
+        }
+
+        async function sasmRequestRemoval() {
+            const selected = sasmGetCheckedMembers();
+            if (selected.length === 0) return;
+
+            const names = selected.map(s => s.name).join(', ');
+            showConfirm('Request Removal', `Submit removal request for ${names}? This requires supervisor approval.`, async () => {
+                sasmSetStatus('sasmRemoveStatus', 'Submitting removal request...', '');
+                try {
+                    const storeNum = document.getElementById('sasmStoreNum').value.trim();
+                    const date = document.getElementById('sasmDate').value;
+                    const requestedBy = document.getElementById('leadName').value || document.getElementById('profileName').value || 'Unknown';
+
+                    const resp = await fetch(`${SASM_API}/sas-shift-request`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            visitId: sasmSelectedShift.visitId,
+                            storeNumber: parseInt(storeNum, 10),
+                            teamName: sasmSelectedShift.projectName || sasmSelectedShift.leadName || '',
+                            date: date,
+                            remove: selected.map(s => ({ shiftId: s.shiftId, employeeId: s.employeeId, name: s.name })),
+                            requestedBy: requestedBy
+                        })
+                    });
+                    const data = await resp.json().catch(() => ({}));
+                    if (sasmCheckSasError(resp, data)) return;
+
+                    if (resp.ok && (data.success || data.requestId)) {
+                        selected.forEach(s => sasmPendingRemovals.add(s.employeeId));
+                        sasmSetStatus('sasmRemoveStatus', 'Removal request submitted — awaiting supervisor approval', 'pending');
+                        sasmRenderMembers();
+                    } else {
+                        sasmSetStatus('sasmRemoveStatus', data.error || 'Failed to submit removal request', 'error');
+                    }
+                } catch (err) {
+                    sasmSetStatus('sasmRemoveStatus', 'Network error: ' + err.message, 'error');
+                }
+            });
+        }
+
+        async function sasmLoadEmployees() {
+            if (sasmEmployeesCache) {
+                sasmRenderAddSelect();
+                return;
+            }
+            const select = document.getElementById('sasmAddSelect');
+            select.innerHTML = '<option value="" disabled>Loading employees...</option>';
+
+            try {
+                const resp = await fetch(`${SASM_API}/sas-employees`);
+                const data = await resp.json().catch(() => ({}));
+                if (sasmCheckSasError(resp, data)) return;
+                if (!resp.ok) throw new Error(data.error || `Server error (${resp.status})`);
+
+                sasmEmployeesCache = data.employees || [];
+                sasmRenderAddSelect();
+            } catch (err) {
+                select.innerHTML = `<option value="" disabled>Error: ${escapeHtml(err.message)}</option>`;
+            }
+        }
+
+        function sasmRenderAddSelect() {
+            const select = document.getElementById('sasmAddSelect');
+            if (!select || !sasmEmployeesCache) return;
+
+            const memberIds = new Set(sasmMembers.map(e => e.employeeId));
+
+            select.innerHTML = sasmEmployeesCache.map(emp => {
+                const isAssigned = memberIds.has(emp.employeeId);
+                const label = escapeHtml(emp.name || emp.preferredName || 'Unknown') + (emp.title ? ' — ' + escapeHtml(emp.title) : '');
+                return `<option value="${emp.employeeId}" ${isAssigned ? 'disabled' : ''}>${label}${isAssigned ? ' (already assigned)' : ''}</option>`;
+            }).join('');
+
+            // Listen for selection changes to show/hide Add button
+            select.onchange = sasmUpdateAddBtn;
+            sasmUpdateAddBtn();
+        }
+
+        function sasmUpdateAddBtn() {
+            const select = document.getElementById('sasmAddSelect');
+            const selectedOpts = Array.from(select.selectedOptions).filter(o => !o.disabled);
+            const btn = document.getElementById('sasmAddBtn');
+            if (selectedOpts.length > 0) {
+                btn.classList.add('visible');
+                btn.textContent = `Add Selected (${selectedOpts.length})`;
+            } else {
+                btn.classList.remove('visible');
+            }
+        }
+
+        async function sasmAddSelected() {
+            const select = document.getElementById('sasmAddSelect');
+            const selectedOpts = Array.from(select.selectedOptions).filter(o => !o.disabled);
+            if (selectedOpts.length === 0 || !sasmSelectedShift) return;
+
+            const employees = selectedOpts.map(o => {
+                const emp = sasmEmployeesCache.find(e => String(e.employeeId) === o.value);
+                return { employeeId: parseInt(o.value, 10), name: emp ? (emp.name || emp.preferredName) : o.textContent.split(' — ')[0] };
+            });
+
+            const names = employees.map(e => e.name).join(', ');
+            showConfirm('Add to Shift', `Add ${names} to this shift?`, async () => {
+                select.disabled = true;
+                document.getElementById('sasmAddBtn').classList.remove('visible');
+                sasmSetStatus('sasmAddStatus', 'Adding...', '');
+
+                let successCount = 0;
+                let lastError = '';
+
+                // Add sequentially as specified
+                for (const emp of employees) {
+                    try {
+                        const resp = await fetch(`${SASM_API}/sas-shift-add`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                visitId: sasmSelectedShift.visitId,
+                                employeeId: emp.employeeId
+                            })
+                        });
+                        const data = await resp.json().catch(() => ({}));
+                        if (sasmCheckSasError(resp, data)) { select.disabled = false; return; }
+
+                        if (resp.ok && data.success) {
+                            successCount++;
+                            sasmSetStatus('sasmAddStatus', `Added ${emp.name} to shift`, 'success');
+                        } else {
+                            lastError = data.error || 'Unknown error';
+                            sasmSetStatus('sasmAddStatus', `Failed to add ${emp.name}: ${lastError}`, 'error');
+                        }
+                    } catch (err) {
+                        lastError = err.message;
+                        sasmSetStatus('sasmAddStatus', `Failed to add ${emp.name}: ${err.message}`, 'error');
+                    }
+                }
+
+                select.disabled = false;
+
+                if (successCount > 0) {
+                    if (successCount === employees.length) {
+                        sasmSetStatus('sasmAddStatus', `Added ${successCount} member${successCount > 1 ? 's' : ''} to shift`, 'success');
+                    } else {
+                        sasmSetStatus('sasmAddStatus', `Added ${successCount}/${employees.length} — some failed`, 'pending');
+                    }
+                }
+
+                // Refresh member list and dropdown
+                await sasmLoadMembers();
+            });
+        }
+
+        function sasmRefreshMembers() {
+            if (!sasmSelectedShift) return;
+            sasmLoadMembers();
         }
     </script>
 </body>
