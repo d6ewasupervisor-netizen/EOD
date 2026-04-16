@@ -12,6 +12,11 @@
     <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <style>
+        /* Role-based visibility gating */
+        [data-requires-role]:not(.role-visible) {
+            display: none !important;
+        }
+
         /* CSS Custom Properties for Mobile Optimization */
         :root {
             --min-touch-target: 44px;
@@ -2695,10 +2700,16 @@
                 .split(' ')
                 .filter(c => !c.startsWith('role-'))
                 .join(' ');
-            if (!session) return;
-            const roles = session.user?.user_metadata?.roles || [];
+
+            const roles = session?.user?.user_metadata?.roles || [];
             roles.forEach(role => {
                 document.body.classList.add(`role-${role}`);
+            });
+
+            document.querySelectorAll('[data-requires-role]').forEach(el => {
+                const requiredRoles = (el.dataset.requiresRole || '').split(/\s+/).filter(Boolean);
+                const hasMatchingRole = requiredRoles.some(r => roles.includes(r));
+                el.classList.toggle('role-visible', hasMatchingRole);
             });
         }
 
