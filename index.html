@@ -6032,9 +6032,6 @@ ${data.Notes || ''}`;
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            cycleId: smSelectedShift.cycleId,
-                            shiftStartTime: smSelectedShift.shiftStartTime || smSelectedShift.startTime || '',
-                            shiftEndTime: smSelectedShift.shiftEndTime || smSelectedShift.endTime || '',
                             employees: [employee],
                             requestedBy: requestedBy
                         })
