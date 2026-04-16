@@ -2113,13 +2113,41 @@
             text-decoration: underline;
         }
 
+        .login-logo-wrap {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .login-logo {
+            max-width: 200px;
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .login-logo-fallback {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #f9fafb;
+            text-align: center;
+            letter-spacing: 0.05em;
+        }
+        @media screen and (max-width: 480px) {
+            .login-logo { max-width: 160px; }
+        }
+
     </style>
 </head>
 <body>
 <!-- Login Overlay -->
 <div id="loginOverlay" style="position:fixed;inset:0;background:#111827;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;">
     <div style="background:#020617;border:2px solid #0d4f8b;border-radius:12px;padding:30px;max-width:400px;width:100%;text-align:center;">
-        <h1 style="color:#88c4ed;margin-bottom:8px;">KOMPASS</h1>
+        <div class="login-logo-wrap">
+          <img src="rologo.png"
+               alt="Retail Odyssey"
+               class="login-logo"
+               onerror="this.outerHTML='<div class=&quot;login-logo-fallback&quot;>Retail Odyssey</div>'">
+        </div>
         <p style="color:#9ca3af;margin-bottom:24px;">Sign in to continue</p>
         <div style="display:flex;flex-direction:column;gap:12px;">
             <input type="email" id="loginEmail" placeholder="Email" style="padding:12px;border:1px solid #4b5563;border-radius:8px;background:#374151;color:#f9fafb;font-size:16px;">
