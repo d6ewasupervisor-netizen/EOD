@@ -2069,6 +2069,50 @@
             to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
 
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        .password-wrapper input {
+            width: 100%;
+            padding-right: 44px;
+            box-sizing: border-box;
+        }
+        .password-peek-btn {
+            position: absolute;
+            top: 50%;
+            right: 6px;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            min-height: 36px;
+            border-radius: 6px;
+            touch-action: manipulation;
+        }
+        .password-peek-btn:hover { color: #e0f2fe; }
+        .password-peek-btn:active { background: rgba(13, 79, 139, 0.25); }
+        .forgot-password-row {
+            margin-top: 8px;
+            text-align: right;
+        }
+        .forgot-password-link {
+            font-size: 0.85em;
+            color: #60a5fa;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .forgot-password-link:hover {
+            color: #93c5fd;
+            text-decoration: underline;
+        }
+
     </style>
 </head>
 <body>
@@ -2079,7 +2123,27 @@
         <p style="color:#9ca3af;margin-bottom:24px;">Sign in to continue</p>
         <div style="display:flex;flex-direction:column;gap:12px;">
             <input type="email" id="loginEmail" placeholder="Email" style="padding:12px;border:1px solid #4b5563;border-radius:8px;background:#374151;color:#f9fafb;font-size:16px;">
-            <input type="password" id="loginPassword" placeholder="Password" style="padding:12px;border:1px solid #4b5563;border-radius:8px;background:#374151;color:#f9fafb;font-size:16px;">
+            <div class="password-wrapper">
+              <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" style="padding:12px;border:1px solid #4b5563;border-radius:8px;background:#374151;color:#f9fafb;font-size:16px;">
+              <button type="button" class="password-peek-btn" id="passwordPeekBtn"
+                      onclick="togglePasswordPeek('loginPassword', 'passwordPeekBtn')"
+                      aria-label="Show password">
+                <svg class="peek-icon-eye" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg class="peek-icon-eye-off" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                     style="display:none;">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+            <div class="forgot-password-row">
+              <a href="#" class="forgot-password-link" onclick="handleForgotPassword(event)">Forgot password?</a>
+            </div>
             <button id="loginBtn" onclick="handleLogin()" style="padding:14px;background:#0d4f8b;color:white;border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;min-height:44px;">Sign In</button>
             <div id="loginError" style="color:#f87171;font-size:14px;min-height:20px;"></div>
         </div>
@@ -2727,6 +2791,48 @@
                 window.history.replaceState({}, '', window.location.pathname);
             }
         })();
+
+        function togglePasswordPeek(inputId, btnId) {
+            const input = document.getElementById(inputId);
+            const btn = document.getElementById(btnId);
+            if (!input || !btn) return;
+            const eyeIcon = btn.querySelector('.peek-icon-eye');
+            const eyeOffIcon = btn.querySelector('.peek-icon-eye-off');
+            const isHidden = input.type === 'password';
+            input.type = isHidden ? 'text' : 'password';
+            if (eyeIcon && eyeOffIcon) {
+                eyeIcon.style.display = isHidden ? 'none' : 'block';
+                eyeOffIcon.style.display = isHidden ? 'block' : 'none';
+            }
+            btn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+        }
+
+        async function handleForgotPassword(event) {
+            if (event) event.preventDefault();
+            const emailField = document.getElementById('loginEmail');
+            let email = emailField ? emailField.value.trim() : '';
+            if (!email) {
+                email = (window.prompt('Enter your email to receive a reset link:') || '').trim();
+            }
+            if (!email) return;
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showAlert('Invalid Email', 'Please enter a valid email address.');
+                return;
+            }
+            try {
+                const redirectTo = window.location.origin + window.location.pathname;
+                const { error } = await sbClient.auth.resetPasswordForEmail(email, { redirectTo });
+                if (error) {
+                    console.error('Password reset error:', error);
+                    showAlert('Reset Link', 'If an account exists for ' + email + ', a reset link has been sent.');
+                    return;
+                }
+                showAlert('Reset Link Sent', 'If an account exists for ' + email + ', a reset link has been sent. Check your inbox (and spam folder).');
+            } catch (err) {
+                console.error('Password reset exception:', err);
+                showAlert('Reset Link', 'If an account exists for ' + email + ', a reset link has been sent.');
+            }
+        }
 
         async function handleLogin() {
             const email = document.getElementById('loginEmail').value.trim();
