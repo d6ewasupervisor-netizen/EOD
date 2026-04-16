@@ -1964,49 +1964,57 @@
             font-weight: 600;
             margin-top: 4px;
         }
-        /* Auth status indicator */
-        .auth-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-left: 10px;
-            vertical-align: middle;
-        }
-        .auth-red { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
-        .auth-yellow { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
-        .auth-green { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
-        .auth-status-row {
+        /* Header auth status bar */
+        .header-auth-bar {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 10px;
-            margin-top: 8px;
-            flex-wrap: wrap;
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin-top: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.3s, color 0.3s;
         }
-        .auth-status-label {
-            font-size: var(--font-size-sm);
-            color: #94a3b8;
+        .header-auth-bar.auth-bar-red {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid #ef4444;
+            color: #fca5a5;
         }
-        .auth-request-btn {
-            background: #0d4f8b;
-            color: #fff;
-            border: none;
-            padding: 6px 14px;
-            border-radius: var(--border-radius);
-            font-size: var(--font-size-sm);
+        .header-auth-bar.auth-bar-yellow {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid #f59e0b;
+            color: #fde68a;
+        }
+        .header-auth-bar.auth-bar-green {
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid #22c55e;
+            color: #86efac;
+        }
+        .header-auth-bar .auth-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .header-auth-bar.auth-bar-red .auth-dot { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
+        .header-auth-bar.auth-bar-yellow .auth-dot { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
+        .header-auth-bar.auth-bar-green .auth-dot { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+        .header-auth-bar .auth-bar-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: inherit;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
             cursor: pointer;
+            min-height: 32px;
+            touch-action: manipulation;
         }
-        .auth-request-btn:hover { background: #1e6bb8; }
-        .auth-request-btn:disabled {
-            background: #4b5563;
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
-        .auth-pending-msg {
-            font-size: 0.85em;
-            color: #f59e0b;
-            margin-top: 6px;
-        }
+        .header-auth-bar .auth-bar-btn:active { transform: scale(0.96); }
+        .header-auth-bar .auth-bar-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         /* Profile auto-fill styles */
         .profile-readonly-wrapper {
             position: relative;
@@ -2086,11 +2094,16 @@
             <h1>KOMPASS</h1>
             <p>END OF DAY COVER SHEET</p>
             <p>GENERATOR</p>
+            <div class="header-auth-bar auth-bar-red" id="headerAuthBar">
+                <span class="auth-dot"></span>
+                <span id="headerAuthLabel">SAS Auth: Checking...</span>
+                <button class="auth-bar-btn" id="headerAuthBtn" onclick="event.stopPropagation(); requestAuth();" style="display:none;">Request Auth</button>
+            </div>
         </div>
 
         <!-- Store & Date Selection + Find Shifts (unified) — MOVED ABOVE My Profile -->
         <div class="section" id="storeShiftSection">
-            <div class="section-title">Store & Shift Selection <span id="authIndicator" class="auth-indicator auth-red" title="Auth status: not active"></span></div>
+            <div class="section-title">Store & Shift Selection</div>
             <div class="sm-controls">
                 <div class="field-group">
                     <div class="field">
@@ -2232,12 +2245,6 @@
                     </div>
                 </div>
                 <button class="btn btn-primary sm-find-btn" id="smFindShiftsBtn" onclick="smFindShifts()">Find Shifts</button>
-                <!-- Auth status row -->
-                <div class="auth-status-row" id="authStatusRow">
-                    <span class="auth-status-label" id="authStatusLabel">SAS Auth: Not Active</span>
-                    <button class="auth-request-btn" id="authRequestBtn" onclick="requestAuth()">Request Auth</button>
-                </div>
-                <div id="authPendingMsg" class="auth-pending-msg" style="display:none;"></div>
             </div>
 
             <!-- Shift results -->
@@ -2728,7 +2735,21 @@
             }
             const headers = options.headers || {};
             headers['Authorization'] = `Bearer ${token}`;
-            return fetch(url, { ...options, headers });
+            const resp = await fetch(url, { ...options, headers });
+
+            if (resp.status === 401) {
+                try {
+                    const cloned = resp.clone();
+                    const errData = await cloned.json();
+                    if (errData.error && errData.error.toLowerCase().includes('sas session')) {
+                        setAuthStatus('red');
+                    }
+                } catch (e) {
+                    // ignore parse errors
+                }
+            }
+
+            return resp;
         }
 
         // Check for existing session on load
@@ -5420,6 +5441,11 @@ ${data.Notes || ''}`;
             // Check auth status on page load
             checkAuthStatus();
 
+            // Auto-check auth every 5 minutes
+            setInterval(() => {
+                checkAuthStatus();
+            }, 300000);
+
             // Log startup info
             console.log('Kompass EOD Advanced loaded');
             console.log('PDFLib available:', typeof PDFLib !== 'undefined');
@@ -5468,44 +5494,35 @@ ${data.Notes || ''}`;
         }
 
         function setAuthStatus(status) {
+            const prevState = authState;
             authState = status;
             sessionStorage.setItem('kompassAuthState', status);
 
-            const indicator = document.getElementById('authIndicator');
-            const label = document.getElementById('authStatusLabel');
-            const btn = document.getElementById('authRequestBtn');
-            const pendingMsg = document.getElementById('authPendingMsg');
+            const bar = document.getElementById('headerAuthBar');
+            const label = document.getElementById('headerAuthLabel');
+            const btn = document.getElementById('headerAuthBtn');
 
-            // Reset classes
-            indicator.className = 'auth-indicator';
+            bar.className = 'header-auth-bar';
 
             if (status === 'red') {
-                indicator.classList.add('auth-red');
-                indicator.title = 'Auth status: not active';
+                bar.classList.add('auth-bar-red');
                 label.textContent = 'SAS Auth: Not Active';
                 btn.style.display = 'inline-block';
                 btn.disabled = false;
                 btn.textContent = 'Request Auth';
-                pendingMsg.style.display = 'none';
                 stopAuthPolling();
             } else if (status === 'yellow') {
-                indicator.classList.add('auth-yellow');
-                indicator.title = 'Auth status: requested, pending';
+                bar.classList.add('auth-bar-yellow');
                 label.textContent = 'SAS Auth: Pending';
                 btn.style.display = 'inline-block';
                 btn.disabled = true;
                 btn.textContent = 'Auth Requested — Please Be Patient';
-                pendingMsg.style.display = 'block';
-                pendingMsg.textContent = 'Auth requested. You can continue recording everything in the app — store selection syncs with PROD but does not require authorization right away. You will be notified when auth is provided.';
             } else if (status === 'green') {
-                indicator.classList.add('auth-green');
-                indicator.title = 'Auth status: active';
+                bar.classList.add('auth-bar-green');
                 label.textContent = 'SAS Auth: Active';
                 btn.style.display = 'none';
-                pendingMsg.style.display = 'none';
                 stopAuthPolling();
-                // Show toast if transitioning from yellow
-                if (sessionStorage.getItem('kompassAuthWasYellow') === 'true') {
+                if (prevState === 'red' || prevState === 'yellow' || sessionStorage.getItem('kompassAuthWasYellow') === 'true') {
                     sessionStorage.removeItem('kompassAuthWasYellow');
                     showAuthToast('SAS session is now active.');
                 }
@@ -5513,7 +5530,7 @@ ${data.Notes || ''}`;
         }
 
         async function requestAuth() {
-            const btn = document.getElementById('authRequestBtn');
+            const btn = document.getElementById('headerAuthBtn');
             btn.disabled = true;
             btn.textContent = 'Sending...';
 
@@ -5693,7 +5710,7 @@ ${data.Notes || ''}`;
                 if (errMsg.includes('401') || errMsg.toLowerCase().includes('sas session') || errMsg.toLowerCase().includes('not active')) {
                     setAuthStatus('red');
                     const authBtnHtml = authState !== 'yellow' ?
-                        `<button class="auth-request-btn" onclick="requestAuth()" style="margin-top:6px;">Request Auth</button>` :
+                        `<button class="auth-bar-btn" onclick="requestAuth()" style="margin-top:6px; background:#0d4f8b; color:#fff; border:none; padding:6px 14px; border-radius:8px; font-size:14px; cursor:pointer;">Request Auth</button>` :
                         `<span style="color:#f59e0b; font-size:0.9em;">Auth Requested — Please Be Patient</span>`;
                     listDiv.innerHTML = `<div class="sm-message error">${escapeHtml(errMsg)}<br>${authBtnHtml}<br><span style="font-size:0.85em; color:#94a3b8;">You can continue using photos, notes, and other features without auth.</span></div>`;
                 } else {
