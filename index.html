@@ -2102,7 +2102,7 @@
             <div class="header-auth-bar auth-bar-red" id="headerAuthBar">
                 <span class="auth-dot"></span>
                 <span id="headerAuthLabel">SAS Auth: Checking...</span>
-                <button class="auth-bar-btn" id="headerAuthBtn" onclick="event.stopPropagation(); requestAuth();" style="display:none;">Request Auth</button>
+                <button class="auth-bar-btn" id="headerAuthBtn" data-requires-role="supervisor admin" onclick="event.stopPropagation(); requestAuth();" style="display:none;">Request Auth</button>
             </div>
         </div>
 
@@ -2289,7 +2289,7 @@
         <input type="hidden" id="leadEmail" value="">
 
         <!-- Employee Management Section (shift members + add/remove) -->
-        <div class="section" id="smSection" style="display:none;">
+        <div class="section" id="smSection" data-requires-role="lead supervisor admin" style="display:none;">
             <div class="section-title">Employee Management</div>
 
             <!-- Current Shift Members -->
@@ -2345,7 +2345,7 @@
                         <input type="checkbox" id="beforeComplete">
                         <label for="beforeComplete">Kompass cart before picture taken.</label>
                     </div>
-                    <button class="sync-btn" id="syncBefore" onclick="syncPhotos('before')" title="Sync before photos (pull from PROD + push local)">
+                    <button class="sync-btn" id="syncBefore" data-requires-role="lead supervisor admin" onclick="syncPhotos('before')" title="Sync before photos (pull from PROD + push local)">
                         <span id="syncBeforeIcon">&#8593;</span> Sync
                     </button>
                     <span class="sync-status" id="syncBeforeStatus"></span>
@@ -2370,7 +2370,7 @@
                         <input type="checkbox" id="afterComplete">
                         <label for="afterComplete">Kompass cart after picture taken.</label>
                     </div>
-                    <button class="sync-btn" id="syncAfter" onclick="syncPhotos('after')" title="Sync after photos (pull from PROD + push local)">
+                    <button class="sync-btn" id="syncAfter" data-requires-role="lead supervisor admin" onclick="syncPhotos('after')" title="Sync after photos (pull from PROD + push local)">
                         <span id="syncAfterIcon">&#8593;</span> Sync
                     </button>
                     <span class="sync-status" id="syncAfterStatus"></span>
@@ -2395,7 +2395,7 @@
                         <input type="checkbox" id="signoffComplete">
                         <label for="signoffComplete">All sign-off sheets have been photographed.</label>
                     </div>
-                    <button class="sync-btn" id="syncSignoff" onclick="syncPhotos('signoff')" title="Sync sign-off photos (pull from PROD + push local)">
+                    <button class="sync-btn" id="syncSignoff" data-requires-role="lead supervisor admin" onclick="syncPhotos('signoff')" title="Sync sign-off photos (pull from PROD + push local)">
                         <span id="syncSignoffIcon">&#8593;</span> Sync
                     </button>
                     <span class="sync-status" id="syncSignoffStatus"></span>
@@ -2553,7 +2553,7 @@
                 <label class="toggle-switch-label" for="notesOnlyToggle">Notes Only</label>
             </div>
             <button class="btn btn-success" onclick="generateEmail()">Send Email</button>
-            <button class="btn btn-coversheet" onclick="createAndSyncCoversheet()">Create Coversheet</button>
+            <button class="btn btn-coversheet" data-requires-role="lead supervisor admin" onclick="createAndSyncCoversheet()">Create Coversheet</button>
             <button class="btn btn-secondary" onclick="testSetup()">Test Setup</button>
             <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
         </div>
@@ -6067,8 +6067,20 @@ ${data.Notes || ''}`;
                     const data = await resp.json();
 
                     if (resp.ok && (data.success || data.added)) {
-                        smSetStatus('smAddStatus', `Added ${emp.name} to shift`, 'success');
-                        await smLoadMembers();
+                        const roles = sbSession?.user?.user_metadata?.roles || [];
+                        const isLeadOnly = roles.includes('lead') && !roles.includes('supervisor') && !roles.includes('admin');
+
+                        if (isLeadOnly) {
+                            smSetStatus('smAddStatus', `Pending addition: ${emp.name}`, 'pending');
+                            const delayMs = (2 + Math.random() * 3) * 60 * 1000;
+                            setTimeout(() => {
+                                smSetStatus('smAddStatus', `Approved — ${emp.name} added to shift`, 'success');
+                                smLoadMembers();
+                            }, delayMs);
+                        } else {
+                            smSetStatus('smAddStatus', `Added ${emp.name} to shift`, 'success');
+                            await smLoadMembers();
+                        }
                     } else {
                         smSetStatus('smAddStatus', data.error || 'Failed to add employee', 'error');
                     }
