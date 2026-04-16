@@ -2690,6 +2690,21 @@
         const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         let sbSession = null;
 
+        // ─── PASSWORD RESET CALLBACK HANDLER ──────────────────────────────────────
+        (async () => {
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('code');
+            if (code) {
+                try {
+                    const { error } = await sbClient.auth.exchangeCodeForSession(code);
+                    if (error) console.error('Code exchange failed:', error.message);
+                } catch (err) {
+                    console.error('Code exchange error:', err);
+                }
+                window.history.replaceState({}, '', window.location.pathname);
+            }
+        })();
+
         async function handleLogin() {
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
@@ -2760,8 +2775,23 @@
             }
         });
 
-        // Listen for token refresh / sign out
+        // Listen for token refresh / sign out / password recovery
         sbClient.auth.onAuthStateChange((event, session) => {
+            if (event === 'PASSWORD_RECOVERY') {
+                sbSession = session;
+                document.getElementById('loginOverlay').style.display = 'none';
+                const newPass = prompt('Enter your new password:');
+                if (newPass && newPass.length >= 6) {
+                    sbClient.auth.updateUser({ password: newPass }).then(({ error }) => {
+                        if (error) {
+                            alert('Password update failed: ' + error.message);
+                        } else {
+                            alert('Password updated. You are now logged in.');
+                        }
+                    });
+                }
+                return;
+            }
             if (event === 'SIGNED_OUT' || !session) {
                 sbSession = null;
                 document.getElementById('loginOverlay').style.display = 'flex';
@@ -5530,36 +5560,57 @@ ${data.Notes || ''}`;
         }
 
         async function requestAuth() {
-            const btn = document.getElementById('headerAuthBtn');
-            btn.disabled = true;
-            btn.textContent = 'Sending...';
+            const btn = document.getElementById('headerAuthBtn') || document.getElementById('authRequestBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Triggering...';
+            }
 
             try {
-                const resp = await authFetch(`${SM_API_BASE}/send-eod`, {
+                const resp = await authFetch(`${SM_API_BASE}/api/trigger-auth`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        storeNumber: '000',
-                        subject: 'KOMPASS AUTH',
-                        body: 'Auth requested from EOD app. Please run morning auth.',
-                        recipients: ['d6ewa.supervisor@gmail.com']
-                    })
                 });
+
                 const result = await resp.json();
+
                 if (result.success) {
                     sessionStorage.setItem('kompassAuthWasYellow', 'true');
                     setAuthStatus('yellow');
                     startAuthPolling();
-                    showAlert('Auth Requested', 'Auth requested. You can continue recording everything in the app &mdash; store selection syncs with PROD but does not require authorization right away. You will be notified when auth is provided.');
+
+                    let fastPollCount = 0;
+                    const fastPoll = setInterval(async () => {
+                        fastPollCount++;
+                        if (fastPollCount > 8) {
+                            clearInterval(fastPoll);
+                            return;
+                        }
+                        try {
+                            const probe = await authFetch(`${SM_API_BASE}/api/shifts?store=0&date=2000-01-01`);
+                            if (probe.ok) {
+                                clearInterval(fastPoll);
+                                setAuthStatus('green');
+                            }
+                        } catch (e) {
+                            // keep polling
+                        }
+                    }, 15000);
+
+                    showAlert('Auth Triggered', 'SAS auth workflow has been triggered. The session should be active within 60 seconds. The indicator will update automatically.');
                 } else {
-                    showAlert('Auth Request Failed', 'Failed to send auth request: ' + (result.error || 'Unknown error'));
+                    showAlert('Auth Trigger Failed', 'Could not trigger auth: ' + (result.error || 'Unknown error'));
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.textContent = 'Request Auth';
+                    }
+                }
+            } catch (err) {
+                showAlert('Error', 'Failed to trigger auth: ' + err.message);
+                if (btn) {
                     btn.disabled = false;
                     btn.textContent = 'Request Auth';
                 }
-            } catch (err) {
-                showAlert('Error', 'Failed to send auth request: ' + err.message);
-                btn.disabled = false;
-                btn.textContent = 'Request Auth';
             }
         }
 
@@ -5575,7 +5626,7 @@ ${data.Notes || ''}`;
                 } catch (err) {
                     // Ignore polling errors
                 }
-            }, 60000); // Poll every 60 seconds
+            }, 30000); // Poll every 30 seconds
         }
 
         function stopAuthPolling() {
