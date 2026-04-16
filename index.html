@@ -2690,6 +2690,18 @@
         const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         let sbSession = null;
 
+        function applyUserRoles(session) {
+            document.body.className = document.body.className
+                .split(' ')
+                .filter(c => !c.startsWith('role-'))
+                .join(' ');
+            if (!session) return;
+            const roles = session.user?.user_metadata?.roles || [];
+            roles.forEach(role => {
+                document.body.classList.add(`role-${role}`);
+            });
+        }
+
         // ─── PASSWORD RESET CALLBACK HANDLER ──────────────────────────────────────
         (async () => {
             const params = new URLSearchParams(window.location.search);
@@ -2730,6 +2742,7 @@
             }
 
             sbSession = data.session;
+            applyUserRoles(data.session);
             document.getElementById('loginOverlay').style.display = 'none';
         }
 
@@ -2771,6 +2784,7 @@
         sbClient.auth.getSession().then(({ data: { session } }) => {
             if (session) {
                 sbSession = session;
+                applyUserRoles(session);
                 document.getElementById('loginOverlay').style.display = 'none';
             }
         });
@@ -2794,9 +2808,11 @@
             }
             if (event === 'SIGNED_OUT' || !session) {
                 sbSession = null;
+                applyUserRoles(null);
                 document.getElementById('loginOverlay').style.display = 'flex';
             } else {
                 sbSession = session;
+                applyUserRoles(session);
             }
         });
         const photos = {
