@@ -1445,6 +1445,101 @@
             margin-left: 8px;
         }
 
+        /* Weekly Tasks / Rebotics */
+        .rebotics-auth-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 12px;
+            border: 1px solid #4b5563;
+            background: #1f2937;
+        }
+        .rebotics-auth-badge .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .rebotics-auth-badge.level-green .dot { background: #10b981; }
+        .rebotics-auth-badge.level-yellow .dot { background: #fbbf24; }
+        .rebotics-auth-badge.level-red .dot { background: #ef4444; }
+        .rebotics-auth-badge.level-unknown .dot { background: #6b7280; }
+        .rebotics-backlog-btn {
+            background: #7f1d1d;
+            color: #fecaca;
+            border: 1px solid #ef4444;
+            padding: 12px 20px;
+            font-size: 15px;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .rebotics-backlog-btn:hover { background: #991b1b; }
+        .rebotics-backlog-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .rebotics-admin-panel {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px dashed #4b5563;
+        }
+        .rebotics-admin-toggle {
+            background: transparent;
+            border: none;
+            color: #88c4ed;
+            cursor: pointer;
+            font-weight: 600;
+            padding: 4px 0;
+        }
+        .rebotics-task-pick {
+            max-height: 220px;
+            overflow: auto;
+            border: 1px solid #4b5563;
+            border-radius: 8px;
+            padding: 8px;
+            margin-top: 8px;
+            font-size: 13px;
+        }
+        .rebotics-confirm-list {
+            max-height: 45vh;
+            overflow: auto;
+            margin: 12px 0;
+            padding: 8px;
+            background: #111827;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        .rebotics-banner-warn {
+            background: #422006;
+            border: 1px solid #f59e0b;
+            color: #fef3c7;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        .rebotics-result-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-top: 12px;
+        }
+        .rebotics-result-table th,
+        .rebotics-result-table td {
+            border: 1px solid #4b5563;
+            padding: 6px 8px;
+            text-align: left;
+        }
+        .rebotics-result-table tr.err {
+            background: #450a0a;
+        }
+        .modal-dialog.rebotics-wide {
+            max-width: min(96vw, 760px);
+        }
+
         /* ─── Two-Way Sync: PROD badges, selection controls, lightbox ─── */
         .photo-item.prod-photo {
             border-color: #f59e0b;
@@ -2417,6 +2512,63 @@
             </div>
         </div>
 
+        <!-- Weekly Tasks (Rebotics bulk backlog) -->
+        <div class="section" id="weeklyTasksSection" data-requires-role="lead supervisor admin">
+            <div class="section-title">Weekly Tasks</div>
+            <div id="reboticsAuthBadge" class="rebotics-auth-badge level-unknown" title="Rebotics auth status">
+                <span class="dot"></span>
+                <span id="reboticsAuthBadgeLabel">Rebotics auth: …</span>
+            </div>
+            <p style="margin:0 0 8px; color:#9ca3af; font-size:14px;">
+                Backlog not-started Store Intelligence tasks as <strong>Backlog - Revisit Needed</strong> for the selected date (start of week).
+            </p>
+            <div class="field-group" style="margin-top:10px;">
+                <div class="field">
+                    <label for="reboticsBacklogDate">Task date</label>
+                    <input type="date" id="reboticsBacklogDate">
+                </div>
+                <div class="field" style="align-self:end;">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                        <input type="checkbox" id="reboticsDryRun">
+                        Dry run (validate only, no changes)
+                    </label>
+                </div>
+            </div>
+            <h3 style="margin:14px 0 6px; font-size:16px; color:#e5e7eb;">
+                Backlog all not-started tasks for <strong id="reboticsSingleStoreLabel">Store …</strong>
+            </h3>
+            <button type="button" class="rebotics-backlog-btn" id="reboticsSingleStoreBacklogBtn">
+                Backlog all not-started tasks
+            </button>
+
+            <div class="rebotics-admin-panel" id="reboticsAdminPanel" style="display:none;">
+                <button type="button" class="rebotics-admin-toggle" id="reboticsAdminToggle" aria-expanded="false">
+                    ▶ Admin: multi-store
+                </button>
+                <div id="reboticsAdminBody" style="display:none; margin-top:10px;">
+                    <p style="font-size:13px; color:#9ca3af;">Load candidates across District 8 stores, then select tasks or paste IDs.</p>
+                    <button type="button" class="btn btn-secondary" id="reboticsLoadAllCandidatesBtn" style="margin-top:8px;">
+                        Load all not-started (all D8 stores)
+                    </button>
+                    <div class="rebotics-task-pick" id="reboticsAdminTaskPick" style="display:none;"></div>
+                    <div class="field" style="margin-top:10px;">
+                        <label>Paste task IDs (one per line)</label>
+                        <textarea id="reboticsPasteIds" rows="4" style="width:100%; box-sizing:border-box; font-family:monospace;" placeholder="37444028&#10;37442606"></textarea>
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:8px;">
+                        <select id="reboticsAdminStoreSelect" style="flex:1; min-width:180px;"></select>
+                        <button type="button" class="btn btn-secondary" id="reboticsAdminStoreBacklogBtn">Backlog all not-started for selected store</button>
+                    </div>
+                    <button type="button" class="rebotics-backlog-btn" id="reboticsAdminSelectedBacklogBtn" style="margin-top:12px;">
+                        Backlog selected checked tasks
+                    </button>
+                </div>
+            </div>
+
+            <div id="reboticsStaleBanner" style="display:none; margin-top:12px; padding:10px; background:#450a0a; border:1px solid #ef4444; color:#fecaca; border-radius:8px; font-size:14px;"></div>
+            <div id="reboticsResultPanel" style="display:none; margin-top:16px;"></div>
+        </div>
+
         <!-- Photos Section -->
         <div class="section">
             <div class="section-title">Photos</div>
@@ -2695,6 +2847,30 @@
         </div>
     </div>
 
+    <div id="reboticsHelpModal" class="modal-overlay">
+        <div class="modal-dialog">
+            <h2>Rebotics authentication</h2>
+            <div style="line-height:1.6; font-size:14px;">
+                <p>Tokens refresh when your PC runs <code>morning-auth-rebotics.js</code> or when the Gmail poller receives an email titled <strong>KOMPASS REBOTICS AUTH</strong>.</p>
+                <p>Railway can trigger that email automatically when the token is rejected. If status stays red, send yourself a Gmail with that exact subject and wait up to 90 seconds.</p>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-primary" type="button" onclick="document.getElementById('reboticsHelpModal').classList.remove('show')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="reboticsConfirmModal" class="modal-overlay">
+        <div class="modal-dialog rebotics-wide">
+            <h2 id="reboticsConfirmTitle">Confirm bulk backlog</h2>
+            <div id="reboticsConfirmBody"></div>
+            <div class="button-group" style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+                <button class="btn btn-secondary" type="button" id="reboticsConfirmCancel">Cancel</button>
+                <button class="btn btn-primary" type="button" id="reboticsConfirmProceed" disabled>Proceed</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Signature Fullscreen Overlay -->
     <div id="signatureFullOverlay" class="signature-fullscreen-overlay">
         <div class="sig-toolbar">
@@ -2889,6 +3065,9 @@
             sbSession = data.session;
             applyUserRoles(data.session);
             document.getElementById('loginOverlay').style.display = 'none';
+            if (typeof initWeeklyTasks === 'function') {
+                initWeeklyTasks().catch((e) => console.warn('[weekly-tasks]', e));
+            }
         }
 
         async function getAuthToken() {
@@ -2931,6 +3110,9 @@
                 sbSession = session;
                 applyUserRoles(session);
                 document.getElementById('loginOverlay').style.display = 'none';
+                if (typeof initWeeklyTasks === 'function') {
+                    initWeeklyTasks().catch((e) => console.warn('[weekly-tasks]', e));
+                }
             }
         });
 
@@ -2955,9 +3137,13 @@
                 sbSession = null;
                 applyUserRoles(null);
                 document.getElementById('loginOverlay').style.display = 'flex';
+                if (typeof resetWeeklyTasksSession === 'function') resetWeeklyTasksSession();
             } else {
                 sbSession = session;
                 applyUserRoles(session);
+                if (typeof initWeeklyTasks === 'function') {
+                    initWeeklyTasks().catch((e) => console.warn('[weekly-tasks]', e));
+                }
             }
         });
         const photos = {
@@ -5650,6 +5836,346 @@ ${data.Notes || ''}`;
         let smMembers = [];
         let smEmployeesCache = null;
         let smPendingRemovals = new Set();
+
+        // ─── WEEKLY TASKS (Rebotics bulk backlog) ───────────────────────────────────
+        let reboticsMe = { isReboticsAdmin: false, reboticsDistrictStoreIds: null };
+        let reboticsAuthPoll = null;
+        let reboticsListenersBound = false;
+        let adminCandidatesCache = [];
+
+        function resetWeeklyTasksSession() {
+            if (reboticsAuthPoll) {
+                clearInterval(reboticsAuthPoll);
+                reboticsAuthPoll = null;
+            }
+            reboticsListenersBound = false;
+        }
+
+        function storeNumToReboticsCustomId(raw) {
+            const n = String(raw || '').trim().replace(/^0+/, '');
+            if (!n) return '';
+            return '701-' + n.padStart(5, '0');
+        }
+
+        function getD8StoreIdsFromDataList() {
+            if (reboticsMe.reboticsDistrictStoreIds && reboticsMe.reboticsDistrictStoreIds.length) {
+                return reboticsMe.reboticsDistrictStoreIds;
+            }
+            const opts = document.querySelectorAll('#storeList option');
+            const out = [];
+            opts.forEach((o) => {
+                const id = storeNumToReboticsCustomId(o.value);
+                if (id) out.push(id);
+            });
+            return [...new Set(out)];
+        }
+
+        async function refreshReboticsMe() {
+            try {
+                const r = await authFetch(`${SM_API_BASE}/api/me`);
+                if (r.ok) {
+                    const j = await r.json();
+                    reboticsMe.isReboticsAdmin = !!j.isReboticsAdmin;
+                    reboticsMe.reboticsDistrictStoreIds = j.reboticsDistrictStoreIds || null;
+                    const adminPanel = document.getElementById('reboticsAdminPanel');
+                    if (adminPanel) adminPanel.style.display = reboticsMe.isReboticsAdmin ? 'block' : 'none';
+                    if (reboticsMe.isReboticsAdmin) populateReboticsAdminStoreSelect();
+                }
+            } catch (e) {
+                console.warn('[weekly-tasks] /api/me', e);
+            }
+        }
+
+        function populateReboticsAdminStoreSelect() {
+            const sel = document.getElementById('reboticsAdminStoreSelect');
+            if (!sel) return;
+            const ids = getD8StoreIdsFromDataList();
+            sel.innerHTML = '<option value="">-- Select store --</option>'
+                + ids.map((id) => `<option value="${id}">${id}</option>`).join('');
+        }
+
+        async function pollReboticsAuthStatus() {
+            const badge = document.getElementById('reboticsAuthBadge');
+            const label = document.getElementById('reboticsAuthBadgeLabel');
+            if (!badge || !label) return;
+            try {
+                const r = await authFetch(`${SM_API_BASE}/rebotics-auth-status`);
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                const j = await r.json();
+                const mins = j.minutes_since_refresh;
+                let level = 'green';
+                if (!j.ok || j.stale) level = 'red';
+                else if (mins != null && mins > 120) level = 'yellow';
+                badge.className = 'rebotics-auth-badge level-' + level;
+                const last = mins != null ? `${mins} min ago` : 'unknown';
+                if (!j.ok) label.textContent = '🔴 Rebotics auth expired (no token)';
+                else if (j.stale) label.textContent = '🔴 Rebotics auth expired';
+                else if (level === 'yellow') label.textContent = '🟡 Rebotics auth aging (last refresh ' + last + ')';
+                else label.textContent = '🟢 Rebotics auth fresh (last refreshed ' + last + ')';
+            } catch {
+                badge.className = 'rebotics-auth-badge level-unknown';
+                label.textContent = 'Rebotics auth: could not load';
+            }
+        }
+
+        function openReboticsHelp() {
+            document.getElementById('reboticsHelpModal').classList.add('show');
+        }
+
+        function groupCandidatesByStore(candidates) {
+            const m = {};
+            candidates.forEach((c) => {
+                const k = c.store_custom_id || '?';
+                if (!m[k]) m[k] = [];
+                m[k].push(c);
+            });
+            return m;
+        }
+
+        function escapeHtmlRebotics(s) {
+            const d = document.createElement('div');
+            d.textContent = s == null ? '' : String(s);
+            return d.innerHTML;
+        }
+
+        function renderConfirmListHtml(candidates) {
+            const by = groupCandidatesByStore(candidates);
+            let html = '<div class="rebotics-banner-warn">⚠️ Bulk Backlog is intended for the start of the work week, when newly issued tasks should be moved to backlog ahead of being worked. Do not run this on tasks your team intends to complete today.</div>';
+            html += '<div class="rebotics-confirm-list">';
+            Object.keys(by).sort().forEach((store) => {
+                html += `<div style="margin-bottom:10px;"><strong>${escapeHtmlRebotics(store)}</strong><ul style="margin:4px 0 0 18px;">`;
+                by[store].forEach((t) => {
+                    html += `<li><span style="color:#d1d5db;">#${t.task_id}</span> — ${escapeHtmlRebotics(t.title || '')} <span style="color:#9ca3af;">(${escapeHtmlRebotics(t.category || '')})</span></li>`;
+                });
+                html += '</ul></div>';
+            });
+            html += '</div>';
+            html += `<p style="margin:8px 0;"><strong>About to set ${candidates.length} tasks to Backlog - Revisit Needed</strong></p>`;
+            html += '<label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;font-size:14px;"><input type="checkbox" id="reboticsUnderstandCb" style="margin-top:3px;"> I understand this will mark all listed tasks as backlog in Store Intelligence</label>';
+            return html;
+        }
+
+        async function fetchReboticsCandidates(storeIds, date) {
+            const q = `${SM_API_BASE}/rebotics/tasks/candidates?store_ids=${encodeURIComponent(storeIds.join(','))}&date=${encodeURIComponent(date)}`;
+            const r = await authFetch(q);
+            const j = await r.json().catch(() => ({}));
+            return { httpOk: r.ok, ...j };
+        }
+
+        function showReboticsStaleBanner(msg) {
+            const el = document.getElementById('reboticsStaleBanner');
+            if (!el) return;
+            el.style.display = 'block';
+            el.textContent = msg;
+        }
+
+        function hideReboticsStaleBanner() {
+            const el = document.getElementById('reboticsStaleBanner');
+            if (el) el.style.display = 'none';
+        }
+
+        async function postReboticsBulkBacklog(taskIds, dryRun) {
+            const r = await authFetch(`${SM_API_BASE}/rebotics/tasks/bulk-backlog`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ task_ids: taskIds, dry_run: !!dryRun }),
+            });
+            const j = await r.json().catch(() => ({}));
+            return { httpOk: r.ok, ...j };
+        }
+
+        function renderReboticsResults(data) {
+            const panel = document.getElementById('reboticsResultPanel');
+            panel.style.display = 'block';
+            let html = '';
+            if (data.stale_token) {
+                html += '<div class="rebotics-banner-warn" style="border-color:#ef4444;background:#450a0a;color:#fecaca;">Auth could not be refreshed automatically. Send yourself an email titled <strong>KOMPASS REBOTICS AUTH</strong> and try again in about 60 seconds.</div>';
+            }
+            html += `<p><strong>Completed:</strong> ${data.completed ?? 0} &nbsp; <strong>Failed:</strong> ${data.failed ?? 0}</p>`;
+            html += '<table class="rebotics-result-table"><thead><tr><th>Task</th><th>Status</th><th>Detail</th><th></th></tr></thead><tbody>';
+            (data.results || []).forEach((row) => {
+                const err = row.status === 'error';
+                const detail = row.error
+                    ? row.error
+                    : (row.elapsed_ms != null ? String(row.elapsed_ms) + ' ms' : '');
+                html += `<tr class="${err ? 'err' : ''}"><td>${row.task_id}</td><td>${row.status}</td><td>${escapeHtmlRebotics(detail)}</td>`;
+                html += `<td>${err ? `<button type="button" class="btn btn-secondary rebotics-retry-btn" data-tid="${row.task_id}">Retry</button>` : ''}</td></tr>`;
+            });
+            html += '</tbody></table>';
+            panel.innerHTML = html;
+            panel.querySelectorAll('.rebotics-retry-btn').forEach((btn) => {
+                btn.addEventListener('click', async () => {
+                    const tid = parseInt(btn.getAttribute('data-tid'), 10);
+                    const dry = document.getElementById('reboticsDryRun').checked;
+                    btn.disabled = true;
+                    const res = await postReboticsBulkBacklog([tid], dry);
+                    renderReboticsResults(res);
+                });
+            });
+        }
+
+        function openReboticsConfirmModal(candidates, onConfirm) {
+            const modal = document.getElementById('reboticsConfirmModal');
+            const body = document.getElementById('reboticsConfirmBody');
+            const cancel = document.getElementById('reboticsConfirmCancel');
+            const proceed = document.getElementById('reboticsConfirmProceed');
+            body.innerHTML = renderConfirmListHtml(candidates);
+            proceed.disabled = true;
+            const cb = body.querySelector('#reboticsUnderstandCb');
+            cb.addEventListener('change', (e) => {
+                proceed.disabled = !e.target.checked;
+            });
+            modal.classList.add('show');
+            cancel.focus();
+
+            function cleanup() {
+                modal.classList.remove('show');
+                cancel.removeEventListener('click', onCancel);
+                proceed.removeEventListener('click', onProceed);
+            }
+            function onCancel() {
+                cleanup();
+            }
+            function onProceed() {
+                if (!body.querySelector('#reboticsUnderstandCb').checked) return;
+                cleanup();
+                onConfirm(candidates.map((c) => c.task_id));
+            }
+            cancel.addEventListener('click', onCancel);
+            proceed.addEventListener('click', onProceed);
+        }
+
+        async function initWeeklyTasks() {
+            const dateEl = document.getElementById('reboticsBacklogDate');
+            if (!dateEl) return;
+
+            dateEl.value = new Date().toISOString().slice(0, 10);
+
+            if (!reboticsListenersBound) {
+                reboticsListenersBound = true;
+                document.getElementById('reboticsAuthBadge').addEventListener('click', openReboticsHelp);
+            }
+
+            await refreshReboticsMe();
+            pollReboticsAuthStatus();
+            if (reboticsAuthPoll) clearInterval(reboticsAuthPoll);
+            reboticsAuthPoll = setInterval(pollReboticsAuthStatus, 30000);
+
+            function updateSingleStoreLabel() {
+                const sid = storeNumToReboticsCustomId(document.getElementById('storeNumber').value);
+                document.getElementById('reboticsSingleStoreLabel').textContent = sid ? sid : '(select store # above)';
+            }
+            updateSingleStoreLabel();
+            const sn = document.getElementById('storeNumber');
+            sn.removeEventListener('input', sn._reboticsUpd);
+            sn.removeEventListener('change', sn._reboticsUpd);
+            sn._reboticsUpd = updateSingleStoreLabel;
+            sn.addEventListener('input', sn._reboticsUpd);
+            sn.addEventListener('change', sn._reboticsUpd);
+
+            const singleBtn = document.getElementById('reboticsSingleStoreBacklogBtn');
+            singleBtn.onclick = async () => {
+                hideReboticsStaleBanner();
+                const sid = storeNumToReboticsCustomId(document.getElementById('storeNumber').value);
+                if (!sid) {
+                    alert('Select a store number first.');
+                    return;
+                }
+                const date = document.getElementById('reboticsBacklogDate').value;
+                const data = await fetchReboticsCandidates([sid], date);
+                if (!data.httpOk) {
+                    if (data.stale_token) showReboticsStaleBanner('Rebotics token missing or stale.');
+                    alert(data.error || 'Could not load candidates');
+                    return;
+                }
+                if (data.stale_token) showReboticsStaleBanner('Rebotics auth may be stale — proceed with caution.');
+                if (!data.candidates || !data.candidates.length) {
+                    alert('No not-started tasks for this store/date.');
+                    return;
+                }
+                openReboticsConfirmModal(data.candidates, async (taskIds) => {
+                    const dry = document.getElementById('reboticsDryRun').checked;
+                    const res = await postReboticsBulkBacklog(taskIds, dry);
+                    renderReboticsResults(res);
+                    if (res.stale_token) showReboticsStaleBanner('Auth could not be refreshed automatically…');
+                });
+            };
+
+            document.getElementById('reboticsAdminToggle').onclick = () => {
+                const body = document.getElementById('reboticsAdminBody');
+                const tgl = document.getElementById('reboticsAdminToggle');
+                const open = body.style.display !== 'block';
+                body.style.display = open ? 'block' : 'none';
+                tgl.setAttribute('aria-expanded', open ? 'true' : 'false');
+                tgl.textContent = open ? '▼ Admin: multi-store' : '▶ Admin: multi-store';
+            };
+
+            document.getElementById('reboticsLoadAllCandidatesBtn').onclick = async () => {
+                const ids = getD8StoreIdsFromDataList();
+                if (!ids.length) {
+                    alert('No district store list — set KOMPASS_D8_REBOTICS_STORES on the API or rely on the store datalist.');
+                    return;
+                }
+                const date = document.getElementById('reboticsBacklogDate').value;
+                const data = await fetchReboticsCandidates(ids, date);
+                if (!data.httpOk) {
+                    alert(data.error || 'Failed to load candidates');
+                    return;
+                }
+                adminCandidatesCache = data.candidates || [];
+                const box = document.getElementById('reboticsAdminTaskPick');
+                box.style.display = 'block';
+                const by = groupCandidatesByStore(adminCandidatesCache);
+                let html = '';
+                Object.keys(by).sort().forEach((store) => {
+                    html += `<div style="margin-bottom:8px;"><strong>${escapeHtmlRebotics(store)}</strong>`;
+                    by[store].forEach((t) => {
+                        html += `<div><label style="cursor:pointer;"><input type="checkbox" class="rebotics-pick-cb" value="${t.task_id}" checked> #${t.task_id} — ${escapeHtmlRebotics(t.title || '')}</label></div>`;
+                    });
+                    html += '</div>';
+                });
+                box.innerHTML = html || '<em>No candidates</em>';
+            };
+
+            document.getElementById('reboticsAdminSelectedBacklogBtn').onclick = () => {
+                const ids = [...document.querySelectorAll('.rebotics-pick-cb:checked')].map((el) => parseInt(el.value, 10));
+                const pasted = document.getElementById('reboticsPasteIds').value.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+                const numeric = pasted.map((s) => parseInt(s, 10)).filter((n) => !Number.isNaN(n));
+                const all = [...new Set([...ids, ...numeric])];
+                if (!all.length) {
+                    alert('Select tasks or paste IDs.');
+                    return;
+                }
+                const cands = adminCandidatesCache.filter((c) => all.includes(c.task_id));
+                const minimal = cands.length
+                    ? cands
+                    : all.map((id) => ({ task_id: id, store_custom_id: '?', title: '(pasted id)', category: '' }));
+                openReboticsConfirmModal(minimal, async (taskIds) => {
+                    const dry = document.getElementById('reboticsDryRun').checked;
+                    const res = await postReboticsBulkBacklog(taskIds, dry);
+                    renderReboticsResults(res);
+                });
+            };
+
+            document.getElementById('reboticsAdminStoreBacklogBtn').onclick = async () => {
+                const sid = document.getElementById('reboticsAdminStoreSelect').value;
+                if (!sid) {
+                    alert('Pick a store.');
+                    return;
+                }
+                const date = document.getElementById('reboticsBacklogDate').value;
+                const data = await fetchReboticsCandidates([sid], date);
+                if (!data.httpOk || !data.candidates || !data.candidates.length) {
+                    alert(data.error || 'No candidates');
+                    return;
+                }
+                openReboticsConfirmModal(data.candidates, async (taskIds) => {
+                    const dry = document.getElementById('reboticsDryRun').checked;
+                    const res = await postReboticsBulkBacklog(taskIds, dry);
+                    renderReboticsResults(res);
+                });
+            };
+        }
 
         // ─── AUTH STATUS MANAGEMENT ─────────────────────────────────────────────────
         let authState = sessionStorage.getItem('kompassAuthState') || 'unknown';
