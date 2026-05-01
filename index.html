@@ -2669,6 +2669,23 @@
             </div>
 
             <div class="field" style="margin-top: 15px;">
+                <label>Did you have InstaWork support today?</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="instaworkYes" name="instawork" value="Yes" onchange="toggleInstawork(this)">
+                        <label for="instaworkYes">Yes</label>
+                    </div>
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="instaworkNo" name="instawork" value="No" onchange="toggleInstawork(this)">
+                        <label for="instaworkNo">No</label>
+                    </div>
+                </div>
+                <div id="instaworkNote" style="display: none; margin-top: 8px; padding: 8px 10px; background: #1f2937; border-left: 3px solid #fbbf24; color: #fde68a; font-size: 13px; border-radius: 4px;">
+                    Sign-off sheet photos are required. On submit, an InstaWork timesheet PDF is saved automatically to the correct P#W# folder under "InstaWork Sign Out Sheets".
+                </div>
+            </div>
+
+            <div class="field" style="margin-top: 15px;">
                 <label>Did you call the KOMPASS Hotline?</label>
                 <div class="checkbox-group">
                     <div class="checkbox-option">
@@ -3397,6 +3414,8 @@
                 emailRecipients: emailRecipients,
                 hotlineYes: document.getElementById('hotlineYes').checked,
                 hotlineNo: document.getElementById('hotlineNo').checked,
+                instaworkYes: document.getElementById('instaworkYes')?.checked || false,
+                instaworkNo: document.getElementById('instaworkNo')?.checked || false,
                 resolvedYes: document.getElementById('resolvedYes').checked,
                 resolvedNo: document.getElementById('resolvedNo').checked,
                 resolvedNA: document.getElementById('resolvedNA').checked,
@@ -3457,6 +3476,14 @@
                     document.getElementById('hotlineDetails').style.display = 'block';
                 }
                 if (data.hotlineNo) document.getElementById('hotlineNo').checked = true;
+                const instaworkYesEl = document.getElementById('instaworkYes');
+                const instaworkNoEl = document.getElementById('instaworkNo');
+                const instaworkNoteEl = document.getElementById('instaworkNote');
+                if (instaworkYesEl && data.instaworkYes) {
+                    instaworkYesEl.checked = true;
+                    if (instaworkNoteEl) instaworkNoteEl.style.display = 'block';
+                }
+                if (instaworkNoEl && data.instaworkNo) instaworkNoEl.checked = true;
                 if (data.resolvedYes) document.getElementById('resolvedYes').checked = true;
                 if (data.resolvedNo) {
                     document.getElementById('resolvedNo').checked = true;
@@ -3612,6 +3639,23 @@
             } else if (checkbox.id === 'hotlineNo' && checkbox.checked) {
                 yes.checked = false;
                 details.style.display = 'none';
+            }
+            autoSave();
+        }
+
+        function toggleInstawork(checkbox) {
+            const yes = document.getElementById('instaworkYes');
+            const no = document.getElementById('instaworkNo');
+            const note = document.getElementById('instaworkNote');
+
+            if (checkbox.id === 'instaworkYes' && checkbox.checked) {
+                no.checked = false;
+                if (note) note.style.display = 'block';
+            } else if (checkbox.id === 'instaworkNo' && checkbox.checked) {
+                yes.checked = false;
+                if (note) note.style.display = 'none';
+            } else if (!yes.checked && !no.checked) {
+                if (note) note.style.display = 'none';
             }
             autoSave();
         }
@@ -5107,9 +5151,12 @@
 
             const hotlineYes = document.getElementById('hotlineYes').checked;
             const resolvedValue = document.querySelector('input[name="resolved"]:checked')?.value || 'NA';
+            const instaworkYes = document.getElementById('instaworkYes')?.checked || false;
+            const instaworkNo = document.getElementById('instaworkNo')?.checked || false;
 
             return {
                 LeadName: document.getElementById('leadName').value,
+                WorkDateISO: rawDate,
                 DateMMDDYYYY: dates.mmddyyyy,
                 DateForFilename: dates.mm_dd_yyyy,
                 DateForPDFFilename: dates.dd_mm_yy,
@@ -5130,6 +5177,7 @@
                 SignoffComplete: document.getElementById('signoffComplete')?.checked || false,
                 AfterComplete: document.getElementById('afterComplete')?.checked || false,
                 NoKompassCart: document.getElementById('noKompassCart')?.checked || false,
+                InstaworkSupport: instaworkYes ? true : (instaworkNo ? false : null),
                 signatureDataURL: await getSignatureDataURL(),
                 photos: photos
             };
@@ -5141,6 +5189,35 @@
             loading.classList.add('show');
             try {
                 const data = await collectData();
+
+                // ─── Pre-submit validation ─────────────────────────────────
+                // Sign-off sheet photos are required before submitting.
+                const localSignoffCount = data.photos.signoff.length;
+                const selectedSignoffCount = eodSelections.signoff.length;
+                const totalSignoffCount = localSignoffCount + selectedSignoffCount;
+                if (totalSignoffCount === 0) {
+                    loading.classList.remove('show');
+                    showAlert(
+                        'Sign-Off Sheet Required',
+                        'You must upload at least one photo of the sign-off sheet before submitting the EOD.'
+                    );
+                    return;
+                }
+
+                // InstaWork support requires a Yes/No answer.
+                const instaworkYesEl = document.getElementById('instaworkYes');
+                const instaworkNoEl = document.getElementById('instaworkNo');
+                const instaworkYes = !!instaworkYesEl?.checked;
+                const instaworkNo = !!instaworkNoEl?.checked;
+                if (!instaworkYes && !instaworkNo) {
+                    loading.classList.remove('show');
+                    showAlert(
+                        'InstaWork Question Required',
+                        'Please answer "Did you have InstaWork support today?" before submitting.'
+                    );
+                    return;
+                }
+
                 const pdfFilename = `FM${data.StoreNumberPadded} KOMPASS EOD ${data.DateForPDFFilename}.PDF`;
 
                 // Generate PDF as base64
@@ -5149,6 +5226,36 @@
                     pdfBase64 = await generatePDFBase64(data);
                 } catch (pdfError) {
                     console.error('Error generating PDF:', pdfError);
+                }
+
+                // ─── If InstaWork = Yes, save the timesheet locally first ───
+                let instaworkSave = null;
+                if (instaworkYes) {
+                    try {
+                        const signoffSource = eodSelections.signoff.length > 0
+                            ? eodSelections.signoff
+                            : data.photos.signoff.map(p => ({ dataUrl: p }));
+                        const timesheetPdfBase64 = await buildInstaworkTimesheetPDF(
+                            signoffSource,
+                            data.StoreNumberPadded,
+                            data.DateMMDDYYYY
+                        );
+                        instaworkSave = await saveInstaworkTimesheetLocally({
+                            storeNumber: data.StoreNumber,
+                            workDate: data.WorkDateISO,
+                            pdfBase64: timesheetPdfBase64
+                        });
+                    } catch (e) {
+                        console.error('InstaWork timesheet save failed:', e);
+                        loading.classList.remove('show');
+                        showAlert(
+                            'InstaWork Timesheet Save Failed',
+                            (e.message || String(e)) +
+                            '<br><br>Submit was halted. Start the local saver and try again, ' +
+                            'or set InstaWork support to "No" if it does not apply.'
+                        );
+                        return;
+                    }
                 }
 
                 const notesOnly = document.getElementById('notesOnlyToggle').checked;
@@ -5163,6 +5270,7 @@ Date: ${data.DateMMDDYYYY || ''}
 Store Number: ${data.StoreNumber || ''}
 Before picture of KOMPASS cart taken: ${beforeDone ? 'Yes' : 'No'}
 Manager checked in with: ${data.CheckInManager || ''}
+InstaWork support: ${instaworkYes ? 'Yes' : 'No'}${instaworkSave ? ` (timesheet saved → ${instaworkSave.folder}\\${instaworkSave.filePath?.split(/[\\/]/).pop() || ''})` : ''}
 Called KOMPASS Hotline: ${pickYN(data.CalledHotline)}
 Commodities: ${data.IssueCommodities || 'N/A'}
 Issue: ${data.WhatIsIssue || 'N/A'}
@@ -5208,6 +5316,10 @@ ${data.Notes || ''}`;
                     ...(pdfBase64 && { pdfBase64 })
                 };
 
+                // Attach InstaWork save metadata so the confirmation preview
+                // can show the user where the timesheet landed.
+                data._instaworkSave = instaworkSave;
+
                 loading.classList.remove('show');
 
                 // Show confirmation preview before sending
@@ -5221,6 +5333,10 @@ ${data.Notes || ''}`;
 
         // Show send confirmation modal with email preview
         function showSendConfirmation(payload, data) {
+            const instaworkSave = data._instaworkSave;
+            const instaworkSavedRow = instaworkSave
+                ? `<p style="color:#34d399;"><strong>InstaWork timesheet saved:</strong> ${instaworkSave.folder}\\${(instaworkSave.filePath || '').split(/[\\/]/).pop()}</p>`
+                : '';
             const previewHtml = `
                 <div style="text-align:left; font-size:13px; max-height:60vh; overflow-y:auto;">
                     <p><strong>From:</strong> EOD_FM${data.StoreNumberPadded}@retail-odyssey.com</p>
@@ -5228,6 +5344,7 @@ ${data.Notes || ''}`;
                     <p><strong>Subject:</strong> ${payload.subject}</p>
                     ${payload.pdfBase64 ? '<p><strong>Attachment:</strong> ' + payload.pdfFilename + '</p>' : '<p style="color:#fbbf24;"><strong>Attachment:</strong> PDF generation failed</p>'}
                     ${payload.signoffPhotos.length > 0 ? '<p><strong>Sign-off photos:</strong> ' + payload.signoffPhotos.length + ' (inline)</p>' : ''}
+                    ${instaworkSavedRow}
                     <hr style="border-color:#4b5563; margin:10px 0;">
                     <pre style="white-space:pre-wrap; font-size:12px; color:#d1d5db; background:#1f2937; padding:10px; border-radius:6px; max-height:200px; overflow-y:auto;">${payload.body}</pre>
                     ${payload.userName ? '<p style="margin-top:8px; color:#9ca3af; font-size:12px;">' + payload.userName + '<br>Retail Odyssey' + (payload.userEmail ? '<br>' + payload.userEmail : '') + '</p>' : ''}
@@ -5285,6 +5402,104 @@ ${data.Notes || ''}`;
                 loading.classList.remove('show');
                 showAlert('Error', 'Failed to send: ' + error.message);
             }
+        }
+
+        // ─── InstaWork timesheet (local saver integration) ──────────────────────
+        // The flow-automation runtime exposes this on its EOD emailer port
+        // (default 3001). flow-automation is started at logon and refreshed
+        // alongside SAS-MorningAuth via Windows Task Scheduler — see
+        // flow-automation/scripts/setup-flow-automation-task.ps1.
+        const INSTAWORK_SAVER_URL = 'http://127.0.0.1:3001/instawork/save-timesheet';
+
+        // Build a portrait PDF that contains the sign-off photos as the
+        // InstaWork Timesheet. Returns base64 (without data: prefix).
+        async function buildInstaworkTimesheetPDF(signoffPhotos, storeNumberPadded, dateMMDDYYYY) {
+            if (!Array.isArray(signoffPhotos) || signoffPhotos.length === 0) {
+                throw new Error('No sign-off photos available for InstaWork timesheet.');
+            }
+            if (typeof PDFLib === 'undefined') {
+                throw new Error('PDF library not loaded. Please refresh the page.');
+            }
+
+            const pdfDoc = await PDFLib.PDFDocument.create();
+            const pageWidth = 612;   // 8.5"
+            const pageHeight = 792;  // 11"
+            const sideMargin = 18;
+            const topMargin = 56;
+            const bottomMargin = 18;
+            const availableWidth = pageWidth - (sideMargin * 2);
+            const availableHeight = pageHeight - topMargin - bottomMargin;
+
+            for (let i = 0; i < signoffPhotos.length; i++) {
+                let photoData = signoffPhotos[i]?.dataUrl || signoffPhotos[i];
+                if (typeof photoData === 'string' && photoData.startsWith('http')) {
+                    const resp = await fetch(photoData);
+                    const blob = await resp.blob();
+                    photoData = await new Promise(resolve => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.readAsDataURL(blob);
+                    });
+                }
+
+                const portraitData = await ensurePortraitOrientation(photoData);
+                const compressed = await compressImageForPDF(portraitData, 2000, 2600, 0.85);
+                const imgBytes = await fetch(compressed).then(r => r.arrayBuffer());
+                const img = await pdfDoc.embedJpg(imgBytes);
+
+                const page = pdfDoc.addPage([pageWidth, pageHeight]);
+                page.drawText(`InstaWork Timesheet  —  FM${storeNumberPadded}  —  ${dateMMDDYYYY}`, {
+                    x: sideMargin,
+                    y: pageHeight - 28,
+                    size: 12,
+                    color: PDFLib.rgb(0, 0, 0)
+                });
+                page.drawText(`Page ${i + 1} of ${signoffPhotos.length}`, {
+                    x: sideMargin,
+                    y: pageHeight - 44,
+                    size: 9,
+                    color: PDFLib.rgb(0.4, 0.4, 0.4)
+                });
+
+                const scale = Math.min(availableWidth / img.width, availableHeight / img.height);
+                const finalW = img.width * scale;
+                const finalH = img.height * scale;
+                const x = sideMargin + (availableWidth - finalW) / 2;
+                const y = bottomMargin + (availableHeight - finalH) / 2;
+                page.drawImage(img, { x, y, width: finalW, height: finalH });
+            }
+
+            const bytes = await pdfDoc.save({ useObjectStreams: true, addDefaultPage: false });
+            const u8 = new Uint8Array(bytes);
+            let binary = '';
+            const chunkSize = 8192;
+            for (let i = 0; i < u8.length; i += chunkSize) {
+                binary += String.fromCharCode(...u8.subarray(i, i + chunkSize));
+            }
+            return btoa(binary);
+        }
+
+        // POST the timesheet PDF to the local saver service. Returns the saver
+        // response (`{ success, filePath, folder, periodWeek, ... }`) or throws.
+        async function saveInstaworkTimesheetLocally({ storeNumber, workDate, pdfBase64 }) {
+            let response;
+            try {
+                response = await fetch(INSTAWORK_SAVER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ storeNumber, workDate, pdfBase64 })
+                });
+            } catch (e) {
+                throw new Error(
+                    'Could not reach the local automation service (flow-automation) on http://127.0.0.1:3001. ' +
+                    'It should auto-start at logon; if it is not running, start it manually with `npm start` from c:\\Users\\tgaut\\flow-automation.'
+                );
+            }
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.success) {
+                throw new Error(result.error || `Saver returned ${response.status}`);
+            }
+            return result;
         }
 
         // PDF generation function - returns base64 string
@@ -5650,6 +5865,8 @@ ${data.Notes || ''}`;
                     updateSignaturePreview();
                     document.getElementById('hotlineDetails').style.display = 'none';
                     document.getElementById('tempSolutionField').style.display = 'none';
+                    const instaworkNoteReset = document.getElementById('instaworkNote');
+                    if (instaworkNoteReset) instaworkNoteReset.style.display = 'none';
                     // Reset Kompass labels back to default
                     document.getElementById('beforePhotoSection').querySelector('label.field').textContent = 'Kompass Cart - Before:';
                     document.getElementById('afterPhotoSection').querySelector('label.field').textContent = 'Kompass Cart - After:';

@@ -1,4 +1,8 @@
 {
+  "name": "eod-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static EOD report app. The InstaWork timesheet save and other local automation are handled by the flow-automation service (see c:\\Users\\tgaut\\flow-automation).",
   "dependencies": {
     "node-cron": "^4.2.1"
   }
