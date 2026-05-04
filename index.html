@@ -586,6 +586,118 @@
             }
         }
 
+        /* ─── InstaWork save overlay (saving / success) ────────────────── */
+        .iw-overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(2, 6, 23, 0.92);
+            z-index: 10001;
+            padding: 24px;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+        }
+        .iw-overlay.show { display: flex; }
+        .iw-overlay-card {
+            background: #0b1220;
+            border: 2px solid #0d4f8b;
+            border-radius: 14px;
+            padding: 32px 28px;
+            max-width: 460px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
+        }
+        .iw-spinner {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 20px;
+            border: 6px solid rgba(96, 165, 250, 0.25);
+            border-top-color: #60a5fa;
+            border-radius: 50%;
+            animation: iw-spin 1s linear infinite;
+        }
+        @keyframes iw-spin { to { transform: rotate(360deg); } }
+        .iw-check {
+            display: none;
+            width: 96px;
+            height: 96px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            background: #065f46;
+            color: #d1fae5;
+            font-size: 56px;
+            line-height: 96px;
+            font-weight: 700;
+            box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.25);
+            animation: iw-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+        @keyframes iw-pop {
+            0%   { transform: scale(0.4); opacity: 0; }
+            100% { transform: scale(1);   opacity: 1; }
+        }
+        .iw-overlay-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #e5e7eb;
+            margin-bottom: 8px;
+        }
+        .iw-overlay-subtitle {
+            font-size: 0.95em;
+            color: #94a3b8;
+            line-height: 1.45;
+            word-break: break-word;
+        }
+        .iw-overlay[data-state="success"] .iw-spinner { display: none; }
+        .iw-overlay[data-state="success"] .iw-check { display: block; }
+        .iw-overlay[data-state="success"] .iw-overlay-card {
+            border-color: #10b981;
+            box-shadow: 0 18px 50px rgba(16, 185, 129, 0.25);
+        }
+        .iw-overlay[data-state="success"] .iw-overlay-title { color: #a7f3d0; }
+        @media (max-width: 480px) {
+            .iw-overlay-card { padding: 24px 18px; }
+            .iw-overlay-title { font-size: 1.25em; }
+            .iw-check { width: 80px; height: 80px; line-height: 80px; font-size: 48px; }
+        }
+
+        /* When the InstaWork section has already been saved-and-confirmed,
+           collapse the heavy capture UI down to a compact green summary
+           row so the lead isn't re-prompted every time they scroll. */
+        #instaworkYesPanel.iw-collapsed > div:not(.iw-collapsed-row),
+        #instaworkYesPanel.iw-collapsed .photo-section,
+        #instaworkYesPanel.iw-collapsed #instaworkSaveBtn,
+        #instaworkYesPanel.iw-collapsed #instaworkSaveStatus {
+            display: none !important;
+        }
+        .iw-collapsed-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 14px;
+            background: #064e3b;
+            border-left: 4px solid #34d399;
+            border-radius: 6px;
+            color: #a7f3d0;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        .iw-collapsed-row .iw-retake-btn {
+            background: transparent;
+            color: #a7f3d0;
+            border: 1px solid #34d399;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .iw-collapsed-row .iw-retake-btn:hover { background: rgba(52, 211, 153, 0.15); }
+
         input[type="file"] {
             display: none;
         }
@@ -2313,7 +2425,7 @@
             <div class="section-title" style="color:#fde68a;">InstaWork Support</div>
 
             <div class="field">
-                <label>Did you have InstaWork support today?</label>
+                <label>Do you have InstaWork support today?</label>
                 <div class="checkbox-group">
                     <div class="checkbox-option">
                         <input type="checkbox" id="instaworkYes" name="instawork" value="Yes" onchange="toggleInstawork(this)">
@@ -2361,6 +2473,20 @@
                 <button class="btn btn-primary" id="instaworkSaveBtn" type="button" onclick="confirmAndSaveInstaworkPhoto()" style="margin-top:12px; width:100%;" disabled>
                     Confirm &amp; Save InstaWork Sign-Out Sheet
                 </button>
+
+                <!--
+                    Compact "saved" summary that takes the panel's place
+                    after a successful upload. The "Re-take photo" button
+                    re-expands the panel so the lead can re-capture if
+                    something was wrong with the first picture.
+                -->
+                <div id="instaworkCollapsedRow" class="iw-collapsed-row" style="display:none;">
+                    <div>
+                        <div style="font-weight:700;">&#10003; InstaWork sign-out sheet saved</div>
+                        <div id="instaworkCollapsedDest" style="font-size:12px; color:#6ee7b7; margin-top:2px; word-break:break-word;"></div>
+                    </div>
+                    <button type="button" class="iw-retake-btn" onclick="reopenInstaworkPanel()">Re-take photo</button>
+                </div>
             </div>
         </div>
 
@@ -2885,6 +3011,24 @@
         <span>Processing...</span>
     </div>
 
+    <!--
+        InstaWork dedicated overlay. Two visual states swapped via the
+        `data-state` attribute on the wrapper:
+          - "saving": animated blue spinner + "Saving InstaWork sign-out sheet..."
+          - "success": large green checkmark + "Saved!" + saver's destination path
+        Held visible for a minimum of ~4 s total so the lead has clear,
+        unambiguous confirmation that the upload completed and the file
+        landed where they expect.
+    -->
+    <div id="instaworkBufferOverlay" class="iw-overlay" data-state="saving">
+        <div class="iw-overlay-card">
+            <div class="iw-spinner" aria-hidden="true"></div>
+            <div class="iw-check" aria-hidden="true">&#10003;</div>
+            <div id="iwOverlayTitle" class="iw-overlay-title">Saving InstaWork sign-out sheet&hellip;</div>
+            <div id="iwOverlaySubtitle" class="iw-overlay-subtitle">Uploading the photo and routing it to the right period folder.</div>
+        </div>
+    </div>
+
     <!-- Lightbox Overlay for full-size photo viewing -->
     <div id="lightboxOverlay" class="lightbox-overlay" onclick="closeLightbox(event)">
         <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
@@ -3165,7 +3309,13 @@
             }
             const headers = options.headers || {};
             headers['Authorization'] = `Bearer ${token}`;
-            const resp = await fetch(url, { ...options, headers });
+            // Cloudflare Access fronts the EOD API on eod-api.the-dump-bin.com.
+            // The CF_Authorization cookie that proves we're authenticated is set
+            // on the parent zone (.the-dump-bin.com), so we MUST send credentials
+            // on every API request — otherwise Cloudflare Access strips the
+            // request before it reaches Railway and the API responds with 401
+            // "Missing Cloudflare Access JWT".
+            const resp = await fetch(url, { ...options, headers, credentials: 'include' });
 
             if (resp.status === 401) {
                 try {
@@ -3236,6 +3386,14 @@
         // sign-out sheet for this session. Cleared whenever the photo
         // changes or InstaWork is set back to "No".
         let instaworkSavedInfo = null;
+        // Re-entry guard for the Confirm & Save button. Prevents
+        // double-clicks from firing two saves (which would write
+        // "...version 2.jpg" alongside the first one).
+        let instaworkSaving = false;
+        // Minimum hold time, in milliseconds, that the buffering+success
+        // overlay stays visible. Exceeds the typical save round-trip so
+        // the lead always sees a clear "✓ Saved!" confirmation.
+        const INSTAWORK_OVERLAY_MIN_MS = 4000;
 
         // PROD-sourced photos pulled per type
         const prodPhotos = {
@@ -3740,6 +3898,9 @@
                 renderPhotos('instawork');
                 const statusEl = document.getElementById('instaworkSaveStatus');
                 if (statusEl) statusEl.style.display = 'none';
+                // Clear any "saved" collapsed state so the next time
+                // they tap "Yes" they get the full reminder + capture UI.
+                reopenInstaworkPanel();
             } else if (!yes.checked && !no.checked) {
                 hidePanel();
             }
@@ -3859,6 +4020,7 @@
                             instaworkSavedInfo = null;
                             const statusEl = document.getElementById('instaworkSaveStatus');
                             if (statusEl) statusEl.style.display = 'none';
+                            reopenInstaworkPanel();
                         } else {
                             photos[type].push(correctedDataUrl);
                         }
@@ -3880,6 +4042,7 @@
                                 instaworkSavedInfo = null;
                                 const statusEl = document.getElementById('instaworkSaveStatus');
                                 if (statusEl) statusEl.style.display = 'none';
+                                reopenInstaworkPanel();
                             } else {
                                 photos[type].push(e.target.result);
                             }
@@ -4075,6 +4238,7 @@
                 instaworkSavedInfo = null;
                 const statusEl = document.getElementById('instaworkSaveStatus');
                 if (statusEl) statusEl.style.display = 'none';
+                reopenInstaworkPanel();
             }
             renderPhotos(type);
             updatePhotoCheckbox(type);
@@ -4379,6 +4543,7 @@
                 instaworkSavedInfo = null;
                 const statusEl = document.getElementById('instaworkSaveStatus');
                 if (statusEl) statusEl.style.display = 'none';
+                reopenInstaworkPanel();
             } else {
                 photos[currentCameraType].push(photoData);
             }
@@ -5166,6 +5331,7 @@
                 instaworkSavedInfo = null;
                 const statusEl = document.getElementById('instaworkSaveStatus');
                 if (statusEl) statusEl.style.display = 'none';
+                reopenInstaworkPanel();
             }
 
             // Re-render and save
@@ -5534,7 +5700,7 @@ ${data.Notes || ''}`;
             const loading = document.getElementById('loadingOverlay');
             loading.classList.add('show');
             try {
-                const response = await authFetch('https://eod-api-production.up.railway.app/send-eod', {
+                const response = await authFetch('https://eod-api.the-dump-bin.com/send-eod', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -5611,22 +5777,81 @@ ${data.Notes || ''}`;
             const btn = document.getElementById('instaworkSaveBtn');
             if (!btn) return;
             const hasPhoto = photos.instawork.length > 0;
-            const alreadySaved = !!instaworkSavedInfo;
+            // Saving lock takes priority — keep the button disabled and
+            // labeled until the in-flight save resolves (success or fail).
+            if (instaworkSaving) {
+                btn.disabled = true;
+                btn.textContent = 'Saving\u2026';
+                return;
+            }
             btn.disabled = !hasPhoto;
-            if (alreadySaved) {
-                btn.textContent = 'Re-save InstaWork Sign-Out Sheet';
-            } else {
-                btn.textContent = 'Confirm \u0026 Save InstaWork Sign-Out Sheet';
+            btn.textContent = instaworkSavedInfo
+                ? 'Re-save InstaWork Sign-Out Sheet'
+                : 'Confirm \u0026 Save InstaWork Sign-Out Sheet';
+        }
+
+        // Show / hide / re-state the InstaWork buffering overlay.
+        // state: 'saving' (spinner) | 'success' (checkmark) | 'hide' (close)
+        function setInstaworkOverlay(state, opts) {
+            const overlay = document.getElementById('instaworkBufferOverlay');
+            const title = document.getElementById('iwOverlayTitle');
+            const sub = document.getElementById('iwOverlaySubtitle');
+            if (!overlay) return;
+            if (state === 'hide') {
+                overlay.classList.remove('show');
+                return;
+            }
+            overlay.dataset.state = state;
+            if (state === 'saving') {
+                title.textContent = (opts && opts.title) || 'Saving InstaWork sign-out sheet\u2026';
+                sub.textContent = (opts && opts.subtitle)
+                    || 'Uploading the photo and routing it to the right period folder.';
+            } else if (state === 'success') {
+                title.textContent = (opts && opts.title) || 'Saved!';
+                sub.textContent = (opts && opts.subtitle) || '';
+            }
+            overlay.classList.add('show');
+        }
+
+        // Collapse the InstaWork yes-panel down to a compact "Saved" summary
+        // row. Called after a successful save+confirmation. The lead can
+        // re-expand it via the "Re-take photo" button.
+        function collapseInstaworkPanel() {
+            const panel = document.getElementById('instaworkYesPanel');
+            const collapsedRow = document.getElementById('instaworkCollapsedRow');
+            const collapsedDest = document.getElementById('instaworkCollapsedDest');
+            if (!panel || !collapsedRow) return;
+            panel.classList.add('iw-collapsed');
+            collapsedRow.style.display = 'flex';
+            if (collapsedDest && instaworkSavedInfo) {
+                const fileName = (instaworkSavedInfo.filePath || '').split(/[\\/]/).pop() || '';
+                const folder = instaworkSavedInfo.folder || '';
+                const pw = instaworkSavedInfo.periodWeek ? ` (${instaworkSavedInfo.periodWeek})` : '';
+                collapsedDest.textContent = `${folder}\\${fileName}${pw}`;
             }
         }
 
+        // Re-open the InstaWork yes-panel from its collapsed state so the
+        // lead can re-take or re-edit the sign-out sheet photo.
+        function reopenInstaworkPanel() {
+            const panel = document.getElementById('instaworkYesPanel');
+            const collapsedRow = document.getElementById('instaworkCollapsedRow');
+            if (panel) panel.classList.remove('iw-collapsed');
+            if (collapsedRow) collapsedRow.style.display = 'none';
+        }
+
         // User clicked "Confirm & Save InstaWork Sign-Out Sheet". Validates
-        // the store + date, builds a high-quality portrait JPEG, and POSTs
-        // it to the local saver. On success it locks in `instaworkSavedInfo`
-        // so the EOD submit can pass through without re-prompting.
+        // the store + date, builds a high-quality portrait JPEG, POSTs it
+        // to the local saver, and shows a 4-second saving/success overlay
+        // for unambiguous confirmation. On success it locks in
+        // `instaworkSavedInfo` so EOD submit can pass through, and
+        // collapses the panel into a compact summary row.
         async function confirmAndSaveInstaworkPhoto() {
-            const btn = document.getElementById('instaworkSaveBtn');
-            const statusEl = document.getElementById('instaworkSaveStatus');
+            // Re-entry guard: if a save is already in flight, bail.
+            // Buttons are also disabled, but this protects against keyboard
+            // double-Enter, programmatic invocation, etc.
+            if (instaworkSaving) return;
+
             if (photos.instawork.length === 0) {
                 showAlert('No Photo Yet', 'Please take or upload a photo of the InstaWork sign-out sheet first.');
                 return;
@@ -5643,11 +5868,23 @@ ${data.Notes || ''}`;
                 return;
             }
 
-            const originalLabel = btn ? btn.textContent : '';
-            if (btn) {
-                btn.disabled = true;
-                btn.textContent = 'Saving\u2026';
+            instaworkSaving = true;
+            updateInstaworkSaveButton();
+
+            const statusEl = document.getElementById('instaworkSaveStatus');
+            // Reset status pill so a previous error doesn't bleed through.
+            if (statusEl) {
+                statusEl.style.display = 'none';
+                statusEl.style.background = '#064e3b';
+                statusEl.style.borderLeftColor = '#34d399';
+                statusEl.style.color = '#a7f3d0';
+                statusEl.innerHTML = '';
             }
+
+            // Show buffering overlay immediately and start the minimum-hold timer.
+            setInstaworkOverlay('saving');
+            const overlayStartedAt = Date.now();
+            const minHoldUntil = overlayStartedAt + INSTAWORK_OVERLAY_MIN_MS;
 
             try {
                 const imageBase64 = await buildInstaworkSignOutJpegBase64(photos.instawork[0]);
@@ -5658,16 +5895,38 @@ ${data.Notes || ''}`;
                 });
                 instaworkSavedInfo = result;
 
+                const fileName = (result.filePath || '').split(/[\\/]/).pop() || '(unknown)';
+                const destLine = `${result.folder}\\${fileName}` +
+                    (result.periodWeek ? `  \u2022  ${result.periodWeek}` : '');
+
                 if (statusEl) {
-                    const fileName = (result.filePath || '').split(/[\\/]/).pop() || '(unknown)';
                     statusEl.style.display = 'block';
-                    statusEl.innerHTML =
-                        `<strong>Saved.</strong> ${result.folder}\\${fileName}` +
-                        (result.periodWeek ? ` (${result.periodWeek})` : '');
+                    statusEl.innerHTML = `<strong>Saved.</strong> ${destLine}`;
                 }
-                updateInstaworkSaveButton();
+
+                // Flip the overlay to its success state, then keep it on
+                // screen until the minimum hold has elapsed. We always show
+                // the success state for at least ~1.2 s so it actually
+                // registers, regardless of how fast the network was.
+                setInstaworkOverlay('success', {
+                    title: 'Sign-out sheet saved!',
+                    subtitle: destLine
+                });
+                const elapsed = Date.now() - overlayStartedAt;
+                const successHold = Math.max(1200, minHoldUntil - Date.now());
+                if (elapsed < INSTAWORK_OVERLAY_MIN_MS) {
+                    await new Promise(r => setTimeout(r, successHold));
+                } else {
+                    await new Promise(r => setTimeout(r, 1200));
+                }
+
+                setInstaworkOverlay('hide');
+                collapseInstaworkPanel();
             } catch (e) {
                 console.error('InstaWork sign-out save failed:', e);
+                // Hide the overlay before surfacing the error modal so the
+                // two don't fight for the screen.
+                setInstaworkOverlay('hide');
                 if (statusEl) {
                     statusEl.style.display = 'block';
                     statusEl.style.background = '#450a0a';
@@ -5680,8 +5939,9 @@ ${data.Notes || ''}`;
                     (e.message || String(e)) +
                     '<br><br>Make sure the local automation service is running, then try again.'
                 );
-                if (btn) btn.textContent = originalLabel || 'Confirm \u0026 Save InstaWork Sign-Out Sheet';
-                if (btn) btn.disabled = false;
+            } finally {
+                instaworkSaving = false;
+                updateInstaworkSaveButton();
             }
         }
 
@@ -6022,6 +6282,9 @@ ${data.Notes || ''}`;
                     photos.after = [];
                     photos.instawork = [];
                     instaworkSavedInfo = null;
+                    instaworkSaving = false;
+                    setInstaworkOverlay('hide');
+                    reopenInstaworkPanel();
                     emailRecipients = [];
                     selectedShift = null;
                     smClearAll();
@@ -6232,7 +6495,11 @@ ${data.Notes || ''}`;
         });
 
         // ─── SHIFT MANAGEMENT ────────────────────────────────────────────────────────
-        const SM_API_BASE = 'https://eod-api-production.up.railway.app';
+        // Cloudflare Access fronts the API on this hostname. Hitting the raw
+        // Railway URL (eod-api-production.up.railway.app) bypasses Access, which
+        // makes the API reject every request with 401 "Missing Cloudflare Access
+        // JWT" — see eod-api/docs/cloudflare-access-setup.md.
+        const SM_API_BASE = 'https://eod-api.the-dump-bin.com';
         let smShifts = [];
         let smSelectedShift = null;
         let smMembers = [];
@@ -7758,7 +8025,7 @@ ${data.Notes || ''}`;
         }
 
         // ─── SAS SYNC FUNCTIONS ─────────────────────────────────────────────────────
-        const SAS_UPLOAD_URL = 'https://eod-api-production.up.railway.app/sas-upload';
+        const SAS_UPLOAD_URL = 'https://eod-api.the-dump-bin.com/sas-upload';
 
         // Map EOD photo types to SAS slots
         const SYNC_SLOT_MAP = {
