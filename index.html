@@ -115,6 +115,20 @@
             transform: scale(0.95);
         }
 
+        .refresh-connections-btn:disabled,
+        .refresh-connections-btn.cooldown {
+            background: #1f2937;
+            border-color: #374151;
+            color: #6b7280;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .refresh-connections-btn:disabled:hover,
+        .refresh-connections-btn.cooldown:hover {
+            background: #1f2937;
+        }
+
         .refresh-connections-btn.spinning svg {
             animation: spin 1s linear infinite;
         }
@@ -2499,7 +2513,7 @@
 </div>
     <div class="container">
         <div class="header" onclick="openQuickView()">
-            <button class="refresh-connections-btn" id="refreshConnectionsBtn" onclick="event.stopPropagation(); refreshConnections();" title="Refresh connections">
+            <button class="refresh-connections-btn" id="refreshConnectionsBtn" onclick="event.stopPropagation(); refreshConnections();" title="Refresh SAS / Rebotics auth">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 2v6h-6"/>
                     <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
@@ -6928,6 +6942,9 @@ ${data.Notes || ''}`;
             pollConnections();
             connPollInterval = setInterval(pollConnections, 30000);
 
+            // Restore the auth-refresh button's cooldown state across reloads
+            ensureRefreshCooldownTicker();
+
             // Log startup info
             console.log('Kompass EOD Advanced loaded');
             console.log('PDFLib available:', typeof PDFLib !== 'undefined');
@@ -8148,18 +8165,126 @@ ${data.Notes || ''}`;
             smLoadMembers();
         }
 
+        // ─── AUTH REFRESH BUTTON ─────────────────────────────────────────────
+        //
+        // The header refresh icon is a dedicated SAS + Rebotics auth refresh
+        // trigger.  Server-side cron already re-mints the SAS session every
+        // 4h (the credentials are good for 24h), so this button is for the
+        // "I switched devices and need fresh tokens NOW" case.  We gate it
+        // with a 10-minute click cooldown so a frantic user (or bumped
+        // touchscreen) can't burn TOTP codes back-to-back, and persist the
+        // cooldown to localStorage so the gate survives reloads.
+        const REFRESH_COOLDOWN_MS = 10 * 60 * 1000;
+        const REFRESH_COOLDOWN_KEY = 'kompassAuthRefreshLastClickAt';
+
+        function getRefreshCooldownRemainingMs() {
+            const last = parseInt(localStorage.getItem(REFRESH_COOLDOWN_KEY) || '0', 10);
+            if (!last || Number.isNaN(last)) return 0;
+            const elapsed = Date.now() - last;
+            return Math.max(0, REFRESH_COOLDOWN_MS - elapsed);
+        }
+
+        function formatCooldownLabel(ms) {
+            if (ms <= 0) return '';
+            const totalSec = Math.ceil(ms / 1000);
+            const m = Math.floor(totalSec / 60);
+            const s = totalSec % 60;
+            if (m > 0 && s > 0) return `${m}m ${s}s`;
+            if (m > 0) return `${m}m`;
+            return `${s}s`;
+        }
+
+        function updateRefreshButtonState() {
+            const btn = document.getElementById('refreshConnectionsBtn');
+            if (!btn) return;
+            const remaining = getRefreshCooldownRemainingMs();
+            if (remaining > 0) {
+                btn.disabled = true;
+                btn.classList.add('cooldown');
+                btn.title = `Auth refresh available in ${formatCooldownLabel(remaining)}`;
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('cooldown');
+                btn.title = 'Refresh SAS / Rebotics auth';
+            }
+        }
+
+        let refreshCooldownTimer = null;
+        function ensureRefreshCooldownTicker() {
+            updateRefreshButtonState();
+            if (refreshCooldownTimer) clearInterval(refreshCooldownTimer);
+            if (getRefreshCooldownRemainingMs() <= 0) return;
+            refreshCooldownTimer = setInterval(() => {
+                updateRefreshButtonState();
+                if (getRefreshCooldownRemainingMs() <= 0) {
+                    clearInterval(refreshCooldownTimer);
+                    refreshCooldownTimer = null;
+                }
+            }, 1000);
+        }
+
         async function refreshConnections() {
             const btn = document.getElementById('refreshConnectionsBtn');
+            if (!btn) return;
+
+            const remaining = getRefreshCooldownRemainingMs();
+            if (remaining > 0) {
+                showAuthToast(`Auth refresh available in ${formatCooldownLabel(remaining)}`);
+                return;
+            }
+
+            // Lock immediately so a double-tap can't slip past the cooldown
+            // before the first request returns.
+            localStorage.setItem(REFRESH_COOLDOWN_KEY, String(Date.now()));
+            ensureRefreshCooldownTicker();
+
             btn.classList.add('spinning');
+
+            let sasResult = null;
+            let reboticsResult = null;
+
+            try {
+                const sasResp = await authFetch(`${SM_API_BASE}/api/trigger-auth?force=1`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                sasResult = await sasResp.json().catch(() => ({}));
+            } catch (e) {
+                console.error('[refresh] SAS trigger failed:', e);
+                sasResult = { success: false, error: e.message };
+            }
+
+            try {
+                const reboticsResp = await authFetch(`${SM_API_BASE}/rebotics-trigger-auth`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                reboticsResult = await reboticsResp.json().catch(() => ({}));
+            } catch (e) {
+                console.error('[refresh] Rebotics trigger failed:', e);
+                reboticsResult = { success: false, error: e.message };
+            }
+
+            const parts = [];
+            if (sasResult?.success) {
+                parts.push(sasResult.skipped ? 'SAS still fresh' : 'SAS refreshed');
+            } else {
+                parts.push('SAS refresh failed');
+            }
+            if (reboticsResult?.success) {
+                parts.push('Rebotics email sent');
+            } else {
+                parts.push('Rebotics trigger failed');
+            }
+            showAuthToast(parts.join(' · '));
+
             try {
                 await pollConnections();
-
-                // If a shift is selected, refresh its members too
                 if (smSelectedShift) {
                     await smLoadMembers();
                 }
             } catch (e) {
-                console.error('Refresh connections error:', e);
+                console.error('[refresh] Post-trigger poll failed:', e);
             } finally {
                 btn.classList.remove('spinning');
             }
