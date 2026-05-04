@@ -2301,6 +2301,69 @@
             </div>
         </div>
 
+        <!--
+            InstaWork Support — placed at the TOP of the form so the lead is
+            reminded BEFORE the day starts (sign-in) AND before EOD submission
+            (sign-out + capture). When "Yes" is selected the lead is required
+            to capture the InstaWork sign-out sheet photo and explicitly
+            confirm-and-save it; the saver routes the JPG into the correct
+            P#W# folder under the InstaWork sign-out root.
+        -->
+        <div class="section" id="instaworkSection" style="border-color:#fbbf24;">
+            <div class="section-title" style="color:#fde68a;">InstaWork Support</div>
+
+            <div class="field">
+                <label>Did you have InstaWork support today?</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="instaworkYes" name="instawork" value="Yes" onchange="toggleInstawork(this)">
+                        <label for="instaworkYes">Yes</label>
+                    </div>
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="instaworkNo" name="instawork" value="No" onchange="toggleInstawork(this)">
+                        <label for="instaworkNo">No</label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="instaworkYesPanel" style="display:none; margin-top:14px;">
+                <div style="padding:12px 14px; background:#1f2937; border-left:4px solid #fbbf24; color:#fde68a; border-radius:6px;">
+                    <p style="margin:0 0 6px 0; font-weight:700;">Make sure your InstaWork crew signs in &amp; out</p>
+                    <ul style="margin:0; padding-left:18px; line-height:1.55;">
+                        <li>Have every InstaWork employee fill out the sign-off sheet <strong>first thing in the morning</strong>.</li>
+                        <li>Have them fill it out <strong>again when they leave</strong> for the day.</li>
+                    </ul>
+                </div>
+
+                <div style="margin-top:12px; padding:12px 14px; background:#450a0a; border-left:4px solid #ef4444; color:#fecaca; border-radius:6px;">
+                    <p style="margin:0 0 6px 0; font-weight:700; font-size:14px;">As soon as the LAST InstaWork employee signs:</p>
+                    <p style="margin:0; line-height:1.5;">
+                        Immediately take a clear photo of the sign-out sheet. Make sure it is in good order — correct orientation, no glare, all signatures visible. You can rotate, crop, and adjust the image before saving.
+                    </p>
+                </div>
+
+                <div class="photo-section" id="instaworkPhotoSection">
+                    <label class="field label" style="margin-top:14px;">InstaWork Sign-Out Sheet Photo:</label>
+                    <div class="photo-button-group">
+                        <button class="photo-button" type="button" onclick="openInstaworkCamera()">
+                            Take Photo
+                        </button>
+                        <button class="photo-button" type="button" onclick="document.getElementById('photoInstawork').click()">
+                            Upload Image
+                        </button>
+                    </div>
+                    <input type="file" id="photoInstawork" accept="image/*,.heic,.heif" onchange="handlePhoto(this, 'instawork')">
+                    <div id="previewInstawork" class="photo-preview"></div>
+                </div>
+
+                <div id="instaworkSaveStatus" style="display:none; margin-top:10px; padding:10px 12px; background:#064e3b; border-left:4px solid #34d399; color:#a7f3d0; border-radius:6px; font-size:13px;"></div>
+
+                <button class="btn btn-primary" id="instaworkSaveBtn" type="button" onclick="confirmAndSaveInstaworkPhoto()" style="margin-top:12px; width:100%;" disabled>
+                    Confirm &amp; Save InstaWork Sign-Out Sheet
+                </button>
+            </div>
+        </div>
+
         <!-- Store & Date Selection + Find Shifts (unified) — MOVED ABOVE My Profile -->
         <div class="section" id="storeShiftSection">
             <div class="section-title">Store & Shift Selection</div>
@@ -2680,23 +2743,6 @@
             <div class="field">
                 <label>Manager checked in with:</label>
                 <input type="text" id="checkInManager" placeholder="Manager name">
-            </div>
-
-            <div class="field" style="margin-top: 15px;">
-                <label>Did you have InstaWork support today?</label>
-                <div class="checkbox-group">
-                    <div class="checkbox-option">
-                        <input type="checkbox" id="instaworkYes" name="instawork" value="Yes" onchange="toggleInstawork(this)">
-                        <label for="instaworkYes">Yes</label>
-                    </div>
-                    <div class="checkbox-option">
-                        <input type="checkbox" id="instaworkNo" name="instawork" value="No" onchange="toggleInstawork(this)">
-                        <label for="instaworkNo">No</label>
-                    </div>
-                </div>
-                <div id="instaworkNote" style="display: none; margin-top: 8px; padding: 8px 10px; background: #1f2937; border-left: 3px solid #fbbf24; color: #fde68a; font-size: 13px; border-radius: 4px;">
-                    Sign-off sheet photos are required. On submit, an InstaWork timesheet PDF is saved automatically to the correct P#W# folder under "InstaWork Sign Out Sheets".
-                </div>
             </div>
 
             <div class="field" style="margin-top: 15px;">
@@ -3177,8 +3223,19 @@
         const photos = {
             before: [],
             signoff: [],
-            after: []
+            after: [],
+            // Single-photo capture for the InstaWork sign-out sheet. Kept in
+            // the same shape as the other photo types so renderPhotos /
+            // handlePhoto / openImageEditor / IndexedDB persistence all work
+            // unchanged. We only ever keep the most-recent photo (length <= 1).
+            instawork: []
         };
+
+        // Tracks the saver response after a successful InstaWork JPG save.
+        // When non-null, the lead has already confirmed-and-saved the
+        // sign-out sheet for this session. Cleared whenever the photo
+        // changes or InstaWork is set back to "No".
+        let instaworkSavedInfo = null;
 
         // PROD-sourced photos pulled per type
         const prodPhotos = {
@@ -3246,6 +3303,7 @@
                         before: photosObj.before || [],
                         signoff: photosObj.signoff || [],
                         after: photosObj.after || [],
+                        instawork: photosObj.instawork || [],
                         timestamp: Date.now()
                     };
 
@@ -3278,10 +3336,11 @@
                                 resolve({
                                     before: data.before || [],
                                     signoff: data.signoff || [],
-                                    after: data.after || []
+                                    after: data.after || [],
+                                    instawork: data.instawork || []
                                 });
                             } else {
-                                resolve({ before: [], signoff: [], after: [] });
+                                resolve({ before: [], signoff: [], after: [], instawork: [] });
                             }
                         };
                         request.onerror = () => {
@@ -3291,7 +3350,7 @@
                     });
                 } catch (e) {
                     console.error('IndexedDB loadPhotos error:', e);
-                    return { before: [], signoff: [], after: [] };
+                    return { before: [], signoff: [], after: [], instawork: [] };
                 }
             },
 
@@ -3489,10 +3548,10 @@
                 if (data.hotlineNo) document.getElementById('hotlineNo').checked = true;
                 const instaworkYesEl = document.getElementById('instaworkYes');
                 const instaworkNoEl = document.getElementById('instaworkNo');
-                const instaworkNoteEl = document.getElementById('instaworkNote');
+                const instaworkPanelEl = document.getElementById('instaworkYesPanel');
                 if (instaworkYesEl && data.instaworkYes) {
                     instaworkYesEl.checked = true;
-                    if (instaworkNoteEl) instaworkNoteEl.style.display = 'block';
+                    if (instaworkPanelEl) instaworkPanelEl.style.display = 'block';
                 }
                 if (instaworkNoEl && data.instaworkNo) instaworkNoEl.checked = true;
                 if (data.resolvedYes) document.getElementById('resolvedYes').checked = true;
@@ -3573,19 +3632,25 @@
                 };
 
                 const savedPhotos = await PhotoDB.loadPhotos();
-                if (savedPhotos.before.length || savedPhotos.signoff.length || savedPhotos.after.length) {
+                const savedInstawork = savedPhotos.instawork || [];
+                if (savedPhotos.before.length || savedPhotos.signoff.length || savedPhotos.after.length || savedInstawork.length) {
                     photos.before = deduplicatePhotos(savedPhotos.before);
                     photos.signoff = deduplicatePhotos(savedPhotos.signoff);
                     photos.after = deduplicatePhotos(savedPhotos.after);
+                    // Cap InstaWork to a single photo even if older sessions stored more.
+                    photos.instawork = deduplicatePhotos(savedInstawork).slice(-1);
 
                     renderPhotos('before');
                     renderPhotos('signoff');
                     renderPhotos('after');
+                    renderPhotos('instawork');
+                    updateInstaworkSaveButton();
 
                     // Save back any cleaned up duplicates
                     if (photos.before.length !== savedPhotos.before.length ||
                         photos.signoff.length !== savedPhotos.signoff.length ||
-                        photos.after.length !== savedPhotos.after.length) {
+                        photos.after.length !== savedPhotos.after.length ||
+                        photos.instawork.length !== savedInstawork.length) {
                         console.log('Cleaned up duplicate photos');
                         await PhotoDB.savePhotos(photos);
                     }
@@ -3657,16 +3722,26 @@
         function toggleInstawork(checkbox) {
             const yes = document.getElementById('instaworkYes');
             const no = document.getElementById('instaworkNo');
-            const note = document.getElementById('instaworkNote');
+            const panel = document.getElementById('instaworkYesPanel');
+
+            const showPanel = () => { if (panel) panel.style.display = 'block'; };
+            const hidePanel = () => { if (panel) panel.style.display = 'none'; };
 
             if (checkbox.id === 'instaworkYes' && checkbox.checked) {
                 no.checked = false;
-                if (note) note.style.display = 'block';
+                showPanel();
             } else if (checkbox.id === 'instaworkNo' && checkbox.checked) {
                 yes.checked = false;
-                if (note) note.style.display = 'none';
+                hidePanel();
+                // Selecting "No" abandons any in-progress InstaWork capture
+                // so the form doesn't quietly hold a stale photo.
+                photos.instawork = [];
+                instaworkSavedInfo = null;
+                renderPhotos('instawork');
+                const statusEl = document.getElementById('instaworkSaveStatus');
+                if (statusEl) statusEl.style.display = 'none';
             } else if (!yes.checked && !no.checked) {
-                if (note) note.style.display = 'none';
+                hidePanel();
             }
             autoSave();
         }
@@ -3776,7 +3851,17 @@
                     const correctedDataUrl = await processImageWithOrientation(processedFile);
                     // Only add if not a duplicate
                     if (!isPhotoAlreadyAdded(photos[type], correctedDataUrl)) {
-                        photos[type].push(correctedDataUrl);
+                        if (type === 'instawork') {
+                            // InstaWork is single-photo: each new capture
+                            // replaces the previous one and clears any
+                            // prior "saved" confirmation.
+                            photos.instawork = [correctedDataUrl];
+                            instaworkSavedInfo = null;
+                            const statusEl = document.getElementById('instaworkSaveStatus');
+                            if (statusEl) statusEl.style.display = 'none';
+                        } else {
+                            photos[type].push(correctedDataUrl);
+                        }
                         renderPhotos(type);
                         updatePhotoCheckbox(type);
                         autoSave();
@@ -3790,7 +3875,14 @@
                     reader.onload = (e) => {
                         // Only add if not a duplicate
                         if (!isPhotoAlreadyAdded(photos[type], e.target.result)) {
-                            photos[type].push(e.target.result);
+                            if (type === 'instawork') {
+                                photos.instawork = [e.target.result];
+                                instaworkSavedInfo = null;
+                                const statusEl = document.getElementById('instaworkSaveStatus');
+                                if (statusEl) statusEl.style.display = 'none';
+                            } else {
+                                photos[type].push(e.target.result);
+                            }
                             renderPhotos(type);
                             updatePhotoCheckbox(type);
                             autoSave();
@@ -3939,18 +4031,22 @@
 
         function renderPhotos(type) {
             const container = document.getElementById(`preview${type.charAt(0).toUpperCase() + type.slice(1)}`);
+            if (!container) return;
             container.innerHTML = '';
+
+            // Both sign-off and InstaWork photos need the in-place rotate /
+            // crop / brightness / contrast editor — the user explicitly
+            // asked for the "same tools" on the InstaWork capture.
+            const isEditable = (type === 'signoff' || type === 'instawork');
 
             photos[type].forEach((photo, index) => {
                 const item = document.createElement('div');
                 item.className = 'photo-item';
-                // Add edit button and clickable image only for signoff photos
-                const isSignoff = type === 'signoff';
-                const editBtn = isSignoff
-                    ? `<button class="photo-edit" onclick="openImageEditor(${index})" title="Edit">&#9998;</button>`
+                const editBtn = isEditable
+                    ? `<button class="photo-edit" onclick="openImageEditor(${index}, '${type}')" title="Edit">&#9998;</button>`
                     : '';
-                const imgClick = isSignoff
-                    ? `onclick="openImageEditor(${index})" style="cursor: pointer;" title="Tap to edit"`
+                const imgClick = isEditable
+                    ? `onclick="openImageEditor(${index}, '${type}')" style="cursor: pointer;" title="Tap to edit"`
                     : `onclick="openLightbox(this.src, 'Local ${type} photo')" style="cursor:pointer;"`;
                 item.innerHTML = `
                     <img src="${photo}" alt="${type} photo" ${imgClick}>
@@ -3960,12 +4056,26 @@
                 container.appendChild(item);
             });
 
-            // Also rebuild EOD selections whenever local photos change
-            rebuildEodSelections(type);
+            // EOD selection bookkeeping is only meaningful for the EOD email
+            // photo types — InstaWork photos are saved separately.
+            if (type === 'before' || type === 'signoff' || type === 'after') {
+                rebuildEodSelections(type);
+            }
+
+            if (type === 'instawork') {
+                updateInstaworkSaveButton();
+            }
         }
 
         function removePhoto(type, index) {
             photos[type].splice(index, 1);
+            if (type === 'instawork') {
+                // Removing the photo means we no longer have a saved
+                // confirmation tied to it.
+                instaworkSavedInfo = null;
+                const statusEl = document.getElementById('instaworkSaveStatus');
+                if (statusEl) statusEl.style.display = 'none';
+            }
             renderPhotos(type);
             updatePhotoCheckbox(type);
             autoSave();
@@ -4180,6 +4290,15 @@
             await openCameraOverlay(true);
         }
 
+        // InstaWork sign-out sheet capture — single high-resolution photo,
+        // same camera pipeline as the sign-off sheets so we get the 4K
+        // request + flash control + EXIF-correct PNG output. Closes the
+        // overlay after a single capture (like before/after).
+        async function openInstaworkCamera() {
+            currentCameraType = 'instawork';
+            await openCameraOverlay(false);
+        }
+
         async function openCameraOverlay(multiplePhotos) {
             try {
                 cameraOverlay.classList.add('show');
@@ -4252,7 +4371,17 @@
 
             // Convert to PNG for lossless quality preservation (no JPEG compression artifacts)
             const photoData = captureCanvas.toDataURL('image/png');
-            photos[currentCameraType].push(photoData);
+
+            if (currentCameraType === 'instawork') {
+                // Single-photo capture; replace any prior shot and clear
+                // any prior "saved" status so the user must re-confirm.
+                photos.instawork = [photoData];
+                instaworkSavedInfo = null;
+                const statusEl = document.getElementById('instaworkSaveStatus');
+                if (statusEl) statusEl.style.display = 'none';
+            } else {
+                photos[currentCameraType].push(photoData);
+            }
             tempPhotoCount++;
 
             renderPhotos(currentCameraType);
@@ -4265,8 +4394,8 @@
                 captureCanvas.style.display = 'none';
             }, 100);
 
-            // For single photo types (before/after), close camera after capture
-            if (currentCameraType === 'before' || currentCameraType === 'after') {
+            // For single-photo types (before/after/instawork), close camera after capture
+            if (currentCameraType === 'before' || currentCameraType === 'after' || currentCameraType === 'instawork') {
                 setTimeout(() => {
                     closeCameraOverlay();
                     captureInProgress = false;
@@ -4310,6 +4439,10 @@
 
         let editorOriginalImage = null;
         let editorCurrentPhotoIndex = -1;
+        // Which photos array the editor is currently bound to. Defaults to
+        // 'signoff' for back-compat with all existing call sites; the
+        // InstaWork capture passes 'instawork' explicitly.
+        let editorCurrentType = 'signoff';
         let editorRotation = 0;
         let editorBrightness = 0;
         let editorContrast = 0;
@@ -4328,9 +4461,10 @@
         const cropPolygonOutline = document.getElementById('cropPolygonOutline');
         const cropHandlesContainer = document.getElementById('cropHandlesContainer');
 
-        function openImageEditor(photoIndex) {
+        function openImageEditor(photoIndex, type) {
             editorCurrentPhotoIndex = photoIndex;
-            const photoData = photos.signoff[photoIndex];
+            editorCurrentType = (type === 'instawork') ? 'instawork' : 'signoff';
+            const photoData = photos[editorCurrentType][photoIndex];
 
             // Reset all editor state
             editorRotation = 0;
@@ -4985,7 +5119,7 @@
 
         document.getElementById('editorReset').addEventListener('click', () => {
             // Reload original image
-            const photoData = photos.signoff[editorCurrentPhotoIndex];
+            const photoData = photos[editorCurrentType][editorCurrentPhotoIndex];
             editorRotation = 0;
             editorBrightness = 0;
             editorContrast = 0;
@@ -5021,11 +5155,21 @@
             // Get the final image data URL using PNG for lossless quality preservation
             const finalDataUrl = fullResCanvas.toDataURL('image/png');
 
-            // Update the photo in the array
-            photos.signoff[editorCurrentPhotoIndex] = finalDataUrl;
+            // Update the photo in the array (signoff OR instawork)
+            const targetType = editorCurrentType;
+            photos[targetType][editorCurrentPhotoIndex] = finalDataUrl;
+
+            // Editing the InstaWork capture invalidates any prior "saved"
+            // confirmation — the user must re-confirm to save the new
+            // version.
+            if (targetType === 'instawork') {
+                instaworkSavedInfo = null;
+                const statusEl = document.getElementById('instaworkSaveStatus');
+                if (statusEl) statusEl.style.display = 'none';
+            }
 
             // Re-render and save
-            renderPhotos('signoff');
+            renderPhotos(targetType);
             autoSave();
 
             // Close editor
@@ -5239,35 +5383,30 @@
                     console.error('Error generating PDF:', pdfError);
                 }
 
-                // ─── If InstaWork = Yes, save the timesheet locally first ───
-                let instaworkSave = null;
+                // ─── If InstaWork = Yes, the lead must have already taken the
+                // sign-out sheet photo AND clicked "Confirm & Save" so the
+                // JPG was routed to the correct P#W# folder. We do NOT
+                // silently save it here — the explicit confirm step is the
+                // whole point of the new UX.
                 if (instaworkYes) {
-                    try {
-                        const signoffSource = eodSelections.signoff.length > 0
-                            ? eodSelections.signoff
-                            : data.photos.signoff.map(p => ({ dataUrl: p }));
-                        const timesheetPdfBase64 = await buildInstaworkTimesheetPDF(
-                            signoffSource,
-                            data.StoreNumberPadded,
-                            data.DateMMDDYYYY
-                        );
-                        instaworkSave = await saveInstaworkTimesheetLocally({
-                            storeNumber: data.StoreNumber,
-                            workDate: data.WorkDateISO,
-                            pdfBase64: timesheetPdfBase64
-                        });
-                    } catch (e) {
-                        console.error('InstaWork timesheet save failed:', e);
+                    if (photos.instawork.length === 0) {
                         loading.classList.remove('show');
                         showAlert(
-                            'InstaWork Timesheet Save Failed',
-                            (e.message || String(e)) +
-                            '<br><br>Submit was halted. Start the local saver and try again, ' +
-                            'or set InstaWork support to "No" if it does not apply.'
+                            'InstaWork Photo Required',
+                            'Please take a photo of the InstaWork sign-out sheet at the top of the page before submitting the EOD.'
+                        );
+                        return;
+                    }
+                    if (!instaworkSavedInfo) {
+                        loading.classList.remove('show');
+                        showAlert(
+                            'Confirm InstaWork Sign-Out Sheet',
+                            'Please tap "Confirm &amp; Save InstaWork Sign-Out Sheet" at the top of the page before submitting the EOD.'
                         );
                         return;
                     }
                 }
+                const instaworkSave = instaworkSavedInfo;
 
                 const notesOnly = document.getElementById('notesOnlyToggle').checked;
                 const beforeDone  = data.photos.before.length  > 0 || eodSelections.before.length > 0 || data.BeforeComplete;
@@ -5281,7 +5420,7 @@ Date: ${data.DateMMDDYYYY || ''}
 Store Number: ${data.StoreNumber || ''}
 Before picture of KOMPASS cart taken: ${beforeDone ? 'Yes' : 'No'}
 Manager checked in with: ${data.CheckInManager || ''}
-InstaWork support: ${instaworkYes ? 'Yes' : 'No'}${instaworkSave ? ` (timesheet saved → ${instaworkSave.folder}\\${instaworkSave.filePath?.split(/[\\/]/).pop() || ''})` : ''}
+InstaWork support: ${instaworkYes ? 'Yes' : 'No'}${instaworkSave ? ` (sign-out sheet photo saved → ${instaworkSave.folder}\\${(instaworkSave.filePath || '').split(/[\\/]/).pop()})` : ''}
 Called KOMPASS Hotline: ${pickYN(data.CalledHotline)}
 Commodities: ${data.IssueCommodities || 'N/A'}
 Issue: ${data.WhatIsIssue || 'N/A'}
@@ -5346,7 +5485,7 @@ ${data.Notes || ''}`;
         function showSendConfirmation(payload, data) {
             const instaworkSave = data._instaworkSave;
             const instaworkSavedRow = instaworkSave
-                ? `<p style="color:#34d399;"><strong>InstaWork timesheet saved:</strong> ${instaworkSave.folder}\\${(instaworkSave.filePath || '').split(/[\\/]/).pop()}</p>`
+                ? `<p style="color:#34d399;"><strong>InstaWork sign-out sheet saved:</strong> ${instaworkSave.folder}\\${(instaworkSave.filePath || '').split(/[\\/]/).pop()}</p>`
                 : '';
             const previewHtml = `
                 <div style="text-align:left; font-size:13px; max-height:60vh; overflow-y:auto;">
@@ -5415,90 +5554,42 @@ ${data.Notes || ''}`;
             }
         }
 
-        // ─── InstaWork timesheet (local saver integration) ──────────────────────
-        // The flow-automation runtime exposes this on its EOD emailer port
-        // (default 3001). flow-automation is started at logon and refreshed
-        // alongside SAS-MorningAuth via Windows Task Scheduler — see
-        // flow-automation/scripts/setup-flow-automation-task.ps1.
-        const INSTAWORK_SAVER_URL = 'http://127.0.0.1:3001/instawork/save-timesheet';
+        // ─── InstaWork sign-out sheet (local saver integration) ──────────────
+        // The flow-automation runtime exposes the InstaWork JPG saver on its
+        // EOD emailer port (default 3001). It auto-starts at logon — see
+        // flow-automation/scripts/setup-flow-automation-task.ps1. The
+        // endpoint resolves the work date to the right P#W# folder under
+        // the shared "InstaWork Sign Out Sheets" root and writes the JPG
+        // as `FM### MM_DD_YYYY.jpg`, lock-safe (versioned write).
+        const INSTAWORK_IMAGE_SAVER_URL = 'http://127.0.0.1:3001/instawork/save-image';
 
-        // Build a portrait PDF that contains the sign-off photos as the
-        // InstaWork Timesheet. Returns base64 (without data: prefix).
-        async function buildInstaworkTimesheetPDF(signoffPhotos, storeNumberPadded, dateMMDDYYYY) {
-            if (!Array.isArray(signoffPhotos) || signoffPhotos.length === 0) {
-                throw new Error('No sign-off photos available for InstaWork timesheet.');
+        // Render the user's captured InstaWork photo to a high-quality JPEG
+        // data URL with portrait orientation. We keep the long edge at up
+        // to 3200px so signatures stay legible even after JPEG compression.
+        async function buildInstaworkSignOutJpegBase64(photoDataUrl) {
+            if (!photoDataUrl) {
+                throw new Error('No InstaWork sign-out sheet photo to save.');
             }
-            if (typeof PDFLib === 'undefined') {
-                throw new Error('PDF library not loaded. Please refresh the page.');
-            }
-
-            const pdfDoc = await PDFLib.PDFDocument.create();
-            const pageWidth = 612;   // 8.5"
-            const pageHeight = 792;  // 11"
-            const sideMargin = 18;
-            const topMargin = 56;
-            const bottomMargin = 18;
-            const availableWidth = pageWidth - (sideMargin * 2);
-            const availableHeight = pageHeight - topMargin - bottomMargin;
-
-            for (let i = 0; i < signoffPhotos.length; i++) {
-                let photoData = signoffPhotos[i]?.dataUrl || signoffPhotos[i];
-                if (typeof photoData === 'string' && photoData.startsWith('http')) {
-                    const resp = await fetch(photoData);
-                    const blob = await resp.blob();
-                    photoData = await new Promise(resolve => {
-                        const reader = new FileReader();
-                        reader.onloadend = () => resolve(reader.result);
-                        reader.readAsDataURL(blob);
-                    });
-                }
-
-                const portraitData = await ensurePortraitOrientation(photoData);
-                const compressed = await compressImageForPDF(portraitData, 2000, 2600, 0.85);
-                const imgBytes = await fetch(compressed).then(r => r.arrayBuffer());
-                const img = await pdfDoc.embedJpg(imgBytes);
-
-                const page = pdfDoc.addPage([pageWidth, pageHeight]);
-                page.drawText(`InstaWork Timesheet  —  FM${storeNumberPadded}  —  ${dateMMDDYYYY}`, {
-                    x: sideMargin,
-                    y: pageHeight - 28,
-                    size: 12,
-                    color: PDFLib.rgb(0, 0, 0)
-                });
-                page.drawText(`Page ${i + 1} of ${signoffPhotos.length}`, {
-                    x: sideMargin,
-                    y: pageHeight - 44,
-                    size: 9,
-                    color: PDFLib.rgb(0.4, 0.4, 0.4)
-                });
-
-                const scale = Math.min(availableWidth / img.width, availableHeight / img.height);
-                const finalW = img.width * scale;
-                const finalH = img.height * scale;
-                const x = sideMargin + (availableWidth - finalW) / 2;
-                const y = bottomMargin + (availableHeight - finalH) / 2;
-                page.drawImage(img, { x, y, width: finalW, height: finalH });
-            }
-
-            const bytes = await pdfDoc.save({ useObjectStreams: true, addDefaultPage: false });
-            const u8 = new Uint8Array(bytes);
-            let binary = '';
-            const chunkSize = 8192;
-            for (let i = 0; i < u8.length; i += chunkSize) {
-                binary += String.fromCharCode(...u8.subarray(i, i + chunkSize));
-            }
-            return btoa(binary);
+            const portraitData = await ensurePortraitOrientation(photoDataUrl);
+            // High quality (q=0.95), large max edge — readable signatures
+            // matter more than tiny payload size for this artifact.
+            const compressed = await compressImageForPDF(portraitData, 2400, 3200, 0.95);
+            const prefix = 'data:image/jpeg;base64,';
+            return compressed.startsWith(prefix)
+                ? compressed.slice(prefix.length)
+                : compressed.replace(/^data:[^;]+;base64,/, '');
         }
 
-        // POST the timesheet PDF to the local saver service. Returns the saver
-        // response (`{ success, filePath, folder, periodWeek, ... }`) or throws.
-        async function saveInstaworkTimesheetLocally({ storeNumber, workDate, pdfBase64 }) {
+        // POST the InstaWork JPG to the local saver service. Returns the
+        // saver response (`{ success, filePath, folder, periodWeek, ... }`)
+        // or throws on transport / saver errors.
+        async function saveInstaworkImageLocally({ storeNumber, workDate, imageBase64 }) {
             let response;
             try {
-                response = await fetch(INSTAWORK_SAVER_URL, {
+                response = await fetch(INSTAWORK_IMAGE_SAVER_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ storeNumber, workDate, pdfBase64 })
+                    body: JSON.stringify({ storeNumber, workDate, imageBase64 })
                 });
             } catch (e) {
                 throw new Error(
@@ -5511,6 +5602,87 @@ ${data.Notes || ''}`;
                 throw new Error(result.error || `Saver returned ${response.status}`);
             }
             return result;
+        }
+
+        // Enable / disable the "Confirm & Save" button based on whether
+        // there is an InstaWork photo ready, and surface the latest saved
+        // status if any.
+        function updateInstaworkSaveButton() {
+            const btn = document.getElementById('instaworkSaveBtn');
+            if (!btn) return;
+            const hasPhoto = photos.instawork.length > 0;
+            const alreadySaved = !!instaworkSavedInfo;
+            btn.disabled = !hasPhoto;
+            if (alreadySaved) {
+                btn.textContent = 'Re-save InstaWork Sign-Out Sheet';
+            } else {
+                btn.textContent = 'Confirm \u0026 Save InstaWork Sign-Out Sheet';
+            }
+        }
+
+        // User clicked "Confirm & Save InstaWork Sign-Out Sheet". Validates
+        // the store + date, builds a high-quality portrait JPEG, and POSTs
+        // it to the local saver. On success it locks in `instaworkSavedInfo`
+        // so the EOD submit can pass through without re-prompting.
+        async function confirmAndSaveInstaworkPhoto() {
+            const btn = document.getElementById('instaworkSaveBtn');
+            const statusEl = document.getElementById('instaworkSaveStatus');
+            if (photos.instawork.length === 0) {
+                showAlert('No Photo Yet', 'Please take or upload a photo of the InstaWork sign-out sheet first.');
+                return;
+            }
+
+            const rawStoreNum = document.getElementById('storeNumber').value.trim();
+            const workDate = document.getElementById('workDate').value;
+            if (!rawStoreNum) {
+                showAlert('Store # Required', 'Please enter your store number above before saving the InstaWork sign-out sheet.');
+                return;
+            }
+            if (!workDate) {
+                showAlert('Date Required', 'Please pick a work date above before saving the InstaWork sign-out sheet.');
+                return;
+            }
+
+            const originalLabel = btn ? btn.textContent : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Saving\u2026';
+            }
+
+            try {
+                const imageBase64 = await buildInstaworkSignOutJpegBase64(photos.instawork[0]);
+                const result = await saveInstaworkImageLocally({
+                    storeNumber: rawStoreNum,
+                    workDate,
+                    imageBase64
+                });
+                instaworkSavedInfo = result;
+
+                if (statusEl) {
+                    const fileName = (result.filePath || '').split(/[\\/]/).pop() || '(unknown)';
+                    statusEl.style.display = 'block';
+                    statusEl.innerHTML =
+                        `<strong>Saved.</strong> ${result.folder}\\${fileName}` +
+                        (result.periodWeek ? ` (${result.periodWeek})` : '');
+                }
+                updateInstaworkSaveButton();
+            } catch (e) {
+                console.error('InstaWork sign-out save failed:', e);
+                if (statusEl) {
+                    statusEl.style.display = 'block';
+                    statusEl.style.background = '#450a0a';
+                    statusEl.style.borderLeftColor = '#ef4444';
+                    statusEl.style.color = '#fecaca';
+                    statusEl.innerHTML = '<strong>Save failed.</strong> ' + (e.message || String(e));
+                }
+                showAlert(
+                    'InstaWork Sign-Out Sheet Save Failed',
+                    (e.message || String(e)) +
+                    '<br><br>Make sure the local automation service is running, then try again.'
+                );
+                if (btn) btn.textContent = originalLabel || 'Confirm \u0026 Save InstaWork Sign-Out Sheet';
+                if (btn) btn.disabled = false;
+            }
         }
 
         // PDF generation function - returns base64 string
@@ -5848,6 +6020,8 @@ ${data.Notes || ''}`;
                     photos.before = [];
                     photos.signoff = [];
                     photos.after = [];
+                    photos.instawork = [];
+                    instaworkSavedInfo = null;
                     emailRecipients = [];
                     selectedShift = null;
                     smClearAll();
@@ -5872,12 +6046,16 @@ ${data.Notes || ''}`;
                     renderPhotos('before');
                     renderPhotos('signoff');
                     renderPhotos('after');
+                    renderPhotos('instawork');
                     renderRecipientList();
                     updateSignaturePreview();
                     document.getElementById('hotlineDetails').style.display = 'none';
                     document.getElementById('tempSolutionField').style.display = 'none';
-                    const instaworkNoteReset = document.getElementById('instaworkNote');
-                    if (instaworkNoteReset) instaworkNoteReset.style.display = 'none';
+                    const instaworkPanelReset = document.getElementById('instaworkYesPanel');
+                    if (instaworkPanelReset) instaworkPanelReset.style.display = 'none';
+                    const instaworkStatusReset = document.getElementById('instaworkSaveStatus');
+                    if (instaworkStatusReset) instaworkStatusReset.style.display = 'none';
+                    updateInstaworkSaveButton();
                     // Reset Kompass labels back to default
                     document.getElementById('beforePhotoSection').querySelector('label.field').textContent = 'Kompass Cart - Before:';
                     document.getElementById('afterPhotoSection').querySelector('label.field').textContent = 'Kompass Cart - After:';
