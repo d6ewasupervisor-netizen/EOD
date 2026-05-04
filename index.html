@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 2026-05-04T10:18Z instawork-ux+cf-access -->
+<!-- build: 2026-05-04T16:05Z eod-completion-checks+sets-not-in -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -2144,6 +2144,119 @@
         .sm-status.error { color: #fca5a5; }
         .sm-status.pending { color: #fbbf24; }
 
+        /* ─── Sets-not-in pickers (Not in Store / Not in SI) ─── */
+        .sets-picker {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+        .sets-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            min-height: 0;
+        }
+        .sets-tags:empty { display: none; }
+        .set-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #4b5563;
+            color: #f9fafb;
+            padding: 6px 10px;
+            border-radius: 16px;
+            font-size: 0.85em;
+        }
+        .set-tag.set-tag-other { background: #5b3a1f; }
+        .set-tag .set-tag-x {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 22px; height: 22px; min-width: 22px;
+            display: inline-flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 13px; line-height: 1; padding: 0;
+            touch-action: manipulation;
+        }
+        .set-tag .set-tag-x:active { background: #dc2626; transform: scale(0.95); }
+        .sets-picker select,
+        .sets-picker input[type="text"] {
+            width: 100%;
+            padding: var(--spacing-md);
+            border: 1px solid #4b5563;
+            border-radius: var(--border-radius);
+            background: #374151;
+            color: #f9fafb;
+            font-size: var(--font-size-base);
+            font-family: inherit;
+            min-height: var(--min-touch-target);
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .sets-picker select:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+        .sets-help { font-style: italic; }
+
+        /* ─── Pre-submit validation field highlight ─── */
+        .field-invalid input[type="text"],
+        .field-invalid input[type="email"],
+        .field-invalid textarea,
+        .field-invalid select {
+            border-color: #ef4444 !important;
+            background: rgba(239, 68, 68, 0.08) !important;
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25);
+        }
+        .field-invalid > label,
+        .field-invalid label.field {
+            color: #fca5a5 !important;
+        }
+        .section-invalid {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.18);
+        }
+        .photo-section-invalid {
+            border-left: 4px solid #ef4444;
+            padding-left: 10px;
+            background: rgba(239, 68, 68, 0.05);
+            border-radius: 6px;
+        }
+
+        /* Sign-off photo "Needs review" badge — forces the lead to open
+           the editor so they actually look at the orientation/crop before
+           submitting. We're tired of seeing sideways forms. */
+        .photo-item.needs-review {
+            box-shadow: 0 0 0 3px #f59e0b;
+            border-radius: 8px;
+        }
+        .photo-needs-review-badge {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            background: #f59e0b;
+            color: #1f2937;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 7px;
+            border-radius: 10px;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .photo-reviewed-badge {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            background: #10b981;
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 7px;
+            border-radius: 10px;
+            pointer-events: none;
+            z-index: 2;
+        }
+
         /* ─── Lead Info Bar ─── */
         .lead-info-bar {
             display: flex;
@@ -2836,7 +2949,7 @@
                 <div id="previewAfter" class="photo-preview"></div>
             </div>
 
-            <div class="photo-section">
+            <div class="photo-section" id="signoffPhotoSection">
                 <label class="field label">Sign-Off Sheets:</label>
                 <div class="checkbox-group" style="margin-top: 4px;">
                     <div class="checkbox-option">
@@ -2847,6 +2960,11 @@
                         <span id="syncSignoffIcon">&#8593;</span> Sync
                     </button>
                     <span class="sync-status" id="syncSignoffStatus"></span>
+                </div>
+                <div id="signoffOrientationHint" style="display:none; margin-top:6px; font-size:13px; color:#fde68a; background:#422006; border-left:3px solid #f59e0b; padding:8px 10px; border-radius:6px; line-height:1.4;">
+                    Tap each sign-off photo to confirm orientation and crop.
+                    Landscape captures are auto-rotated to portrait, but please
+                    crop and verify each one before submitting.
                 </div>
                 <div id="prodPreviewSignoff" class="photo-preview"></div>
                 <div class="photo-button-group">
@@ -2951,6 +3069,37 @@
                         <label for="siNo">No</label>
                     </div>
                 </div>
+            </div>
+
+            <!--
+                Sets the lead couldn't find / sign out — sourced from the
+                shift's category-resets so they pick from the actual sets on
+                their visit. The free-text "Other" field handles anything
+                that isn't on the list (e.g. cross-merch carts, cut-ins
+                that didn't map to a category, etc).
+            -->
+            <div class="field" id="setsNotInStoreField" style="margin-top: 15px;">
+                <label>Not in store:</label>
+                <div class="sets-picker">
+                    <div class="sets-tags" id="notInStoreTags"></div>
+                    <select id="notInStoreSelect" onchange="addSetNotIn('store')">
+                        <option value="">-- Select a set from your shift --</option>
+                    </select>
+                    <input type="text" id="notInStoreOther" placeholder="Other (set not in the list above)" oninput="autoSave()">
+                </div>
+                <div class="sets-help" id="notInStoreHelp">Pick a shift first to load the available sets.</div>
+            </div>
+
+            <div class="field" id="setsNotInSiField" style="margin-top: 15px;">
+                <label>Not in SI:</label>
+                <div class="sets-picker">
+                    <div class="sets-tags" id="notInSiTags"></div>
+                    <select id="notInSiSelect" onchange="addSetNotIn('si')">
+                        <option value="">-- Select a set from your shift --</option>
+                    </select>
+                    <input type="text" id="notInSiOther" placeholder="Other (set not in the list above)" oninput="autoSave()">
+                </div>
+                <div class="sets-help" id="notInSiHelp">Pick a shift first to load the available sets.</div>
             </div>
 
             <div class="field" style="margin-top: 15px;">
@@ -3657,7 +3806,15 @@
                 afterComplete: document.getElementById('afterComplete')?.checked || false,
                 noKompassCart: document.getElementById('noKompassCart')?.checked || false,
                 addRetailOdysseyTeam: document.getElementById('addRetailOdysseyTeam')?.checked || false,
-                selectedShift: selectedShift
+                selectedShift: selectedShift,
+                // Sets-not-in selections + Other free-text fallbacks
+                shiftSets: shiftSets,
+                notInStoreSelected: notInStoreSelected,
+                notInSiSelected: notInSiSelected,
+                notInStoreOther: document.getElementById('notInStoreOther')?.value || '',
+                notInSiOther: document.getElementById('notInSiOther')?.value || '',
+                // Sign-off photo review state (parallel to photos.signoff)
+                signoffNeedsReview: signoffNeedsReview
                 // Note: photos are now stored in IndexedDB, not localStorage
             };
             try {
@@ -3749,6 +3906,29 @@
                 // Restore selected shift
                 if (data.selectedShift && data.selectedShift.visitId) {
                     selectedShift = data.selectedShift;
+                }
+
+                // Restore sets-not-in pickers. We restore both the saved
+                // shiftSets list and the user's selections so the chips
+                // come back even before the next /sets API call lands.
+                if (Array.isArray(data.shiftSets)) shiftSets = data.shiftSets;
+                if (Array.isArray(data.notInStoreSelected)) notInStoreSelected = data.notInStoreSelected.slice();
+                if (Array.isArray(data.notInSiSelected)) notInSiSelected = data.notInSiSelected.slice();
+                if (typeof data.notInStoreOther === 'string') {
+                    const el = document.getElementById('notInStoreOther');
+                    if (el) el.value = data.notInStoreOther;
+                }
+                if (typeof data.notInSiOther === 'string') {
+                    const el = document.getElementById('notInSiOther');
+                    if (el) el.value = data.notInSiOther;
+                }
+                renderSetsPickers();
+
+                // Restore signoff per-photo review flags. We never trust
+                // the saved length blindly — alignSignoffReviewState() will
+                // truncate or zero-fill to match the actual photos count.
+                if (Array.isArray(data.signoffNeedsReview)) {
+                    signoffNeedsReview = data.signoffNeedsReview.slice();
                 }
 
                 // Migration: if photos exist in localStorage, migrate them to IndexedDB
@@ -4010,7 +4190,21 @@
                     }
 
                     // Process image with orientation correction
-                    const correctedDataUrl = await processImageWithOrientation(processedFile);
+                    let correctedDataUrl = await processImageWithOrientation(processedFile);
+
+                    // Sign-off sheets are forms — they are always supposed
+                    // to read in portrait. Auto-rotate landscape captures
+                    // so we stop seeing sideways forms in the email PDF.
+                    // The lead is still required to open the editor and
+                    // confirm crop/orientation (see signoffNeedsReview).
+                    if (type === 'signoff') {
+                        try {
+                            correctedDataUrl = await ensurePortraitOrientation(correctedDataUrl);
+                        } catch (e) {
+                            console.warn('Sign-off auto-rotate failed:', e);
+                        }
+                    }
+
                     // Only add if not a duplicate
                     if (!isPhotoAlreadyAdded(photos[type], correctedDataUrl)) {
                         if (type === 'instawork') {
@@ -4024,6 +4218,12 @@
                             reopenInstaworkPanel();
                         } else {
                             photos[type].push(correctedDataUrl);
+                            if (type === 'signoff') {
+                                // Newly added sign-off photos always start
+                                // out as "needs review" so the lead is
+                                // forced into the editor at least once.
+                                signoffNeedsReview.push(true);
+                            }
                         }
                         renderPhotos(type);
                         updatePhotoCheckbox(type);
@@ -4046,6 +4246,9 @@
                                 reopenInstaworkPanel();
                             } else {
                                 photos[type].push(e.target.result);
+                                if (type === 'signoff') {
+                                    signoffNeedsReview.push(true);
+                                }
                             }
                             renderPhotos(type);
                             updatePhotoCheckbox(type);
@@ -4203,9 +4406,27 @@
             // asked for the "same tools" on the InstaWork capture.
             const isEditable = (type === 'signoff' || type === 'instawork');
 
+            // Keep the review-flag array aligned with the photos list
+            // before we render. This protects against legacy saved data
+            // and any out-of-band mutations to photos.signoff.
+            if (type === 'signoff') alignSignoffReviewState();
+
             photos[type].forEach((photo, index) => {
                 const item = document.createElement('div');
                 item.className = 'photo-item';
+
+                // Sign-off review badge — orange "Needs review" until the
+                // lead opens the editor and saves; green "Reviewed" after.
+                let badge = '';
+                if (type === 'signoff') {
+                    if (signoffNeedsReview[index]) {
+                        item.classList.add('needs-review');
+                        badge = '<span class="photo-needs-review-badge">Tap to review</span>';
+                    } else {
+                        badge = '<span class="photo-reviewed-badge">Reviewed</span>';
+                    }
+                }
+
                 const editBtn = isEditable
                     ? `<button class="photo-edit" onclick="openImageEditor(${index}, '${type}')" title="Edit">&#9998;</button>`
                     : '';
@@ -4213,6 +4434,7 @@
                     ? `onclick="openImageEditor(${index}, '${type}')" style="cursor: pointer;" title="Tap to edit"`
                     : `onclick="openLightbox(this.src, 'Local ${type} photo')" style="cursor:pointer;"`;
                 item.innerHTML = `
+                    ${badge}
                     <img src="${photo}" alt="${type} photo" ${imgClick}>
                     ${editBtn}
                     <button class="photo-remove" onclick="removePhoto('${type}', ${index})">x</button>
@@ -4229,10 +4451,37 @@
             if (type === 'instawork') {
                 updateInstaworkSaveButton();
             }
+
+            // Reveal the "tap to review" hint as soon as the lead has
+            // any sign-off photos still flagged for review. Tucked away
+            // when everything's clean so it doesn't add visual noise.
+            if (type === 'signoff') {
+                const hint = document.getElementById('signoffOrientationHint');
+                if (hint) {
+                    const anyNeedsReview = signoffNeedsReview.some(Boolean);
+                    hint.style.display = anyNeedsReview ? 'block' : 'none';
+                }
+            }
+        }
+
+        // Truncate / zero-fill the per-photo review-flag array so it
+        // always has the same length as photos.signoff. New entries
+        // default to "needs review" (true).
+        function alignSignoffReviewState() {
+            const n = photos.signoff.length;
+            if (signoffNeedsReview.length > n) {
+                signoffNeedsReview.length = n;
+            } else {
+                while (signoffNeedsReview.length < n) signoffNeedsReview.push(true);
+            }
         }
 
         function removePhoto(type, index) {
             photos[type].splice(index, 1);
+            if (type === 'signoff') {
+                // Keep review flags aligned with the photos array.
+                signoffNeedsReview.splice(index, 1);
+            }
             if (type === 'instawork') {
                 // Removing the photo means we no longer have a saved
                 // confirmation tied to it.
@@ -5325,6 +5574,13 @@
             const targetType = editorCurrentType;
             photos[targetType][editorCurrentPhotoIndex] = finalDataUrl;
 
+            // Saving the editor for a sign-off photo counts as the lead
+            // having reviewed the orientation/crop. Clears the badge.
+            if (targetType === 'signoff') {
+                alignSignoffReviewState();
+                signoffNeedsReview[editorCurrentPhotoIndex] = false;
+            }
+
             // Editing the InstaWork capture invalidates any prior "saved"
             // confirmation — the user must re-confirm to save the new
             // version.
@@ -5500,9 +5756,147 @@
                 AfterComplete: document.getElementById('afterComplete')?.checked || false,
                 NoKompassCart: document.getElementById('noKompassCart')?.checked || false,
                 InstaworkSupport: instaworkYes ? true : (instaworkNo ? false : null),
+                NotInStoreSelected: notInStoreSelected.slice(),
+                NotInStoreOther: (document.getElementById('notInStoreOther')?.value || '').trim(),
+                NotInSiSelected: notInSiSelected.slice(),
+                NotInSiOther: (document.getElementById('notInSiOther')?.value || '').trim(),
                 signatureDataURL: await getSignatureDataURL(),
                 photos: photos
             };
+        }
+
+        // Combine multi-select chips + free-text Other into a single
+        // human-readable string for the email body / PDF notes overlay.
+        function formatNotInList(selected, other) {
+            const items = [];
+            (selected || []).forEach(s => { if (s && !items.includes(s)) items.push(s); });
+            const trimmedOther = (other || '').trim();
+            if (trimmedOther) items.push(trimmedOther);
+            return items.length ? items.join(', ') : 'None';
+        }
+
+        // ─── Pre-submit validation ───────────────────────────────────────
+        // Walks the entire form and returns every problem in a single
+        // pass so the user gets one consolidated checklist, not a series
+        // of "fix this, no fix that next" modal dismissals. Every issue
+        // includes a CSS hook that gets toggled on the offending element
+        // (`.field-invalid`, `.photo-section-invalid`, etc.) so the UI
+        // can highlight it inline alongside the modal.
+        function validateBeforeSubmit(data) {
+            const issues = [];
+            const fieldsToFlag = [];      // .field elements
+            const photoSections = [];     // .photo-section elements
+            const sectionsToFlag = [];    // .section elements
+
+            const flagField = (selector) => {
+                const el = document.querySelector(selector);
+                if (el) {
+                    const fieldEl = el.closest('.field') || el.parentElement;
+                    if (fieldEl) fieldsToFlag.push(fieldEl);
+                }
+            };
+            const flagPhotoSection = (id) => {
+                const el = document.getElementById(id);
+                if (el) photoSections.push(el);
+            };
+            const flagSection = (id) => {
+                const el = document.getElementById(id);
+                if (el) sectionsToFlag.push(el);
+            };
+
+            // 1. Manager check-in / check-out names.
+            if (!(data.CheckInManager || '').trim()) {
+                issues.push('Enter the manager you checked in with.');
+                flagField('#checkInManager');
+            }
+            if (!(data.CheckOutManager || '').trim()) {
+                issues.push('Enter the manager you checked out with.');
+                flagField('#checkOutManager');
+            }
+
+            // 2. Kompass cart before / after photos. Even when there's no
+            //    Kompass cart on site, the lead still has to photograph
+            //    the Kompass area, the price-change area, or the Vestcom
+            //    pickup spot — see toggleNoKompassCart() for label swap.
+            const noKompass = !!data.NoKompassCart;
+            const beforeHas = data.photos.before.length > 0 || (eodSelections.before && eodSelections.before.length > 0);
+            const afterHas  = data.photos.after.length  > 0 || (eodSelections.after  && eodSelections.after.length  > 0);
+            if (!beforeHas) {
+                issues.push(noKompass
+                    ? 'Take a "before" photo of the Kompass area / price-change area / Vestcom pickup spot.'
+                    : 'Take a "before" photo of the Kompass cart.');
+                flagPhotoSection('beforePhotoSection');
+            }
+            if (!afterHas) {
+                issues.push(noKompass
+                    ? 'Take an "after" photo of the Kompass area / price-change area / Vestcom pickup spot.'
+                    : 'Take an "after" photo of the Kompass cart.');
+                flagPhotoSection('afterPhotoSection');
+            }
+
+            // 3. Sign-off sheet photos — at least one required.
+            const signoffHas = data.photos.signoff.length > 0 || (eodSelections.signoff && eodSelections.signoff.length > 0);
+            if (!signoffHas) {
+                issues.push('Photograph at least one sign-off sheet.');
+                flagPhotoSection('signoffPhotoSection');
+            }
+
+            // 4. Each local sign-off photo must have been opened in the
+            //    editor at least once so the lead has actually checked
+            //    orientation + crop. Auto-rotated landscape photos still
+            //    require a confirming pass through the editor.
+            alignSignoffReviewState();
+            const unreviewedCount = signoffNeedsReview.filter(Boolean).length;
+            if (unreviewedCount > 0) {
+                issues.push(`Tap each sign-off photo to review orientation and crop (${unreviewedCount} still need${unreviewedCount === 1 ? 's' : ''} review).`);
+                flagPhotoSection('signoffPhotoSection');
+            }
+
+            // 5. InstaWork — Yes or No required, plus a saved photo if Yes.
+            const instaworkYes = !!document.getElementById('instaworkYes')?.checked;
+            const instaworkNo = !!document.getElementById('instaworkNo')?.checked;
+            if (!instaworkYes && !instaworkNo) {
+                issues.push('Answer "Did you have InstaWork support today?".');
+                flagSection('instaworkSection');
+            }
+            if (instaworkYes) {
+                if (photos.instawork.length === 0) {
+                    issues.push('Take a photo of the InstaWork sign-out timesheet.');
+                    flagSection('instaworkSection');
+                } else if (!instaworkSavedInfo) {
+                    issues.push('Tap "Confirm & Save InstaWork Sign-Out Sheet" so it gets routed to the right period folder.');
+                    flagSection('instaworkSection');
+                }
+            }
+
+            // 6. PROD / SI sign-out questions must be answered.
+            const prodYes = !!document.getElementById('prodYes')?.checked;
+            const prodNo  = !!document.getElementById('prodNo')?.checked;
+            const siYes   = !!document.getElementById('siYes')?.checked;
+            const siNo    = !!document.getElementById('siNo')?.checked;
+            if (!prodYes && !prodNo) {
+                issues.push('Answer "All sets signed out in PROD?".');
+                flagField('#prodYes');
+            }
+            if (!siYes && !siNo) {
+                issues.push('Answer "All sets signed out in SI?".');
+                flagField('#siYes');
+            }
+
+            return { issues, fieldsToFlag, photoSections, sectionsToFlag };
+        }
+
+        function clearValidationHighlights() {
+            document.querySelectorAll('.field-invalid').forEach(el => el.classList.remove('field-invalid'));
+            document.querySelectorAll('.photo-section-invalid').forEach(el => el.classList.remove('photo-section-invalid'));
+            document.querySelectorAll('.section-invalid').forEach(el => el.classList.remove('section-invalid'));
+        }
+
+        function applyValidationHighlights({ fieldsToFlag, photoSections, sectionsToFlag }) {
+            clearValidationHighlights();
+            (fieldsToFlag || []).forEach(el => el.classList.add('field-invalid'));
+            (photoSections || []).forEach(el => el.classList.add('photo-section-invalid'));
+            (sectionsToFlag || []).forEach(el => el.classList.add('section-invalid'));
         }
 
         // Generate Email - builds payload and shows confirmation preview
@@ -5513,32 +5907,36 @@
                 const data = await collectData();
 
                 // ─── Pre-submit validation ─────────────────────────────────
-                // Sign-off sheet photos are required before submitting.
-                const localSignoffCount = data.photos.signoff.length;
-                const selectedSignoffCount = eodSelections.signoff.length;
-                const totalSignoffCount = localSignoffCount + selectedSignoffCount;
-                if (totalSignoffCount === 0) {
+                // One pass collects EVERY missing piece (manager names,
+                // Kompass before/after photos, sign-off review state,
+                // InstaWork timesheet, PROD/SI sign-out answers) and
+                // shows the lead one consolidated checklist they can
+                // work down. Inline highlights mirror the list.
+                const validation = validateBeforeSubmit(data);
+                if (validation.issues.length > 0) {
                     loading.classList.remove('show');
+                    applyValidationHighlights(validation);
+                    const list = validation.issues
+                        .map(msg => `<li style="margin-bottom:6px;">${msg}</li>`)
+                        .join('');
+                    const firstFlagged = document.querySelector('.field-invalid, .photo-section-invalid, .section-invalid');
+                    if (firstFlagged) {
+                        firstFlagged.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
                     showAlert(
-                        'Sign-Off Sheet Required',
-                        'You must upload at least one photo of the sign-off sheet before submitting the EOD.'
+                        'Finish your EOD before submitting',
+                        `<p style="margin:0 0 8px;">A few things still need your attention:</p>` +
+                        `<ul style="margin:0 0 8px 20px; padding:0; line-height:1.4;">${list}</ul>` +
+                        `<p style="margin:0; color:#94a3b8; font-size:13px;">Highlighted in red on the form. Once everything's done, tap <strong>Send Email</strong> again.</p>`
                     );
                     return;
                 }
 
-                // InstaWork support requires a Yes/No answer.
-                const instaworkYesEl = document.getElementById('instaworkYes');
-                const instaworkNoEl = document.getElementById('instaworkNo');
-                const instaworkYes = !!instaworkYesEl?.checked;
-                const instaworkNo = !!instaworkNoEl?.checked;
-                if (!instaworkYes && !instaworkNo) {
-                    loading.classList.remove('show');
-                    showAlert(
-                        'InstaWork Question Required',
-                        'Please answer "Did you have InstaWork support today?" before submitting.'
-                    );
-                    return;
-                }
+                // All checks passed — drop any leftover red highlights
+                // from a prior failed submit attempt.
+                clearValidationHighlights();
+
+                const instaworkYes = !!document.getElementById('instaworkYes')?.checked;
 
                 const pdfFilename = `FM${data.StoreNumberPadded} KOMPASS EOD ${data.DateForPDFFilename}.PDF`;
 
@@ -5550,35 +5948,15 @@
                     console.error('Error generating PDF:', pdfError);
                 }
 
-                // ─── If InstaWork = Yes, the lead must have already taken the
-                // sign-out sheet photo AND clicked "Confirm & Save" so the
-                // JPG was routed to the correct P#W# folder. We do NOT
-                // silently save it here — the explicit confirm step is the
-                // whole point of the new UX.
-                if (instaworkYes) {
-                    if (photos.instawork.length === 0) {
-                        loading.classList.remove('show');
-                        showAlert(
-                            'InstaWork Photo Required',
-                            'Please take a photo of the InstaWork sign-out sheet at the top of the page before submitting the EOD.'
-                        );
-                        return;
-                    }
-                    if (!instaworkSavedInfo) {
-                        loading.classList.remove('show');
-                        showAlert(
-                            'Confirm InstaWork Sign-Out Sheet',
-                            'Please tap "Confirm &amp; Save InstaWork Sign-Out Sheet" at the top of the page before submitting the EOD.'
-                        );
-                        return;
-                    }
-                }
                 const instaworkSave = instaworkSavedInfo;
 
                 const notesOnly = document.getElementById('notesOnlyToggle').checked;
                 const beforeDone  = data.photos.before.length  > 0 || eodSelections.before.length > 0 || data.BeforeComplete;
                 const signoffDone = data.photos.signoff.length > 0 || eodSelections.signoff.length > 0 || data.SignoffComplete;
                 const afterDone   = data.photos.after.length   > 0 || eodSelections.after.length > 0 || data.AfterComplete;
+
+                const notInStoreText = formatNotInList(data.NotInStoreSelected, data.NotInStoreOther);
+                const notInSiText    = formatNotInList(data.NotInSiSelected,    data.NotInSiOther);
 
                 const body = notesOnly
                     ? `Notes:\n${data.Notes || ''}`
@@ -5596,6 +5974,8 @@ Temporary solution: ${data.TempSolution || 'N/A'}
 Manager checked out with: ${data.CheckOutManager || ''}
 Signed out in PROD: ${pickYN(data.SignedOutPROD)}
 Signed out in SI: ${pickYN(data.SignedOutSI)}
+Not in store: ${notInStoreText}
+Not in SI: ${notInSiText}
 After picture of KOMPASS cart taken: ${afterDone ? 'Yes' : 'No'}
 Sign-off sheets photographed: ${signoffDone ? 'Yes' : 'No'}
 Number of sign-off photos: ${data.photos.signoff.length}
@@ -6001,6 +6381,28 @@ ${data.Notes || ''}`;
                 form.getTextField('WhatIsIssue').setText(data.WhatIsIssue || '');
                 form.getTextField('TempSolution').setText(data.TempSolution || '');
                 form.getTextField('CheckOutManager').setText(data.CheckOutManager || '');
+
+                // The legacy PDF template has no dedicated "Not in store" /
+                // "Not in SI" fields, so we prefix them onto the Notes
+                // field if either has any content. Notes itself follows
+                // a blank line so it stays readable. If the template ever
+                // grows real fields we can switch to setText on them.
+                const _notInStore = formatNotInList(data.NotInStoreSelected, data.NotInStoreOther);
+                const _notInSi    = formatNotInList(data.NotInSiSelected,    data.NotInSiOther);
+                let notesPdf = '';
+                if (_notInStore !== 'None' || _notInSi !== 'None') {
+                    notesPdf += `Not in store: ${_notInStore}\nNot in SI: ${_notInSi}`;
+                    if ((data.Notes || '').trim()) notesPdf += '\n\n';
+                }
+                notesPdf += (data.Notes || '');
+                try {
+                    form.getTextField('Notes').setText(notesPdf);
+                } catch (notesFieldErr) {
+                    // Some template revisions don't expose a Notes field —
+                    // failing here is non-fatal, the email body still has
+                    // the same data.
+                    console.warn('Notes field not available on PDF template:', notesFieldErr.message);
+                }
                 console.log('Text fields filled successfully');
             } catch (e) {
                 console.error('Error filling text fields:', e);
@@ -6282,12 +6684,17 @@ ${data.Notes || ''}`;
                     photos.signoff = [];
                     photos.after = [];
                     photos.instawork = [];
+                    signoffNeedsReview = [];
                     instaworkSavedInfo = null;
                     instaworkSaving = false;
                     setInstaworkOverlay('hide');
                     reopenInstaworkPanel();
                     emailRecipients = [];
                     selectedShift = null;
+                    shiftSets = [];
+                    notInStoreSelected = [];
+                    notInSiSelected = [];
+                    clearValidationHighlights();
                     smClearAll();
                     document.querySelectorAll('input, textarea').forEach(el => {
                         if (el.type === 'checkbox') el.checked = false;
@@ -6311,6 +6718,7 @@ ${data.Notes || ''}`;
                     renderPhotos('signoff');
                     renderPhotos('after');
                     renderPhotos('instawork');
+                    renderSetsPickers();
                     renderRecipientList();
                     updateSignaturePreview();
                     document.getElementById('hotlineDetails').style.display = 'none';
@@ -6485,6 +6893,37 @@ ${data.Notes || ''}`;
             }
             updateSignaturePreview();
 
+            // Initial render of the sets-not-in pickers (empty state until
+            // a shift is selected and category-resets are loaded).
+            renderSetsPickers();
+
+            // Delegated click handler for the set-tag remove (X) buttons.
+            // Set names can contain quotes / special chars, so we read
+            // them from data attributes rather than inline onclick args.
+            document.addEventListener('click', (e) => {
+                const btn = e.target.closest('.set-tag-x[data-remove-kind]');
+                if (!btn) return;
+                const kind = btn.getAttribute('data-remove-kind');
+                const name = btn.getAttribute('data-remove-name');
+                if (kind && name != null) removeSetNotIn(kind, name);
+            });
+
+            // Strip any existing field-invalid highlight as soon as the
+            // user starts editing the field — we re-validate on submit.
+            // Listening to both `input` (for text/number/textarea) and
+            // `change` (for checkboxes/selects/file inputs) covers every
+            // control type the form uses.
+            const clearValidationOnInteract = (e) => {
+                const field = e.target.closest('.field.field-invalid, .photo-section.photo-section-invalid, .section.section-invalid');
+                if (field) {
+                    field.classList.remove('field-invalid');
+                    field.classList.remove('photo-section-invalid');
+                    field.classList.remove('section-invalid');
+                }
+            };
+            document.addEventListener('input', clearValidationOnInteract);
+            document.addEventListener('change', clearValidationOnInteract);
+
             // Poll both connection indicators on page load, then every 30 seconds
             pollConnections();
             connPollInterval = setInterval(pollConnections, 30000);
@@ -6506,6 +6945,22 @@ ${data.Notes || ''}`;
         let smMembers = [];
         let smEmployeesCache = null;
         let smPendingRemovals = new Set();
+
+        // Sets the lead can pick from in the "Not in store" / "Not in SI"
+        // pickers, sourced from the selected shift's category-resets.
+        // Each entry: { id, name, number, planogramId, resetType }.
+        // Selections are stored as raw set-name strings so we don't have to
+        // re-resolve when the form loads from localStorage on a different
+        // device.
+        let shiftSets = [];
+        let notInStoreSelected = []; // string[]
+        let notInSiSelected = [];    // string[]
+
+        // Per-photo "needs review" flags for sign-off sheets. We force the
+        // lead to open the editor at least once per photo so they actually
+        // confirm the orientation/crop before submitting — too many
+        // sideways forms were getting through.
+        let signoffNeedsReview = []; // boolean[] aligned with photos.signoff
 
         // ─── WEEKLY TASKS (Rebotics bulk backlog) ───────────────────────────────────
         let reboticsMe = { isReboticsAdmin: false, reboticsDistrictStoreIds: null };
@@ -7071,6 +7526,12 @@ ${data.Notes || ''}`;
             smSelectedShift = null;
             smMembers = [];
             smPendingRemovals.clear();
+            // Clear the dropdown source for the not-in-store / not-in-SI
+            // pickers but keep the user's existing chip selections — those
+            // may still be valid even after re-finding shifts. Stale chips
+            // can always be removed via the X button.
+            shiftSets = [];
+            renderSetsPickers();
             document.getElementById('smShiftResults').style.display = 'none';
             document.getElementById('smShiftList').innerHTML = '';
             document.getElementById('smMembersSection').style.display = 'none';
@@ -7193,12 +7654,106 @@ ${data.Notes || ''}`;
             // Auto-populate lead info from shift's visitLead
             await smPopulateLeadInfo(shift);
 
-            // Load members and employees in parallel
+            // Load members + employees + sets in parallel. Sets loading
+            // failure is non-fatal — pickers fall back to free-text Other.
             await Promise.all([
                 smLoadMembers(),
-                smLoadEmployees()
+                smLoadEmployees(),
+                loadShiftSets(shift).catch(err => console.warn('Shift sets load failed:', err))
             ]);
 
+            autoSave();
+        }
+
+        // ─── Shift sets (Not in store / Not in SI dropdown sources) ───────
+        // Pulls the shift's category-resets from the API and exposes them
+        // as the dropdown options for the two pickers. We also re-render
+        // the pickers any time the selection list changes.
+        async function loadShiftSets(shift) {
+            const visitId = shift && shift.visitId;
+            if (!visitId) {
+                shiftSets = [];
+                renderSetsPickers();
+                return;
+            }
+            try {
+                const resp = await authFetch(`${SM_API_BASE}/api/shifts/${encodeURIComponent(visitId)}/sets`);
+                if (!resp.ok) throw new Error(`Server error (${resp.status})`);
+                const data = await resp.json();
+                shiftSets = Array.isArray(data?.sets) ? data.sets : [];
+            } catch (err) {
+                console.warn('Failed to load shift sets:', err);
+                shiftSets = [];
+            }
+            renderSetsPickers();
+        }
+
+        function renderSetsPickers() {
+            renderSetsPicker('store');
+            renderSetsPicker('si');
+        }
+
+        function renderSetsPicker(kind) {
+            const isStore = kind === 'store';
+            const select = document.getElementById(isStore ? 'notInStoreSelect' : 'notInSiSelect');
+            const tagsEl = document.getElementById(isStore ? 'notInStoreTags' : 'notInSiTags');
+            const helpEl = document.getElementById(isStore ? 'notInStoreHelp' : 'notInSiHelp');
+            const selected = isStore ? notInStoreSelected : notInSiSelected;
+            if (!select || !tagsEl) return;
+
+            // Build dropdown options from the shift's sets, omitting any
+            // already-selected ones so the user can't double-pick.
+            const remaining = shiftSets
+                .map(s => s.name)
+                .filter(name => name && !selected.includes(name));
+
+            const placeholder = shiftSets.length === 0
+                ? '-- Pick a shift to load sets --'
+                : (remaining.length === 0
+                    ? '-- All sets already selected --'
+                    : '-- Select a set from your shift --');
+
+            select.innerHTML = `<option value="">${placeholder}</option>` +
+                remaining.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
+            select.disabled = shiftSets.length === 0;
+
+            // Render selection chips with X buttons. We use data
+            // attributes + a delegated click handler so set names with
+            // quotes/special characters can't break inline event syntax.
+            tagsEl.innerHTML = selected.map((name) => {
+                const safe = escapeHtml(name);
+                return `<span class="set-tag"><span>${safe}</span>` +
+                    `<button type="button" class="set-tag-x" data-remove-kind="${kind}" data-remove-name="${safe}" title="Remove">&times;</button></span>`;
+            }).join('');
+
+            // Help text below the picker.
+            if (helpEl) {
+                if (shiftSets.length === 0) {
+                    helpEl.textContent = 'Pick a shift first to load the available sets.';
+                } else {
+                    helpEl.textContent = `${shiftSets.length} set${shiftSets.length === 1 ? '' : 's'} on this shift.`;
+                }
+            }
+        }
+
+        function addSetNotIn(kind) {
+            const isStore = kind === 'store';
+            const select = document.getElementById(isStore ? 'notInStoreSelect' : 'notInSiSelect');
+            const value = select.value;
+            if (!value) return;
+            const list = isStore ? notInStoreSelected : notInSiSelected;
+            if (!list.includes(value)) list.push(value);
+            select.value = '';
+            renderSetsPicker(kind);
+            autoSave();
+        }
+
+        function removeSetNotIn(kind, name) {
+            const isStore = kind === 'store';
+            const list = isStore ? notInStoreSelected : notInSiSelected;
+            const idx = list.indexOf(name);
+            if (idx >= 0) list.splice(idx, 1);
+            renderSetsPicker(kind);
             autoSave();
         }
 
