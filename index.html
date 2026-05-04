@@ -2064,54 +2064,53 @@
             font-weight: 600;
             margin-top: 4px;
         }
-        /* Header auth status bar */
-        .header-auth-bar {
+        /* Header connection indicators */
+        .conn-indicators {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            padding: 8px 16px;
-            border-radius: 20px;
-            margin-top: 12px;
-            font-size: 14px;
+            gap: 14px;
+            margin-top: 10px;
+        }
+        .conn-dot {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
             font-weight: 600;
-            transition: background 0.3s, color 0.3s;
+            color: #94a3b8;
+            cursor: default;
+            user-select: none;
         }
-        .header-auth-bar.auth-bar-red {
-            background: rgba(239, 68, 68, 0.15);
-            border: 1px solid #ef4444;
-            color: #fca5a5;
-        }
-        .header-auth-bar.auth-bar-yellow {
-            background: rgba(245, 158, 11, 0.15);
-            border: 1px solid #f59e0b;
-            color: #fde68a;
-        }
-        .header-auth-bar.auth-bar-green {
-            background: rgba(34, 197, 94, 0.15);
-            border: 1px solid #22c55e;
-            color: #86efac;
-        }
-        .header-auth-bar .auth-dot {
-            width: 10px;
-            height: 10px;
+        .conn-dot .dot {
+            width: 9px;
+            height: 9px;
             border-radius: 50%;
             flex-shrink: 0;
+            background: #6b7280;
+            transition: background 0.3s, box-shadow 0.3s;
         }
-        .header-auth-bar.auth-bar-red .auth-dot { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
+        .conn-dot[data-state="green"] .dot { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+        .conn-dot[data-state="red"]   .dot { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
+        .conn-dot[data-state="green"] { color: #86efac; }
+        .conn-dot[data-state="red"]   { color: #fca5a5; }
+        /* Legacy auth bar styles — preserved for future admin section */
+        .header-auth-bar {
+            display: flex; align-items: center; justify-content: center;
+            gap: 10px; padding: 8px 16px; border-radius: 20px; margin-top: 12px;
+            font-size: 14px; font-weight: 600; transition: background 0.3s, color 0.3s;
+        }
+        .header-auth-bar.auth-bar-red    { background: rgba(239,68,68,0.15); border: 1px solid #ef4444; color: #fca5a5; }
+        .header-auth-bar.auth-bar-yellow { background: rgba(245,158,11,0.15); border: 1px solid #f59e0b; color: #fde68a; }
+        .header-auth-bar.auth-bar-green  { background: rgba(34,197,94,0.15);  border: 1px solid #22c55e; color: #86efac; }
+        .header-auth-bar .auth-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .header-auth-bar.auth-bar-red    .auth-dot { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
         .header-auth-bar.auth-bar-yellow .auth-dot { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
-        .header-auth-bar.auth-bar-green .auth-dot { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+        .header-auth-bar.auth-bar-green  .auth-dot { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
         .header-auth-bar .auth-bar-btn {
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: inherit;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            min-height: 32px;
-            touch-action: manipulation;
+            background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
+            color: inherit; padding: 4px 12px; border-radius: 12px; font-size: 13px;
+            font-weight: 600; cursor: pointer; min-height: 32px; touch-action: manipulation;
         }
         .header-auth-bar .auth-bar-btn:active { transform: scale(0.96); }
         .header-auth-bar .auth-bar-btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -2286,7 +2285,16 @@
             <h1>KOMPASS</h1>
             <p>END OF DAY COVER SHEET</p>
             <p>GENERATOR</p>
-            <div class="header-auth-bar auth-bar-red" id="headerAuthBar">
+            <div class="conn-indicators" id="connIndicators">
+                <span class="conn-dot" id="sasConnDot" data-state="unknown" title="SAS auth: checking...">
+                    <span class="dot"></span><span class="lbl">SAS</span>
+                </span>
+                <span class="conn-dot" id="reboticsConnDot" data-state="unknown" title="Rebotics auth: checking...">
+                    <span class="dot"></span><span class="lbl">Rebotics</span>
+                </span>
+            </div>
+            <!-- Legacy auth bar — preserved for future admin section (hidden) -->
+            <div class="header-auth-bar auth-bar-red" id="headerAuthBar" style="display:none;">
                 <span class="auth-dot"></span>
                 <span id="headerAuthLabel">SAS Auth: Checking...</span>
                 <button class="auth-bar-btn" id="headerAuthBtn" data-requires-role="supervisor admin" onclick="event.stopPropagation(); requestAuth();" style="display:none;">Request Auth</button>
@@ -2512,6 +2520,10 @@
             </div>
         </div>
 
+        <!-- TODO: future admin-only area. Unhide #adminToolsLegacy for users with admin role.
+             Contains: Weekly Tasks (Rebotics bulk backlog) section + rebotics modals. -->
+        <div id="adminToolsLegacy" data-admin-feature="legacy-rebotics-and-auth-trigger" hidden>
+
         <!-- Weekly Tasks (Rebotics bulk backlog) -->
         <div class="section" id="weeklyTasksSection" data-requires-role="lead supervisor admin">
             <div class="section-title">Weekly Tasks</div>
@@ -2568,6 +2580,8 @@
             <div id="reboticsStaleBanner" style="display:none; margin-top:12px; padding:10px; background:#450a0a; border:1px solid #ef4444; color:#fecaca; border-radius:8px; font-size:14px;"></div>
             <div id="reboticsResultPanel" style="display:none; margin-top:16px;"></div>
         </div>
+
+        </div><!-- /#adminToolsLegacy end of section block (modals are added below) -->
 
         <!-- Photos Section -->
         <div class="section">
@@ -2864,6 +2878,8 @@
         </div>
     </div>
 
+    <!-- Rebotics modals — inside #adminToolsLegacy (hidden until admin section is built) -->
+    <div id="adminToolsLegacyModals" data-admin-feature="legacy-rebotics-modals" hidden>
     <div id="reboticsHelpModal" class="modal-overlay">
         <div class="modal-dialog">
             <h2>Rebotics authentication</h2>
@@ -2887,6 +2903,7 @@
             </div>
         </div>
     </div>
+    </div><!-- /#adminToolsLegacyModals -->
 
     <!-- Signature Fullscreen Overlay -->
     <div id="signatureFullOverlay" class="signature-fullscreen-overlay">
@@ -3082,9 +3099,7 @@
             sbSession = data.session;
             applyUserRoles(data.session);
             document.getElementById('loginOverlay').style.display = 'none';
-            if (typeof initWeeklyTasks === 'function') {
-                initWeeklyTasks().catch((e) => console.warn('[weekly-tasks]', e));
-            }
+            // TODO: admin-section restore — re-enable initWeeklyTasks() here when admin gate is built
         }
 
         async function getAuthToken() {
@@ -3127,9 +3142,7 @@
                 sbSession = session;
                 applyUserRoles(session);
                 document.getElementById('loginOverlay').style.display = 'none';
-                if (typeof initWeeklyTasks === 'function') {
-                    initWeeklyTasks().catch((e) => console.warn('[weekly-tasks]', e));
-                }
+                // TODO: admin-section restore — re-enable initWeeklyTasks() here when admin gate is built
             }
         });
 
@@ -3154,13 +3167,11 @@
                 sbSession = null;
                 applyUserRoles(null);
                 document.getElementById('loginOverlay').style.display = 'flex';
-                if (typeof resetWeeklyTasksSession === 'function') resetWeeklyTasksSession();
+                // TODO: admin-section restore — re-enable resetWeeklyTasksSession() / initWeeklyTasks() when admin gate is built
             } else {
                 sbSession = session;
                 applyUserRoles(session);
-                if (typeof initWeeklyTasks === 'function') {
-                    initWeeklyTasks().catch((e) => console.warn('[weekly-tasks]', e));
-                }
+                // TODO: admin-section restore — re-enable initWeeklyTasks() here when admin gate is built
             }
         });
         const photos = {
@@ -6032,13 +6043,9 @@ ${data.Notes || ''}`;
             }
             updateSignaturePreview();
 
-            // Check auth status on page load
-            checkAuthStatus();
-
-            // Auto-check auth every 5 minutes
-            setInterval(() => {
-                checkAuthStatus();
-            }, 300000);
+            // Poll both connection indicators on page load, then every 30 seconds
+            pollConnections();
+            connPollInterval = setInterval(pollConnections, 30000);
 
             // Log startup info
             console.log('Kompass EOD Advanced loaded');
@@ -6394,11 +6401,57 @@ ${data.Notes || ''}`;
             };
         }
 
-        // ─── AUTH STATUS MANAGEMENT ─────────────────────────────────────────────────
+        // ─── CONNECTION INDICATORS ──────────────────────────────────────────────────
+
+        function setConnState(target, ok, minsAgo) {
+            const dotId = target === 'sas' ? 'sasConnDot' : 'reboticsConnDot';
+            const el = document.getElementById(dotId);
+            if (el) {
+                el.dataset.state = ok ? 'green' : 'red';
+                const label = target === 'sas' ? 'SAS' : 'Rebotics';
+                if (ok) {
+                    el.title = minsAgo != null
+                        ? `${label} auth: active (refreshed ${minsAgo} min ago)`
+                        : `${label} auth: active`;
+                } else {
+                    el.title = `${label} auth: not active`;
+                }
+            }
+            // Keep legacy authState machinery in sync for the preserved code paths
+            if (target === 'sas') {
+                setAuthStatus(ok ? 'green' : 'red');
+            }
+        }
+
+        let connPollInterval = null;
+
+        async function pollConnections() {
+            // SAS
+            try {
+                const r = await authFetch(`${SM_API_BASE}/sas-auth-status`);
+                const j = r.ok ? await r.json() : { ok: false };
+                setConnState('sas', !!j.ok && !j.stale, j.minutes_since_refresh);
+            } catch (e) {
+                console.warn('[conn] SAS probe failed:', e);
+                setConnState('sas', false);
+            }
+            // Rebotics
+            try {
+                const r = await authFetch(`${SM_API_BASE}/rebotics-auth-status`);
+                const j = r.ok ? await r.json() : { ok: false };
+                setConnState('rebotics', !!j.ok && !j.stale, j.minutes_since_refresh);
+            } catch (e) {
+                console.warn('[conn] Rebotics probe failed:', e);
+                setConnState('rebotics', false);
+            }
+        }
+
+        // ─── AUTH STATUS MANAGEMENT (legacy — preserved for admin section) ─────────
         let authState = sessionStorage.getItem('kompassAuthState') || 'unknown';
         let authPollInterval = null;
 
-        // Check auth status by probing the shifts endpoint with dummy params
+        // Legacy probe — still used by setConnState('sas') to keep authState in sync.
+        // checkAuthStatus() is no longer called directly; pollConnections() replaces it.
         async function checkAuthStatus() {
             // Restore yellow state from sessionStorage
             if (authState === 'yellow') {
@@ -6409,16 +6462,10 @@ ${data.Notes || ''}`;
             try {
                 const resp = await authFetch(`${SM_API_BASE}/api/shifts?store=0&date=2000-01-01`);
                 if (resp.status === 401) {
-                    const data = await resp.json().catch(() => ({}));
-                    if (data.error && data.error.toLowerCase().includes('sas session not active')) {
-                        setAuthStatus('red');
-                    } else {
-                        setAuthStatus('red');
-                    }
+                    setAuthStatus('red');
                 } else if (resp.ok) {
                     setAuthStatus('green');
                 } else {
-                    // Other error — treat as unknown, show red
                     setAuthStatus('red');
                 }
             } catch (err) {
@@ -6664,10 +6711,11 @@ ${data.Notes || ''}`;
                 // Check if this is a 401 / SAS session error
                 if (errMsg.includes('401') || errMsg.toLowerCase().includes('sas session') || errMsg.toLowerCase().includes('not active')) {
                     setAuthStatus('red');
-                    const authBtnHtml = authState !== 'yellow' ?
-                        `<button class="auth-bar-btn" onclick="requestAuth()" style="margin-top:6px; background:#0d4f8b; color:#fff; border:none; padding:6px 14px; border-radius:8px; font-size:14px; cursor:pointer;">Request Auth</button>` :
-                        `<span style="color:#f59e0b; font-size:0.9em;">Auth Requested — Please Be Patient</span>`;
-                    listDiv.innerHTML = `<div class="sm-message error">${escapeHtml(errMsg)}<br>${authBtnHtml}<br><span style="font-size:0.85em; color:#94a3b8;">You can continue using photos, notes, and other features without auth.</span></div>`;
+                    // TODO: admin-section restore — re-enable authBtnHtml injection here when admin gate is built
+                    // const authBtnHtml = authState !== 'yellow' ?
+                    //     `<button class="auth-bar-btn" onclick="requestAuth()" style="margin-top:6px; background:#0d4f8b; color:#fff; border:none; padding:6px 14px; border-radius:8px; font-size:14px; cursor:pointer;">Request Auth</button>` :
+                    //     `<span style="color:#f59e0b; font-size:0.9em;">Auth Requested — Please Be Patient</span>`;
+                    listDiv.innerHTML = `<div class="sm-message error">${escapeHtml(errMsg)}<br><span style="font-size:0.85em; color:#94a3b8;">You can continue using photos, notes, and other features without auth.</span></div>`;
                 } else {
                     listDiv.innerHTML = `<div class="sm-message error">${escapeHtml(errMsg)}</div>`;
                 }
@@ -7103,10 +7151,7 @@ ${data.Notes || ''}`;
             const btn = document.getElementById('refreshConnectionsBtn');
             btn.classList.add('spinning');
             try {
-                // Reset auth state so checkAuthStatus actually probes the API
-                authState = 'unknown';
-                sessionStorage.removeItem('kompassAuthState');
-                await checkAuthStatus();
+                await pollConnections();
 
                 // If a shift is selected, refresh its members too
                 if (smSelectedShift) {
