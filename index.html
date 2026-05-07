@@ -317,6 +317,104 @@
             transform: scale(0.95);
         }
 
+        /* Fred Meyer email pool picker */
+        .fm-info-box {
+            background: #1e3a5f;
+            border-left: 4px solid #3b82f6;
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #bfdbfe;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        .fm-pool-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .fm-pool-header label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #e5e7eb;
+            margin: 0;
+        }
+        .fm-select-all-btn {
+            font-size: 12px;
+            color: #60a5fa;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 2px 6px;
+            text-decoration: underline;
+        }
+        .fm-email-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            background: #1f2937;
+            margin-bottom: 6px;
+        }
+        .fm-email-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            accent-color: #3b82f6;
+        }
+        .fm-email-row .fm-email-label {
+            flex: 1;
+            font-size: 13px;
+            color: #d1d5db;
+            word-break: break-all;
+        }
+        .fm-remove-btn {
+            background: #7f1d1d;
+            color: #fca5a5;
+            border: none;
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .fm-remove-btn:active { background: #991b1b; }
+
+        /* Manager name suggestion chips */
+        .manager-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .manager-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #374151;
+            border: 1px solid #4b5563;
+            color: #d1d5db;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .manager-chip:hover { background: #4b5563; }
+        .manager-chip .chip-select { flex: 1; }
+        .manager-chip .chip-remove {
+            color: #9ca3af;
+            font-size: 14px;
+            line-height: 1;
+            padding: 0 2px;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .manager-chip .chip-remove:hover { color: #ef4444; }
+
         .photo-section {
             margin-top: 15px;
         }
@@ -3001,7 +3099,9 @@
 
             <div class="field">
                 <label>Manager checked in with:</label>
-                <input type="text" id="checkInManager" placeholder="Manager name">
+                <input type="text" id="checkInManager" placeholder="Manager name" list="checkInManagerList" autocomplete="off">
+                <datalist id="checkInManagerList"></datalist>
+                <div id="checkInManagerSuggestions" class="manager-suggestions" style="display:none;"></div>
             </div>
 
             <div class="field" style="margin-top: 15px;">
@@ -3054,7 +3154,9 @@
 
             <div class="field" style="margin-top: 15px;">
                 <label>Manager checked out with:</label>
-                <input type="text" id="checkOutManager" placeholder="Manager name">
+                <input type="text" id="checkOutManager" placeholder="Manager name" list="checkOutManagerList" autocomplete="off">
+                <datalist id="checkOutManagerList"></datalist>
+                <div id="checkOutManagerSuggestions" class="manager-suggestions" style="display:none;"></div>
             </div>
 
             <div class="field" style="margin-top: 15px;">
@@ -3144,6 +3246,20 @@
                 <label>Recipients:</label>
                 <div id="recipientList" class="recipient-list"></div>
             </div>
+
+            <!-- Fred Meyer email pool picker -->
+            <div class="field" id="fmEmailPickerSection" style="margin-top: 14px; display: none;">
+                <div class="fm-info-box">
+                    <strong>Fred Meyer addresses for this store</strong><br>
+                    Any <em>@fredmeyer.com</em> address you add is automatically saved and appears here next time you send from this store. Check the ones you want included in this EOD, or use <em>Select All</em>. Tap <strong>Remove</strong> to permanently delete an address that is no longer valid.
+                </div>
+                <div class="fm-pool-header">
+                    <label>Saved @fredmeyer.com addresses:</label>
+                    <button type="button" class="fm-select-all-btn" onclick="fmSelectAll()">Select All</button>
+                </div>
+                <div id="fmEmailList"></div>
+            </div>
+
             <div class="field" style="margin-top: 10px;">
                 <div class="checkbox-group">
                     <div class="checkbox-option">
@@ -3705,6 +3821,153 @@
         let emailRecipients = [];
         let selectedShift = null;
 
+        // Per-store pools loaded from the API (global across all users for a store)
+        let fredmeyerEmailPool = [];   // @fredmeyer.com addresses saved for this store
+        let managerNamePool = [];      // Manager names saved for this store
+        let currentLoadedStoreNumber = null;
+
+        // ─── Store data (global per-store pools) ───────────────────────────────
+        async function loadStoreData(storeNumber) {
+            if (!storeNumber || storeNumber === currentLoadedStoreNumber) return;
+            currentLoadedStoreNumber = storeNumber;
+            try {
+                const resp = await authFetch(
+                    `https://eod-api.the-dump-bin.com/store-data/${encodeURIComponent(storeNumber)}`
+                );
+                if (!resp.ok) return;
+                const data = await resp.json();
+                if (data.success) {
+                    fredmeyerEmailPool = Array.isArray(data.fredmeyerEmails) ? data.fredmeyerEmails : [];
+                    managerNamePool = Array.isArray(data.managerNames) ? data.managerNames : [];
+                    renderFredmeyerDropdown();
+                    renderManagerSuggestions();
+                }
+            } catch (e) {
+                console.warn('loadStoreData failed:', e.message);
+            }
+        }
+
+        // Render the Fred Meyer email pool picker
+        function renderFredmeyerDropdown() {
+            const section = document.getElementById('fmEmailPickerSection');
+            const list = document.getElementById('fmEmailList');
+            if (!section || !list) return;
+            if (fredmeyerEmailPool.length === 0) {
+                section.style.display = 'none';
+                list.innerHTML = '';
+                return;
+            }
+            section.style.display = 'block';
+            list.innerHTML = fredmeyerEmailPool.map((email, i) => `
+                <div class="fm-email-row">
+                    <input type="checkbox" class="fm-checkbox" data-idx="${i}"
+                           onchange="fmCheckboxChanged()"
+                           aria-label="${email}">
+                    <span class="fm-email-label">${email}</span>
+                    <button type="button" class="fm-remove-btn"
+                            onclick="removeFredmeyerEmail(${JSON.stringify(email)})">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        // Apply checked FM emails into the recipients list
+        function fmCheckboxChanged() {
+            const checkboxes = document.querySelectorAll('#fmEmailList .fm-checkbox');
+            const toAdd = [];
+            checkboxes.forEach((cb) => {
+                const idx = parseInt(cb.dataset.idx, 10);
+                if (cb.checked && fredmeyerEmailPool[idx]) toAdd.push(fredmeyerEmailPool[idx]);
+            });
+            // Remove any previously-FM-added emails that are now unchecked
+            emailRecipients = emailRecipients.filter((e) => !fredmeyerEmailPool.includes(e));
+            emailRecipients = [...new Set([...emailRecipients, ...toAdd])];
+            renderRecipientList();
+            autoSave();
+        }
+
+        function fmSelectAll() {
+            document.querySelectorAll('#fmEmailList .fm-checkbox').forEach((cb) => { cb.checked = true; });
+            fmCheckboxChanged();
+        }
+
+        async function removeFredmeyerEmail(email) {
+            const storeNumber = document.getElementById('storeNumber').value.trim();
+            if (!storeNumber) return;
+            fredmeyerEmailPool = fredmeyerEmailPool.filter((e) => e !== email);
+            emailRecipients = emailRecipients.filter((e) => e !== email);
+            renderFredmeyerDropdown();
+            renderRecipientList();
+            autoSave();
+            try {
+                await authFetch(
+                    `https://eod-api.the-dump-bin.com/store-data/${encodeURIComponent(storeNumber)}/fredmeyer-email`,
+                    { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) }
+                );
+            } catch (e) { console.warn('removeFredmeyerEmail API call failed:', e.message); }
+        }
+
+        async function addFredmeyerEmailToPool(email) {
+            if (fredmeyerEmailPool.includes(email)) return;
+            fredmeyerEmailPool.push(email);
+            renderFredmeyerDropdown();
+            // Auto-check the newly added email (it's now the last checkbox)
+            const checkboxes = document.querySelectorAll('#fmEmailList .fm-checkbox');
+            const lastCb = checkboxes[checkboxes.length - 1];
+            if (lastCb) { lastCb.checked = true; fmCheckboxChanged(); }
+            const storeNumber = document.getElementById('storeNumber').value.trim();
+            if (!storeNumber) return;
+            try {
+                await authFetch(
+                    `https://eod-api.the-dump-bin.com/store-data/${encodeURIComponent(storeNumber)}`,
+                    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fredmeyerEmails: [email] }) }
+                );
+            } catch (e) { console.warn('addFredmeyerEmailToPool API call failed:', e.message); }
+        }
+
+        // Render manager name suggestion chips below each manager input
+        function renderManagerSuggestions() {
+            ['checkIn', 'checkOut'].forEach((which) => {
+                const suggestionsEl = document.getElementById(`${which}ManagerSuggestions`);
+                const datalist = document.getElementById(`${which}ManagerList`);
+                if (!suggestionsEl) return;
+                if (managerNamePool.length === 0) {
+                    suggestionsEl.style.display = 'none';
+                    suggestionsEl.innerHTML = '';
+                    if (datalist) datalist.innerHTML = '';
+                    return;
+                }
+                if (datalist) {
+                    datalist.innerHTML = managerNamePool
+                        .map((n) => `<option value="${n.replace(/"/g, '&quot;')}">`)
+                        .join('');
+                }
+                suggestionsEl.style.display = 'flex';
+                suggestionsEl.innerHTML = managerNamePool.map((name) => `
+                    <span class="manager-chip" title="Tap to fill">
+                        <span class="chip-select"
+                              onclick="document.getElementById('${which}Manager').value=${JSON.stringify(name)};autoSave();"
+                        >${name}</span>
+                        <button type="button" class="chip-remove"
+                                onclick="removeManagerName(${JSON.stringify(name)});event.stopPropagation();"
+                                title="Remove from saved list">&times;</button>
+                    </span>
+                `).join('');
+            });
+        }
+
+        async function removeManagerName(name) {
+            const storeNumber = document.getElementById('storeNumber').value.trim();
+            if (!storeNumber) return;
+            managerNamePool = managerNamePool.filter((n) => n !== name);
+            renderManagerSuggestions();
+            try {
+                await authFetch(
+                    `https://eod-api.the-dump-bin.com/store-data/${encodeURIComponent(storeNumber)}/manager-name`,
+                    { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) }
+                );
+            } catch (e) { console.warn('removeManagerName API call failed:', e.message); }
+        }
+
         // Add email recipient
         function addEmailRecipient() {
             const input = document.getElementById('emailInput');
@@ -3727,10 +3990,16 @@
                 return;
             }
 
-            emailRecipients.push(email.toLowerCase());
+            const normalised = email.toLowerCase();
+            emailRecipients.push(normalised);
             input.value = '';
             renderRecipientList();
             autoSave();
+
+            // Auto-save @fredmeyer.com addresses to this store's pool
+            if (normalised.endsWith('@fredmeyer.com')) {
+                addFredmeyerEmailToPool(normalised);
+            }
         }
 
         // Remove email recipient
@@ -3775,6 +4044,24 @@
                         addEmailRecipient();
                     }
                 });
+            }
+
+            // Load per-store data (FM emails + manager names) when store number is confirmed
+            const storeNumberInput = document.getElementById('storeNumber');
+            if (storeNumberInput) {
+                let storeLoadTimer = null;
+                const triggerStoreLoad = () => {
+                    clearTimeout(storeLoadTimer);
+                    const val = storeNumberInput.value.trim();
+                    if (val) {
+                        storeLoadTimer = setTimeout(() => loadStoreData(val), 400);
+                    }
+                };
+                storeNumberInput.addEventListener('blur', () => {
+                    const val = storeNumberInput.value.trim();
+                    if (val) loadStoreData(val);
+                });
+                storeNumberInput.addEventListener('change', triggerStoreLoad);
             }
         });
 
@@ -3855,6 +4142,8 @@
                 document.getElementById('storeNumber').value = data.storeNumber || '';
                 document.getElementById('workDate').value = data.date || '';
                 document.getElementById('leadName').value = data.leadName || '';
+                // Load per-store FM emails and manager name pool from API
+                if (data.storeNumber) loadStoreData(data.storeNumber);
                 document.getElementById('checkInManager').value = data.checkInManager || '';
                 document.getElementById('checkOutManager').value = data.checkOutManager || '';
                 document.getElementById('commodities').value = data.commodities || '';
@@ -6002,7 +6291,9 @@ ${data.Notes || ''}`;
                         ...recipients,
                         'MAshabranner@retailodyssey.com',
                         'seth.newman@retailodyssey.com',
-                        'tyson.gauthier@retailodyssey.com'
+                        'tyson.gauthier@retailodyssey.com',
+                        'aiyana.natarisalazar@retailodyssey.com',
+                        'Amanda.Mathew@retailodyssey.com'
                     ])];
                 }
 
@@ -6023,6 +6314,8 @@ ${data.Notes || ''}`;
                     pdfFilename,
                     userName,
                     userEmail,
+                    checkInManager: document.getElementById('checkInManager').value.trim(),
+                    checkOutManager: document.getElementById('checkOutManager').value.trim(),
                     signoffPhotos: data.photos.signoff,
                     ...(pdfBase64 && { pdfBase64 })
                 };
