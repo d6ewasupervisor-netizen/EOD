@@ -6,6 +6,11 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+function resolveReplyTo(userEmail) {
+  const t = (v) => (v == null || v === '' ? undefined : String(v).trim() || undefined);
+  return t(userEmail) || t(process.env.RESEND_REPLY_TO) || undefined;
+}
+
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
@@ -92,6 +97,8 @@ app.post('/send-eod', async (req, res) => {
             html,
             attachments
         };
+        const rt = resolveReplyTo(userEmail);
+        if (rt) emailPayload.reply_to = rt;
 
         const result = await resend.emails.send(emailPayload);
 
