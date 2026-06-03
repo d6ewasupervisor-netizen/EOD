@@ -2174,9 +2174,8 @@
             background: #1a3a2a;
         }
         .sm-shift-card.completed {
-            opacity: 0.45;
-            pointer-events: none;
-            cursor: default;
+            opacity: 0.72;
+            cursor: pointer;
         }
         .sm-shift-card-info {
             flex: 1;
@@ -2971,6 +2970,7 @@
         <!-- Employee Management Section (shift members + add/remove) -->
         <div class="section" id="smSection" data-requires-role="lead supervisor admin" style="display:none;">
             <div class="section-title">Employee Management</div>
+            <div class="sm-status pending" id="smClosedShiftNotice" style="display:none;">This shift is closed; sync is available, but roster changes are disabled.</div>
 
             <!-- Current Shift Members -->
             <div id="smMembersSection" style="display:none;">
@@ -2981,7 +2981,7 @@
                 <div id="smMembersList"></div>
 
                 <!-- Compact Remove Dropdown -->
-                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px;">
+                <div id="smRemoveControls" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px;">
                     <select id="smRemoveSelect" style="flex:1; min-width:200px;">
                         <option value="">-- Remove a member --</option>
                     </select>
@@ -8040,6 +8040,18 @@ ${data.Notes || ''}`;
         // sideways forms were getting through.
         let signoffNeedsReview = []; // boolean[] aligned with photos.signoff
 
+        function getShiftStatusKey(shift) {
+            return String((shift && (shift.currentStatus || shift.status)) || '')
+                .trim()
+                .toLowerCase()
+                .replace(/_/g, '-');
+        }
+
+        function isClosedShift(shift) {
+            const status = getShiftStatusKey(shift).replace(/\s+/g, '-');
+            return status === 'completed' || status === 'complete' || status === 'closed' || status === 'closed-out';
+        }
+
         // ─── WEEKLY TASKS (Rebotics bulk backlog) ───────────────────────────────────
         let reboticsMe = { isReboticsAdmin: false, reboticsDistrictStoreIds: null };
         let reboticsAuthPoll = null;
@@ -8616,6 +8628,8 @@ ${data.Notes || ''}`;
             renderSetsPickers();
             document.getElementById('smShiftResults').style.display = 'none';
             document.getElementById('smShiftList').innerHTML = '';
+            const closedNotice = document.getElementById('smClosedShiftNotice');
+            if (closedNotice) closedNotice.style.display = 'none';
             document.getElementById('smMembersSection').style.display = 'none';
             document.getElementById('smAddSection').style.display = 'none';
             document.getElementById('leadPickerSection').style.display = 'none';
@@ -8670,12 +8684,12 @@ ${data.Notes || ''}`;
                 // having to select each shift card individually.
                 loadAllShiftsSets(shifts).catch(err => console.warn('loadAllShiftsSets failed:', err));
                 listDiv.innerHTML = shifts.map((shift, i) => {
-                    const isCompleted = shift.status === 'completed' || shift.currentStatus === 'completed';
+                    const isCompleted = isClosedShift(shift);
                     const displayStatus = shift.currentStatus || shift.status || 'unknown';
                     const statusClass = isCompleted ? 'completed' : (displayStatus === 'in-progress' || displayStatus === 'in_progress') ? 'in-progress' : 'other';
                     const cardClass = 'sm-shift-card' + (isCompleted ? ' completed' : '');
                     const kompassType = shift.kompassType || shift.programName || shift.program || shift.shiftType || shift.type || '';
-                    return `<div class="${cardClass}" onclick="${isCompleted ? '' : 'smSelectShift(' + i + ')'}" data-index="${i}">
+                    return `<div class="${cardClass}" onclick="smSelectShift(${i})" data-index="${i}">
                         <div class="sm-shift-card-info">
                             <div class="sm-shift-card-project">${escapeHtml(shift.projectName || shift.teamName || 'Unnamed Shift')}</div>
                             ${kompassType ? '<div><span class="kompass-type-badge">' + escapeHtml(kompassType) + '</span></div>' : ''}
@@ -8721,7 +8735,8 @@ ${data.Notes || ''}`;
 
         async function smSelectShift(index) {
             const shift = smShifts[index];
-            if (!shift || shift.status === 'completed' || shift.currentStatus === 'completed') return;
+            if (!shift) return;
+            const isClosed = isClosedShift(shift);
 
             smSelectedShift = shift;
             // Also set global selectedShift for photo sync compatibility
@@ -8735,18 +8750,23 @@ ${data.Notes || ''}`;
             // Show employee management section
             document.getElementById('smSection').style.display = 'block';
             document.getElementById('smMembersSection').style.display = 'block';
-            document.getElementById('smAddSection').style.display = 'block';
+            document.getElementById('smAddSection').style.display = isClosed ? 'none' : 'block';
+            const removeControls = document.getElementById('smRemoveControls');
+            if (removeControls) removeControls.style.display = isClosed ? 'none' : 'flex';
+            const closedNotice = document.getElementById('smClosedShiftNotice');
+            if (closedNotice) closedNotice.style.display = isClosed ? 'block' : 'none';
 
             // Auto-populate lead info from shift's visitLead
             await smPopulateLeadInfo(shift);
 
             // Load members + employees + sets in parallel. Sets loading
             // failure is non-fatal — pickers fall back to free-text Other.
-            await Promise.all([
+            const loadTasks = [
                 smLoadMembers(),
-                smLoadEmployees(),
                 loadShiftSets(shift).catch(err => console.warn('Shift sets load failed:', err))
-            ]);
+            ];
+            if (!isClosed) loadTasks.push(smLoadEmployees());
+            await Promise.all(loadTasks);
 
             autoSave();
         }
@@ -9235,6 +9255,10 @@ ${data.Notes || ''}`;
             const select = document.getElementById('smAddSelect');
             const empId = select.value;
             if (!empId || !smSelectedShift) return;
+            if (isClosedShift(smSelectedShift)) {
+                smSetStatus('smAddStatus', 'This shift is closed; roster changes are disabled.', 'error');
+                return;
+            }
 
             const emp = smEmployeesCache.find(e => String(e.employeeId || e.id) === empId);
             if (!emp) return;
@@ -9289,6 +9313,10 @@ ${data.Notes || ''}`;
             const select = document.getElementById('smRemoveSelect');
             const empId = select.value;
             if (!empId || !smSelectedShift) return;
+            if (isClosedShift(smSelectedShift)) {
+                smSetStatus('smRemoveStatus', 'This shift is closed; roster changes are disabled.', 'error');
+                return;
+            }
 
             const emp = smMembers.find(e => String(e.employeeId) === empId);
             if (!emp) return;
